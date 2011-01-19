@@ -55,13 +55,13 @@ define(function(d, F) {
     x.onchange = w;
     w();
     var z = document.getElementById("select_style");
-    z.onchange = y;
+    z.onclick = y;
     y();
     var B = document.getElementById("highlight_active");
-    B.onchange = A;
+    B.onclick = A;
     A();
     var D = document.getElementById("show_hidden");
-    D.onchange = C;
+    D.onclick = C;
     C();
     window.jump = function() {
       var a = document.getElementById("jump"), e = c.editor.getCursorPosition();

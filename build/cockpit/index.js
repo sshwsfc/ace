@@ -4,6 +4,7 @@ define(function(a, d) {
     a("cockpit/cli").startup(b, c);
     window.testCli = a("cockpit/test/testCli");
     a("cockpit/ui/settings").startup(b, c);
-    a("cockpit/ui/cliView").startup(b, c)
+    a("cockpit/ui/cli_view").startup(b, c);
+    a("cockpit/commands/basic").startup(b, c)
   }
 });

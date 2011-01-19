@@ -44,7 +44,13 @@ define(function(m, c) {
     return a.clientY ? a.clientY + (document.documentElement.scrollTop || document.body.scrollTop) : a.pageX
   };
   c.getButton = function(a) {
-    return a.preventDefault ? a.button : Math.max(a.button - 1, 2)
+    if(a.type == "dblclick") {
+      return 0
+    }else {
+      if(a.type == "contextmenu") {
+        return 2
+      }
+    }return a.preventDefault ? a.button : {1:0, 2:2, 4:1}[a.button]
   };
   c.capture = document.documentElement.setCapture ? function(a, e, d) {
     function b(h) {

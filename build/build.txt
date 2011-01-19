@@ -31,8 +31,9 @@ pilot/event.js
 pilot/dom.js
 pilot/keyboard/keyutil.js
 pilot/domtemplate.js
-cockpit/ui/requestView.js
-cockpit/ui/cliView.js
+cockpit/ui/request_view.js
+cockpit/ui/cli_view.js
+cockpit/commands/basic.js
 cockpit/index.js
 ace/textinput.js
 ace/conf/keybindings/default_mac.js
@@ -72,6 +73,17 @@ ace/mode/php_highlight_rules.js
 ace/mode/php.js
 ace/undomanager.js
 demo/startup.js
+ace/theme/clouds.js
+ace/theme/clouds_midnight.js
+ace/theme/cobalt.js
+ace/theme/dawn.js
+ace/theme/eclipse.js
+ace/theme/idle_fingers.js
+ace/theme/kr_theme.js
+ace/theme/mono_industrial.js
+ace/theme/monokai.js
+ace/theme/pastel_on_dark.js
+ace/theme/twilight.js
 demo/boot.js
 
 ace/theme/eclipse.js

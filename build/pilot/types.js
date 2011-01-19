@@ -40,6 +40,8 @@ define(function(k, c) {
     throw new Error("not implemented");
   }, name:undefined, increment:function() {
   }, decrement:function() {
+  }, getDefault:function() {
+    return this.parse("")
   }};
   c.Type = f;
   var d = {};

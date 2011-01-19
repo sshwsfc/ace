@@ -2,7 +2,7 @@ define(function(f, m) {
   function i(a, b) {
     this.cli = a;
     this.doc = document;
-    this.win = d.getParentWindow(this.doc);
+    this.win = c.getParentWindow(this.doc);
     if(this.element = this.doc.getElementById("cockpitInput")) {
       this.settings = b.settings;
       this.hintDirection = this.settings.getSetting("hintDirection");
@@ -15,12 +15,12 @@ define(function(f, m) {
       console.log("No element with an id of cockpit. Bailing on cli")
     }
   }
-  var j = f("text!cockpit/ui/cliView.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n"), 
-  k = f("pilot/event"), d = f("pilot/dom");
-  d.importCssString(j);
+  var j = f("text!cockpit/ui/cli_view.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n"), 
+  k = f("pilot/event"), c = f("pilot/dom");
+  c.importCssString(j);
   var n = f("pilot/canon"), h = f("pilot/types").Status, g = f("pilot/keyboard/keyutil"), o = f("cockpit/cli").CliRequisition;
   j = f("cockpit/cli").Hint;
-  var p = f("cockpit/ui/requestView").RequestView;
+  var p = f("cockpit/ui/request_view").RequestView;
   new j(h.VALID, "", 0, 0);
   m.startup = function(a) {
     var b = new o(a.env);
@@ -28,6 +28,7 @@ define(function(f, m) {
   };
   i.prototype = {createElements:function() {
     var a = this.element;
+    this.element.spellcheck = false;
     this.output = this.doc.getElementById("cockpitOutput");
     this.popupOutput = this.output == null;
     if(!this.output) {
@@ -42,11 +43,11 @@ define(function(f, m) {
       b()
     }this.completer = this.doc.createElement("div");
     this.completer.className = "cptCompletion VALID";
-    this.completer.style.color = d.computedStyle(a, "color");
-    this.completer.style.fontSize = d.computedStyle(a, "fontSize");
-    this.completer.style.fontFamily = d.computedStyle(a, "fontFamily");
-    this.completer.style.fontWeight = d.computedStyle(a, "fontWeight");
-    this.completer.style.fontStyle = d.computedStyle(a, "fontStyle");
+    this.completer.style.color = c.computedStyle(a, "color");
+    this.completer.style.fontSize = c.computedStyle(a, "fontSize");
+    this.completer.style.fontFamily = c.computedStyle(a, "fontFamily");
+    this.completer.style.fontWeight = c.computedStyle(a, "fontWeight");
+    this.completer.style.fontStyle = c.computedStyle(a, "fontStyle");
     a.parentNode.insertBefore(this.completer, a.nextSibling);
     this.completer.style.backgroundColor = a.style.backgroundColor;
     a.style.backgroundColor = "transparent";
@@ -58,8 +59,8 @@ define(function(f, m) {
     this.hintDirection.addEventListener("change", b);
     this.outputDirection.addEventListener("change", b);
     b();
-    n.addEventListener("output", function(c) {
-      new p(c.request, this)
+    n.addEventListener("output", function(d) {
+      new p(d.request, this)
     }.bind(this));
     g.addKeyDownListener(a, this.onKeyDown.bind(this));
     k.addListener(a, "keyup", this.onKeyUp.bind(this));
@@ -109,11 +110,11 @@ define(function(f, m) {
         this.cli.exec();
         this.element.value = ""
       }else {
-        this.element.selectionStart = b.start;
-        this.element.selectionEnd = b.end
+        c.setSelectionStart(this.element, b.start);
+        c.setSelectionEnd(this.element, b.end)
       }
     }this.update();
-    if(b = this.cli.getAssignmentAt(this.element.selectionStart)) {
+    if(b = this.cli.getAssignmentAt(c.getSelectionStart(this.element))) {
       if(a.keyCode === g.KeyHelper.KEY.TAB) {
         b.complete();
         this.update()
@@ -127,21 +128,21 @@ define(function(f, m) {
     }
   }, update:function() {
     this.isUpdating = true;
-    var a = {typed:this.element.value, cursor:{start:this.element.selectionStart, end:this.element.selectionEnd}};
+    var a = {typed:this.element.value, cursor:{start:c.getSelectionStart(this.element), end:c.getSelectionEnd(this.element.selectionEnd)}};
     this.cli.update(a);
     a = this.cli.getAssignmentAt(a.cursor.start).getHint();
-    d.removeCssClass(this.completer, h.VALID.toString());
-    d.removeCssClass(this.completer, h.INCOMPLETE.toString());
-    d.removeCssClass(this.completer, h.INVALID.toString());
+    c.removeCssClass(this.completer, h.VALID.toString());
+    c.removeCssClass(this.completer, h.INCOMPLETE.toString());
+    c.removeCssClass(this.completer, h.INVALID.toString());
     var b = '<span class="cptPrompt">&gt;</span> ';
     if(this.element.value.length > 0) {
-      var c = this.cli.getInputStatusMarkup();
-      b += this.markupStatusScore(c)
+      var d = this.cli.getInputStatusMarkup();
+      b += this.markupStatusScore(d)
     }if(this.element.value.length > 0 && a.predictions && a.predictions.length > 0) {
-      c = a.predictions[0];
-      b += " &nbsp;&#x21E5; " + (c.name ? c.name : c)
+      d = a.predictions[0];
+      b += " &nbsp;&#x21E5; " + (d.name ? d.name : d)
     }this.completer.innerHTML = b;
-    d.addCssClass(this.completer, this.cli.getWorstHint().status.toString());
+    c.addCssClass(this.completer, this.cli.getWorstHint().status.toString());
     var e = "";
     if(this.element.value.length !== 0) {
       e += a.message;
@@ -154,27 +155,27 @@ define(function(f, m) {
         e = e.replace(/\| $/, "]")
       }
     }this.hinter.innerHTML = e;
-    e.length === 0 ? d.addCssClass(this.hinter, "cptNoPopup") : d.removeCssClass(this.hinter, "cptNoPopup");
+    e.length === 0 ? c.addCssClass(this.hinter, "cptNoPopup") : c.removeCssClass(this.hinter, "cptNoPopup");
     this.isUpdating = false
   }, markupStatusScore:function(a) {
-    for(var b = "", c = 0, e = -1;;) {
-      if(e !== a[c]) {
-        b += "<span class=" + a[c].toString() + ">";
-        e = a[c]
-      }b += this.element.value[c];
-      c++;
-      if(c === this.element.value.length) {
+    for(var b = "", d = 0, e = -1;;) {
+      if(e !== a[d]) {
+        b += "<span class=" + a[d].toString() + ">";
+        e = a[d]
+      }b += this.element.value[d];
+      d++;
+      if(d === this.element.value.length) {
         b += "</span>";
         break
-      }if(e !== a[c]) {
+      }if(e !== a[d]) {
         b += "</span>"
       }
     }return b
   }, onArgChange:function(a) {
     if(!this.isUpdating) {
-      var b = this.element.value.substring(0, a.argument.start), c = this.element.value.substring(a.argument.end);
+      var b = this.element.value.substring(0, a.argument.start), d = this.element.value.substring(a.argument.end);
       a = typeof a.text === "string" ? a.text : a.text.name;
-      this.element.value = b + a + c;
+      this.element.value = b + a + d;
       b = (b + a).length;
       this.element.selectionStart = b;
       this.element.selectionEnd = b

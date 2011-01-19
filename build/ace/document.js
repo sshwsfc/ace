@@ -12,7 +12,9 @@ define(function(i, l) {
   (function() {
     m.implement(this, n);
     this.$undoManager = null;
-    this.$split = function(a) {
+    this.$split = "aaa".split(/a/).length == 0 ? function(a) {
+      return a.replace(/\r\n|\r/g, "\n").split("\n")
+    } : function(a) {
       return a.split(/\r\n|\r|\n/)
     };
     this.setValue = function(a) {
@@ -393,7 +395,13 @@ define(function(i, l) {
       }
     };
     this.replace = function(a, b) {
-      this.$remove(a);
+      if(b.length == 0 && a.isEmpty()) {
+        return a.start
+      }else {
+        if(b == this.getTextRange(a)) {
+          return a.end
+        }
+      }this.$remove(a);
       b = b ? this.$insert(a.start, b) : a.start;
       var c = a.end.column == 0 ? a.end.column - 1 : a.end.column;
       this.fireChangeEvent(a.start.row, c == b.row ? c : undefined);

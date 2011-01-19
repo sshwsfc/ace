@@ -445,6 +445,7 @@ define("pilot/plugin_manager", ["require", "exports", "module", "pilot/promise"]
     }.bind(this));
     return pr$$1
   }, startup:function(data$$8, reason$$2) {
+    reason$$2 = reason$$2 || exports$$5.REASONS.APP_STARTUP;
     var pr$$2 = new Promise$$1;
     if(this.status != this.REGISTERED) {
       pr$$2.resolve(this);
@@ -548,6 +549,8 @@ define("pilot/types", ["require", "exports", "module"], function(require$$8, exp
     return
   }, decrement:function() {
     return
+  }, getDefault:function() {
+    return this.parse("")
   }};
   exports$$7.Type = Type;
   var types = {};
@@ -1099,6 +1102,23 @@ define("pilot/types/settings", ["require", "exports", "module", "pilot/types/bas
   }});
   var settingValue = new DeferredType$$1({name:"settingValue", defer:function() {
     return lastSetting ? lastSetting.type : types$$5.getType("text")
+  }, getDefault:function() {
+    var conversion = this.parse("");
+    if(lastSetting) {
+      var current = lastSetting.get();
+      if(conversion.predictions.length === 0) {
+        conversion.predictions.push(current)
+      }else {
+        var removed = false;
+        for(;;) {
+          var index$$5 = conversion.predictions.indexOf(current);
+          if(index$$5 === -1) {
+            break
+          }conversion.predictions.splice(index$$5, 1);
+          removed = true
+        }removed && conversion.predictions.push(current)
+      }
+    }return conversion
   }});
   var env$$2;
   exports$$16.startup = function(data$$21) {
@@ -1256,8 +1276,8 @@ define("pilot/commands/basic", ["require", "exports", "module", "pilot/typecheck
     }request$$5.done("Result for eval <b>'" + javascript + "'</b> (type: " + type$$3 + "): <br><br>" + msg$$2)
   }};
   var skywriterCommandSpec = {name:"skywriter", hidden:true, exec:function(env$$8, args$$11, request$$7) {
-    var index$$5 = Math.floor(Math.random() * messages.length);
-    request$$7.done("Skywriter " + messages[index$$5])
+    var index$$6 = Math.floor(Math.random() * messages.length);
+    request$$7.done("Skywriter " + messages[index$$6])
   }};
   var messages = ["really wants you to trick it out in some way.", "is your Web editor.", "would love to be like Emacs on the Web.", "is written on the Web platform, so you can tweak it."];
   canon$$2 = require$$20("pilot/canon");
@@ -1304,23 +1324,24 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
       this.predictions = arg.predictions
     }
   }
-  function ConversionHint(conversion, arg$$1) {
-    this.status = conversion.status;
-    this.message = conversion.message;
+  function ConversionHint(conversion$$1, arg$$1) {
+    this.status = conversion$$1.status;
+    this.message = conversion$$1.message;
     if(arg$$1) {
       this.start = arg$$1.start;
       this.end = arg$$1.end
     }else {
       this.start = 0;
       this.end = 0
-    }this.predictions = conversion.predictions
+    }this.predictions = conversion$$1.predictions
   }
-  function Argument(emitter, text$$1, start$$1, end$$1, priorSpace) {
+  function Argument(emitter, text$$1, start$$1, end$$1, prefix, suffix) {
     this.emitter = emitter;
     this.setText(text$$1);
     this.start = start$$1;
     this.end = end$$1;
-    this.priorSpace = priorSpace
+    this.prefix = prefix;
+    this.suffix = suffix
   }
   function Assignment(param$$2, requisition) {
     this.param = param$$2;
@@ -1371,7 +1392,7 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
   Argument.prototype = {merge:function(following) {
     if(following.emitter != this.emitter) {
       throw new Error("Can't merge Arguments from different EventEmitters");
-    }return new Argument(this.emitter, this.text + following.priorSpace + following.text, this.start, following.end, this.priorSpace)
+    }return new Argument(this.emitter, this.text + this.suffix + following.prefix + following.text, this.start, following.end, this.prefix, following.suffix)
   }, setText:function(text$$2) {
     if(text$$2 == null) {
       throw new Error("Illegal text for Argument: " + text$$2);
@@ -1379,7 +1400,7 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     this.text = text$$2;
     this.emitter._dispatchEvent("argumentChange", ev)
   }, toString:function() {
-    return this.priorSpace + this.text
+    return this.prefix + this.text + this.suffix
   }};
   Argument.merge = function(argArray, start$$2, end$$2) {
     start$$2 = start$$2 === undefined ? 0 : start$$2;
@@ -1400,13 +1421,15 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     if(this.value === value$$23) {
       return
     }if(value$$23 === undefined) {
-      value$$23 = this.param.defaultValue;
+      this.value = this.param.defaultValue;
+      this.conversion = this.param.getDefault ? this.param.getDefault() : this.param.type.getDefault();
       this.arg = undefined
-    }this.value = value$$23;
-    var text$$3 = value$$23 == null ? "" : this.param.type.stringify(value$$23);
-    this.arg && this.arg.setText(text$$3);
-    this.conversion = undefined;
-    this.requisition._assignmentChanged(this)
+    }else {
+      this.value = value$$23;
+      this.conversion = undefined;
+      var text$$3 = value$$23 == null ? "" : this.param.type.stringify(value$$23);
+      this.arg && this.arg.setText(text$$3)
+    }this.requisition._assignmentChanged(this)
   }, arg:undefined, setArgument:function(arg$$3) {
     if(this.arg === arg$$3) {
       return
@@ -1446,6 +1469,16 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     }return new Hint(status$$3, message$$2, start$$3, end$$3, predictions$$2)
   }, complete:function() {
     this.conversion && this.conversion.predictions && this.conversion.predictions.length > 0 && this.setValue(this.conversion.predictions[0])
+  }, isPositionCaptured:function(position) {
+    if(!this.arg) {
+      return false
+    }if(this.arg.start === -1) {
+      return false
+    }if(position > this.arg.end) {
+      return false
+    }if(position === this.arg.end) {
+      return this.conversion.status !== Status$$3.VALID || this.conversion.predictions.length !== 0
+    }return true
   }, decrement:function() {
     var replacement = this.param.type.decrement(this.value);
     replacement != null && this.setValue(replacement)
@@ -1456,7 +1489,7 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     return this.arg ? this.arg.toString() : ""
   }};
   exports$$22.Assignment = Assignment;
-  var commandParam = {name:"command", type:"command", description:"The command to execute", getCustomHint:function(command$$6, arg$$4) {
+  var commandParam = {name:"__command", type:"command", description:"The command to execute", getCustomHint:function(command$$6, arg$$4) {
     var docs = [];
     docs.push("<strong><tt> &gt; ");
     docs.push(command$$6.name);
@@ -1482,7 +1515,7 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     }return new Hint(Status$$3.VALID, docs.join(""), arg$$4)
   }};
   Requisition.prototype = {commandAssignment:undefined, assignmentCount:undefined, _assignments:undefined, _hints:undefined, _assignmentChanged:function(assignment) {
-    if(assignment.param.name !== "command") {
+    if(assignment.param.name !== "__command") {
       return
     }this._assignments = {};
     assignment.value && assignment.value.params.forEach(function(param$$5) {
@@ -1500,36 +1533,40 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
       return this._assignments[name$$15]
     }, this)
   }, _updateHints:function() {
-    this._hints.push(this.commandAssignment.getHint());
-    Object.keys(this._assignments).map(function(name$$16) {
-      var assignment$$1 = this._assignments[name$$16];
-      assignment$$1.arg && this._hints.push(assignment$$1.getHint())
+    this.getAssignments(true).forEach(function(assignment$$1) {
+      this._hints.push(assignment$$1.getHint())
     }, this);
     Hint.sort(this._hints)
   }, getWorstHint:function() {
     return this._hints[0]
-  }, getArgs:function() {
+  }, getArgsObject:function() {
     var args$$12 = {};
-    Object.keys(this._assignments).forEach(function(name$$17) {
-      args$$12[name$$17] = this.getAssignment(name$$17).value
+    this.getAssignments().forEach(function(assignment$$2) {
+      args$$12[assignment$$2.param.name] = assignment$$2.value
     }, this);
     return args$$12
+  }, getAssignments:function(includeCommand) {
+    var args$$13 = [];
+    includeCommand === true && args$$13.push(this.commandAssignment);
+    Object.keys(this._assignments).forEach(function(name$$16) {
+      args$$13.push(this.getAssignment(name$$16))
+    }, this);
+    return args$$13
   }, setDefaultValues:function() {
-    Object.keys(this._assignments).forEach(function(name$$18) {
-      this._assignments[name$$18].setValue(undefined)
+    this.getAssignments().forEach(function(assignment$$3) {
+      assignment$$3.setValue(undefined)
     }, this)
   }, exec:function() {
-    var command$$7 = this.commandAssignment.value;
-    canon$$3.exec(command$$7, this.env, this.getArgs(), this.toCanonicalString())
+    canon$$3.exec(this.commandAssignment.value, this.env, this.getArgsObject(), this.toCanonicalString())
   }, toCanonicalString:function() {
     var line$$1 = [];
     line$$1.push(this.commandAssignment.value.name);
-    Object.keys(this._assignments).forEach(function(name$$19) {
-      var assignment$$2 = this._assignments[name$$19];
-      var type$$4 = assignment$$2.param.type;
-      if(assignment$$2.value !== assignment$$2.param.defaultValue) {
+    Object.keys(this._assignments).forEach(function(name$$17) {
+      var assignment$$4 = this._assignments[name$$17];
+      var type$$4 = assignment$$4.param.type;
+      if(assignment$$4.value !== assignment$$4.param.defaultValue) {
         line$$1.push(" ");
-        line$$1.push(type$$4.stringify(assignment$$2.value))
+        line$$1.push(type$$4.stringify(assignment$$4.value))
       }
     }, this);
     return line$$1.join("")
@@ -1541,9 +1578,9 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     CliRequisition.prototype.update = function(input) {
       this.input = input;
       this._hints = [];
-      var args$$13 = this._tokenize(input.typed);
-      this._split(args$$13);
-      this.commandAssignment.value && this._assign(args$$13);
+      var args$$14 = this._tokenize(input.typed);
+      this._split(args$$14);
+      this.commandAssignment.value && this._assign(args$$14);
       this._updateHints()
     };
     CliRequisition.prototype.getInputStatusMarkup = function() {
@@ -1561,11 +1598,9 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
       return scores
     };
     CliRequisition.prototype.toString = function() {
-      var parts = Object.keys(this._assignments).map(function(name$$20) {
-        return this._assignments[name$$20].toString()
-      }, this);
-      parts.unshift(this.commandAssignment.toString());
-      return parts.join("")
+      return this.getAssignments(true).map(function(assignment$$5) {
+        return assignment$$5.toString()
+      }, this).join("")
     };
     var superUpdateHints = CliRequisition.prototype._updateHints;
     CliRequisition.prototype._updateHints = function() {
@@ -1584,25 +1619,24 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
     CliRequisition.prototype.getHints = function() {
       return this._hints
     };
-    CliRequisition.prototype.getAssignmentAt = function(position) {
-      var arg$$5 = this.commandAssignment.arg;
-      if(arg$$5 && position <= arg$$5.end) {
-        return this.commandAssignment
-      }var names$$1 = Object.keys(this._assignments);
+    CliRequisition.prototype.getAssignmentAt = function(position$$1) {
+      var assignments = this.getAssignments(true);
       var i$$15 = 0;
-      for(;i$$15 < names$$1.length;i$$15++) {
-        var assignment$$3 = this._assignments[names$$1[i$$15]];
-        if(assignment$$3.arg && position <= assignment$$3.arg.end) {
-          return assignment$$3
+      for(;i$$15 < assignments.length;i$$15++) {
+        var assignment$$6 = assignments[i$$15];
+        if(!assignment$$6.arg) {
+          return assignment$$6
+        }if(assignment$$6.isPositionCaptured(position$$1)) {
+          return assignment$$6
         }
-      }throw new Error("position (" + position + ") is off end of requisition (" + this.toString() + ")");
+      }return assignment$$6
     };
     CliRequisition.prototype._tokenize = function(typed$$1) {
-      function unescape(str$$8) {
+      function unescape2(str$$8) {
         return str$$8.replace(/\uF000/g, " ").replace(/\uF001/g, "'").replace(/\uF002/g, '"')
       }
       if(typed$$1 == null || typed$$1.length === 0) {
-        return[new Argument(this, "", 0, 0, "")]
+        return[new Argument(this, "", 0, 0, "", "")]
       }var OUTSIDE = 1;
       var IN_SIMPLE = 2;
       var IN_SINGLE_Q = 3;
@@ -1611,34 +1645,40 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
       typed$$1 = typed$$1.replace(/\\\\/g, "\\").replace(/\\b/g, "\u0008").replace(/\\f/g, "\u000c").replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t").replace(/\\v/g, "\u000b").replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\ /g, "\uf000").replace(/\\'/g, "\uf001").replace(/\\"/g, "\uf002");
       var i$$16 = 0;
       var start$$4 = 0;
-      var priorSpace$$1 = "";
-      var args$$14 = [];
+      var prefix$$1 = "";
+      var args$$15 = [];
       for(;;) {
         if(i$$16 >= typed$$1.length) {
           if(mode$$1 !== OUTSIDE) {
-            var str$$7 = unescape(typed$$1.substring(start$$4, i$$16));
-            args$$14.push(new Argument(this, str$$7, start$$4, i$$16, priorSpace$$1))
+            var str$$7 = unescape2(typed$$1.substring(start$$4, i$$16));
+            args$$15.push(new Argument(this, str$$7, start$$4, i$$16, prefix$$1, ""))
           }else {
             if(i$$16 !== start$$4) {
-              priorSpace$$1 = typed$$1.substring(start$$4, i$$16);
-              args$$14.push(new Argument(this, "", i$$16, i$$16, priorSpace$$1))
+              var extra = typed$$1.substring(start$$4, i$$16);
+              var lastArg = args$$15[args$$15.length - 1];
+              if(lastArg) {
+                lastArg.suffix += extra
+              }else {
+                lastArg = new Argument(this, "", i$$16, i$$16, extra, "");
+                args$$15.push(lastArg)
+              }
             }
           }break
         }var c$$1 = typed$$1[i$$16];
         switch(mode$$1) {
           case OUTSIDE:
             if(c$$1 === "'") {
-              priorSpace$$1 = typed$$1.substring(start$$4, i$$16);
+              prefix$$1 = typed$$1.substring(start$$4, i$$16 + 1);
               mode$$1 = IN_SINGLE_Q;
               start$$4 = i$$16 + 1
             }else {
               if(c$$1 === '"') {
-                priorSpace$$1 = typed$$1.substring(start$$4, i$$16);
+                prefix$$1 = typed$$1.substring(start$$4, i$$16 + 1);
                 mode$$1 = IN_DOUBLE_Q;
                 start$$4 = i$$16 + 1
               }else {
                 if(!/ /.test(c$$1)) {
-                  priorSpace$$1 = typed$$1.substring(start$$4, i$$16);
+                  prefix$$1 = typed$$1.substring(start$$4, i$$16);
                   mode$$1 = IN_SIMPLE;
                   start$$4 = i$$16
                 }
@@ -1646,98 +1686,98 @@ define("cockpit/cli", ["require", "exports", "module", "pilot/console", "pilot/l
             }break;
           case IN_SIMPLE:
             if(c$$1 === " ") {
-              str$$7 = unescape(typed$$1.substring(start$$4, i$$16));
-              args$$14.push(new Argument(this, str$$7, start$$4, i$$16, priorSpace$$1));
+              str$$7 = unescape2(typed$$1.substring(start$$4, i$$16));
+              args$$15.push(new Argument(this, str$$7, start$$4, i$$16, prefix$$1, ""));
               mode$$1 = OUTSIDE;
               start$$4 = i$$16;
-              priorSpace$$1 = ""
+              prefix$$1 = ""
             }break;
           case IN_SINGLE_Q:
             if(c$$1 === "'") {
-              str$$7 = unescape(typed$$1.substring(start$$4, i$$16));
-              args$$14.push(new Argument(this, str$$7, start$$4, i$$16, priorSpace$$1));
+              str$$7 = unescape2(typed$$1.substring(start$$4, i$$16));
+              args$$15.push(new Argument(this, str$$7, start$$4 - 1, i$$16 + 1, prefix$$1, c$$1));
               mode$$1 = OUTSIDE;
               start$$4 = i$$16 + 1;
-              priorSpace$$1 = ""
+              prefix$$1 = ""
             }break;
           case IN_DOUBLE_Q:
             if(c$$1 === '"') {
-              str$$7 = unescape(typed$$1.substring(start$$4, i$$16));
-              args$$14.push(new Argument(this, str$$7, start$$4, i$$16, priorSpace$$1));
+              str$$7 = unescape2(typed$$1.substring(start$$4, i$$16));
+              args$$15.push(new Argument(this, str$$7, start$$4 - 1, i$$16 + 1, prefix$$1, c$$1));
               mode$$1 = OUTSIDE;
               start$$4 = i$$16 + 1;
-              priorSpace$$1 = ""
+              prefix$$1 = ""
             }break
         }
         i$$16++
-      }return args$$14
+      }return args$$15
     };
-    CliRequisition.prototype._split = function(args$$15) {
+    CliRequisition.prototype._split = function(args$$16) {
       var argsUsed = 1;
-      var arg$$6;
-      for(;argsUsed <= args$$15.length;) {
-        arg$$6 = Argument.merge(args$$15, 0, argsUsed);
-        this.commandAssignment.setArgument(arg$$6);
+      var arg$$5;
+      for(;argsUsed <= args$$16.length;) {
+        arg$$5 = Argument.merge(args$$16, 0, argsUsed);
+        this.commandAssignment.setArgument(arg$$5);
         if(!this.commandAssignment.value) {
           break
         }if(this.commandAssignment.value.exec) {
           var i$$17 = 0;
           for(;i$$17 < argsUsed;i$$17++) {
-            args$$15.shift()
+            args$$16.shift()
           }break
         }argsUsed++
-      }return
+      }
     };
-    CliRequisition.prototype._assign = function(args$$16) {
-      if(args$$16.length === 0) {
+    CliRequisition.prototype._assign = function(args$$17) {
+      if(args$$17.length === 0) {
         this.setDefaultValues();
         return
       }if(this.assignmentCount === 0) {
-        this._hints.push(new Hint(Status$$3.INVALID, this.commandAssignment.value.name + " does not take any parameters", Argument.merge(args$$16)));
+        this._hints.push(new Hint(Status$$3.INVALID, this.commandAssignment.value.name + " does not take any parameters", Argument.merge(args$$17)));
         return
       }if(this.assignmentCount === 1) {
-        var assignment$$4 = this.getAssignment(0);
-        if(assignment$$4.param.type.name === "text") {
-          assignment$$4.setArgument(Argument.merge(args$$16));
+        var assignment$$7 = this.getAssignment(0);
+        if(assignment$$7.param.type.name === "text") {
+          assignment$$7.setArgument(Argument.merge(args$$17));
           return
         }
-      }var assignments = this.cloneAssignments();
-      var names$$2 = this.getParameterNames();
-      assignments.forEach(function(assignment$$5) {
-        var namedArgText = "--" + assignment$$5.name;
+      }var assignments$$1 = this.cloneAssignments();
+      var names$$1 = this.getParameterNames();
+      assignments$$1.forEach(function(assignment$$8) {
+        var namedArgText = "--" + assignment$$8.name;
         var i$$18 = 0;
         for(;;) {
-          var arg$$7 = args$$16[i$$18];
-          if(namedArgText !== arg$$7.text) {
+          var arg$$6 = args$$17[i$$18];
+          if(namedArgText !== arg$$6.text) {
             i$$18++;
-            if(i$$18 >= args$$16.length) {
+            if(i$$18 >= args$$17.length) {
               break
             }continue
-          }if(assignment$$5.param.type.name === "boolean") {
-            assignment$$5.setValue(true)
+          }if(assignment$$8.param.type.name === "boolean") {
+            assignment$$8.setValue(true)
           }else {
-            if(i$$18 + 1 < args$$16.length) {
-              this._hints.push(new Hint(Status$$3.INCOMPLETE, "Missing value for: " + namedArgText, args$$16[i$$18]))
+            if(i$$18 + 1 < args$$17.length) {
+              this._hints.push(new Hint(Status$$3.INCOMPLETE, "Missing value for: " + namedArgText, args$$17[i$$18]))
             }else {
-              args$$16.splice(i$$18 + 1, 1);
-              assignment$$5.setArgument(args$$16[i$$18 + 1])
+              args$$17.splice(i$$18 + 1, 1);
+              assignment$$8.setArgument(args$$17[i$$18 + 1])
             }
-          }lang$$1.arrayRemove(names$$2, assignment$$5.name);
-          args$$16.splice(i$$18, 1)
+          }lang$$1.arrayRemove(names$$1, assignment$$8.name);
+          args$$17.splice(i$$18, 1)
         }
       }, this);
-      names$$2.forEach(function(name$$21) {
-        var assignment$$6 = this.getAssignment(name$$21);
-        if(args$$16.length === 0) {
-          assignment$$6.setValue(undefined)
+      names$$1.forEach(function(name$$18) {
+        var assignment$$9 = this.getAssignment(name$$18);
+        if(args$$17.length === 0) {
+          assignment$$9.setValue(undefined)
         }else {
-          var arg$$8 = args$$16[0];
-          args$$16.splice(0, 1);
-          assignment$$6.setArgument(arg$$8)
+          var arg$$7 = args$$17[0];
+          args$$17.splice(0, 1);
+          assignment$$9.setArgument(arg$$7)
         }
       }, this);
-      if(args$$16.length > 0) {
-        var remaining = Argument.merge(args$$16);
+      if(args$$17.length > 0) {
+        var remaining = Argument.merge(args$$17);
         this._hints.push(new Hint(Status$$3.INVALID, "Input '" + remaining.text + "' makes no sense.", remaining))
       }
     }
@@ -1879,112 +1919,135 @@ define("cockpit/test/assert", ["require", "exports", "module"], function(require
   }};
   exports$$23.test = test
 });
-define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/assert", "pilot/types", "pilot/settings", "cockpit/cli", "cockpit/cli", "cockpit/cli"], function(require$$25, exports$$24) {
+define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/assert", "pilot/types", "pilot/settings", "cockpit/cli", "cockpit/cli", "cockpit/cli", "pilot/canon"], function(require$$25, exports$$24) {
   var test$$1 = require$$25("cockpit/test/assert").test;
   var Status$$4 = require$$25("pilot/types").Status;
   var settings$$5 = require$$25("pilot/settings").settings;
   require$$25("cockpit/cli")._tokenize;
   require$$25("cockpit/cli")._split;
   var CliRequisition$$1 = require$$25("cockpit/cli").CliRequisition;
+  var canon$$4 = require$$25("pilot/canon");
+  var tsvCommandSpec = {name:"tsv", params:[{name:"setting", type:"setting", defaultValue:null}, {name:"value", type:"settingValue", defaultValue:null}], exec:function() {
+  }};
+  var tsrCommandSpec = {name:"tsr", params:[{name:"text", type:"text"}], exec:function() {
+  }};
   exports$$24.testAll = function() {
+    canon$$4.addCommand(tsvCommandSpec);
+    canon$$4.addCommand(tsrCommandSpec);
     exports$$24.testTokenize();
     exports$$24.testSplit();
     exports$$24.testCli();
+    canon$$4.removeCommand(tsvCommandSpec);
+    canon$$4.removeCommand(tsrCommandSpec);
     return"testAll Completed"
   };
   exports$$24.testTokenize = function() {
-    var args$$17;
+    var args$$20;
     var cli = new CliRequisition$$1;
-    args$$17 = cli._tokenize("");
-    test$$1.verifyEqual(1, args$$17.length);
-    test$$1.verifyEqual("", args$$17[0].text);
-    test$$1.verifyEqual(0, args$$17[0].start);
-    test$$1.verifyEqual(0, args$$17[0].end);
-    test$$1.verifyEqual("", args$$17[0].priorSpace);
-    args$$17 = cli._tokenize("s");
-    test$$1.verifyEqual(1, args$$17.length);
-    test$$1.verifyEqual("s", args$$17[0].text);
-    test$$1.verifyEqual(0, args$$17[0].start);
-    test$$1.verifyEqual(1, args$$17[0].end);
-    test$$1.verifyEqual("", args$$17[0].priorSpace);
-    args$$17 = cli._tokenize(" ");
-    test$$1.verifyEqual(1, args$$17.length);
-    test$$1.verifyEqual("", args$$17[0].text);
-    test$$1.verifyEqual(1, args$$17[0].start);
-    test$$1.verifyEqual(1, args$$17[0].end);
-    test$$1.verifyEqual(" ", args$$17[0].priorSpace);
-    args$$17 = cli._tokenize("s s");
-    test$$1.verifyEqual(2, args$$17.length);
-    test$$1.verifyEqual("s", args$$17[0].text);
-    test$$1.verifyEqual(0, args$$17[0].start);
-    test$$1.verifyEqual(1, args$$17[0].end);
-    test$$1.verifyEqual("", args$$17[0].priorSpace);
-    test$$1.verifyEqual("s", args$$17[1].text);
-    test$$1.verifyEqual(2, args$$17[1].start);
-    test$$1.verifyEqual(3, args$$17[1].end);
-    test$$1.verifyEqual(" ", args$$17[1].priorSpace);
-    args$$17 = cli._tokenize(" 1234  '12 34'");
-    test$$1.verifyEqual(2, args$$17.length);
-    test$$1.verifyEqual("1234", args$$17[0].text);
-    test$$1.verifyEqual(1, args$$17[0].start);
-    test$$1.verifyEqual(5, args$$17[0].end);
-    test$$1.verifyEqual(" ", args$$17[0].priorSpace);
-    test$$1.verifyEqual("12 34", args$$17[1].text);
-    test$$1.verifyEqual(8, args$$17[1].start);
-    test$$1.verifyEqual(13, args$$17[1].end);
-    test$$1.verifyEqual("  ", args$$17[1].priorSpace);
-    args$$17 = cli._tokenize('12\'34 "12 34" \\');
-    test$$1.verifyEqual(3, args$$17.length);
-    test$$1.verifyEqual("12'34", args$$17[0].text);
-    test$$1.verifyEqual(0, args$$17[0].start);
-    test$$1.verifyEqual(5, args$$17[0].end);
-    test$$1.verifyEqual("", args$$17[0].priorSpace);
-    test$$1.verifyEqual("12 34", args$$17[1].text);
-    test$$1.verifyEqual(7, args$$17[1].start);
-    test$$1.verifyEqual(12, args$$17[1].end);
-    test$$1.verifyEqual(" ", args$$17[1].priorSpace);
-    test$$1.verifyEqual("\\", args$$17[2].text);
-    test$$1.verifyEqual(14, args$$17[2].start);
-    test$$1.verifyEqual(15, args$$17[2].end);
-    test$$1.verifyEqual(" ", args$$17[2].priorSpace);
-    args$$17 = cli._tokenize("a\\ b \\t\\n\\r \\'x\\\" 'd");
-    test$$1.verifyEqual(4, args$$17.length);
-    test$$1.verifyEqual("a b", args$$17[0].text);
-    test$$1.verifyEqual(0, args$$17[0].start);
-    test$$1.verifyEqual(3, args$$17[0].end);
-    test$$1.verifyEqual("", args$$17[0].priorSpace);
-    test$$1.verifyEqual("\t\n\r", args$$17[1].text);
-    test$$1.verifyEqual(4, args$$17[1].start);
-    test$$1.verifyEqual(7, args$$17[1].end);
-    test$$1.verifyEqual(" ", args$$17[1].priorSpace);
-    test$$1.verifyEqual("'x\"", args$$17[2].text);
-    test$$1.verifyEqual(8, args$$17[2].start);
-    test$$1.verifyEqual(11, args$$17[2].end);
-    test$$1.verifyEqual(" ", args$$17[2].priorSpace);
-    test$$1.verifyEqual("d", args$$17[3].text);
-    test$$1.verifyEqual(13, args$$17[3].start);
-    test$$1.verifyEqual(14, args$$17[3].end);
-    test$$1.verifyEqual(" ", args$$17[3].priorSpace);
+    args$$20 = cli._tokenize("");
+    test$$1.verifyEqual(1, args$$20.length);
+    test$$1.verifyEqual("", args$$20[0].text);
+    test$$1.verifyEqual(0, args$$20[0].start);
+    test$$1.verifyEqual(0, args$$20[0].end);
+    test$$1.verifyEqual("", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    args$$20 = cli._tokenize("s");
+    test$$1.verifyEqual(1, args$$20.length);
+    test$$1.verifyEqual("s", args$$20[0].text);
+    test$$1.verifyEqual(0, args$$20[0].start);
+    test$$1.verifyEqual(1, args$$20[0].end);
+    test$$1.verifyEqual("", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    args$$20 = cli._tokenize(" ");
+    test$$1.verifyEqual(1, args$$20.length);
+    test$$1.verifyEqual("", args$$20[0].text);
+    test$$1.verifyEqual(1, args$$20[0].start);
+    test$$1.verifyEqual(1, args$$20[0].end);
+    test$$1.verifyEqual(" ", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    args$$20 = cli._tokenize("s s");
+    test$$1.verifyEqual(2, args$$20.length);
+    test$$1.verifyEqual("s", args$$20[0].text);
+    test$$1.verifyEqual(0, args$$20[0].start);
+    test$$1.verifyEqual(1, args$$20[0].end);
+    test$$1.verifyEqual("", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    test$$1.verifyEqual("s", args$$20[1].text);
+    test$$1.verifyEqual(2, args$$20[1].start);
+    test$$1.verifyEqual(3, args$$20[1].end);
+    test$$1.verifyEqual(" ", args$$20[1].prefix);
+    test$$1.verifyEqual("", args$$20[1].suffix);
+    args$$20 = cli._tokenize(" 1234  '12 34'");
+    test$$1.verifyEqual(2, args$$20.length);
+    test$$1.verifyEqual("1234", args$$20[0].text);
+    test$$1.verifyEqual(1, args$$20[0].start);
+    test$$1.verifyEqual(5, args$$20[0].end);
+    test$$1.verifyEqual(" ", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    test$$1.verifyEqual("12 34", args$$20[1].text);
+    test$$1.verifyEqual(7, args$$20[1].start);
+    test$$1.verifyEqual(14, args$$20[1].end);
+    test$$1.verifyEqual("  '", args$$20[1].prefix);
+    test$$1.verifyEqual("'", args$$20[1].suffix);
+    args$$20 = cli._tokenize('12\'34 "12 34" \\');
+    test$$1.verifyEqual(3, args$$20.length);
+    test$$1.verifyEqual("12'34", args$$20[0].text);
+    test$$1.verifyEqual(0, args$$20[0].start);
+    test$$1.verifyEqual(5, args$$20[0].end);
+    test$$1.verifyEqual("", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    test$$1.verifyEqual("12 34", args$$20[1].text);
+    test$$1.verifyEqual(6, args$$20[1].start);
+    test$$1.verifyEqual(13, args$$20[1].end);
+    test$$1.verifyEqual(' "', args$$20[1].prefix);
+    test$$1.verifyEqual('"', args$$20[1].suffix);
+    test$$1.verifyEqual("\\", args$$20[2].text);
+    test$$1.verifyEqual(14, args$$20[2].start);
+    test$$1.verifyEqual(15, args$$20[2].end);
+    test$$1.verifyEqual(" ", args$$20[2].prefix);
+    test$$1.verifyEqual("", args$$20[2].suffix);
+    args$$20 = cli._tokenize("a\\ b \\t\\n\\r \\'x\\\" 'd");
+    test$$1.verifyEqual(4, args$$20.length);
+    test$$1.verifyEqual("a b", args$$20[0].text);
+    test$$1.verifyEqual(0, args$$20[0].start);
+    test$$1.verifyEqual(3, args$$20[0].end);
+    test$$1.verifyEqual("", args$$20[0].prefix);
+    test$$1.verifyEqual("", args$$20[0].suffix);
+    test$$1.verifyEqual("\t\n\r", args$$20[1].text);
+    test$$1.verifyEqual(4, args$$20[1].start);
+    test$$1.verifyEqual(7, args$$20[1].end);
+    test$$1.verifyEqual(" ", args$$20[1].prefix);
+    test$$1.verifyEqual("", args$$20[1].suffix);
+    test$$1.verifyEqual("'x\"", args$$20[2].text);
+    test$$1.verifyEqual(8, args$$20[2].start);
+    test$$1.verifyEqual(11, args$$20[2].end);
+    test$$1.verifyEqual(" ", args$$20[2].prefix);
+    test$$1.verifyEqual("", args$$20[2].suffix);
+    test$$1.verifyEqual("d", args$$20[3].text);
+    test$$1.verifyEqual(13, args$$20[3].start);
+    test$$1.verifyEqual(14, args$$20[3].end);
+    test$$1.verifyEqual(" '", args$$20[3].prefix);
+    test$$1.verifyEqual("", args$$20[3].suffix);
     return"testTokenize Completed"
   };
   exports$$24.testSplit = function() {
-    var args$$18;
+    var args$$21;
     var cli$$1 = new CliRequisition$$1;
-    args$$18 = cli$$1._tokenize("s");
-    cli$$1._split(args$$18);
-    test$$1.verifyEqual(1, args$$18.length);
-    test$$1.verifyEqual("s", args$$18[0].text);
+    args$$21 = cli$$1._tokenize("s");
+    cli$$1._split(args$$21);
+    test$$1.verifyEqual(1, args$$21.length);
+    test$$1.verifyEqual("s", args$$21[0].text);
     test$$1.verifyNull(cli$$1.commandAssignment.value);
-    args$$18 = cli$$1._tokenize("set");
-    cli$$1._split(args$$18);
-    test$$1.verifyEqual([], args$$18);
-    test$$1.verifyEqual("set", cli$$1.commandAssignment.value.name);
-    args$$18 = cli$$1._tokenize("set a b");
-    cli$$1._split(args$$18);
-    test$$1.verifyEqual("set", cli$$1.commandAssignment.value.name);
-    test$$1.verifyEqual(2, args$$18.length);
-    test$$1.verifyEqual("a", args$$18[0].text);
-    test$$1.verifyEqual("b", args$$18[1].text);
+    args$$21 = cli$$1._tokenize("tsv");
+    cli$$1._split(args$$21);
+    test$$1.verifyEqual([], args$$21);
+    test$$1.verifyEqual("tsv", cli$$1.commandAssignment.value.name);
+    args$$21 = cli$$1._tokenize("tsv a b");
+    cli$$1._split(args$$21);
+    test$$1.verifyEqual("tsv", cli$$1.commandAssignment.value.name);
+    test$$1.verifyEqual(2, args$$21.length);
+    test$$1.verifyEqual("a", args$$21[0].text);
+    test$$1.verifyEqual("b", args$$21[1].text);
     return"testSplit Completed"
   };
   exports$$24.testCli = function() {
@@ -1996,21 +2059,21 @@ define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/as
       statuses$$1 = cli$$2.getInputStatusMarkup().map(function(status$$4) {
         return status$$4.valueOf()
       }).join("");
-      if(cli$$2.commandAssignment.value && cli$$2.commandAssignment.value.name === "set") {
-        settingAssignment = cli$$2.getAssignment("setting");
-        valueAssignment = cli$$2.getAssignment("value")
+      if(cli$$2.commandAssignment.value) {
+        assign1 = cli$$2.getAssignment(0);
+        assign2 = cli$$2.getAssignment(1)
       }else {
-        settingAssignment = undefined;
-        valueAssignment = undefined
+        assign1 = undefined;
+        assign2 = undefined
       }
     }
-    function verifyPredictionsContains(name$$22, predictions$$3) {
+    function verifyPredictionsContains(name$$19, predictions$$3) {
       return predictions$$3.every(function(prediction) {
-        return name$$22 === prediction || name$$22 === prediction.name
+        return name$$19 === prediction || name$$19 === prediction.name
       }, this)
     }
-    var settingAssignment;
-    var valueAssignment;
+    var assign1;
+    var assign2;
     var cli$$2 = new CliRequisition$$1;
     var debug = true;
     var worst;
@@ -2019,7 +2082,6 @@ define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/as
     var historyLengthSetting$$1 = settings$$5.getSetting("historyLength");
     update({typed:"", cursor:{start:0, end:0}});
     test$$1.verifyEqual("", statuses$$1);
-    test$$1.verifyEqual(1, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(0, display$$1.start);
     test$$1.verifyEqual(0, display$$1.end);
@@ -2027,7 +2089,6 @@ define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/as
     test$$1.verifyNull(cli$$2.commandAssignment.value);
     update({typed:" ", cursor:{start:1, end:1}});
     test$$1.verifyEqual("0", statuses$$1);
-    test$$1.verifyEqual(1, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(1, display$$1.start);
     test$$1.verifyEqual(1, display$$1.end);
@@ -2035,70 +2096,62 @@ define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/as
     test$$1.verifyNull(cli$$2.commandAssignment.value);
     update({typed:" ", cursor:{start:0, end:0}});
     test$$1.verifyEqual("0", statuses$$1);
-    test$$1.verifyEqual(1, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(1, display$$1.start);
     test$$1.verifyEqual(1, display$$1.end);
     test$$1.verifyEqual(display$$1, worst);
     test$$1.verifyNull(cli$$2.commandAssignment.value);
-    update({typed:"s", cursor:{start:1, end:1}});
+    update({typed:"t", cursor:{start:1, end:1}});
     test$$1.verifyEqual("1", statuses$$1);
-    test$$1.verifyEqual(1, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(0, display$$1.start);
     test$$1.verifyEqual(1, display$$1.end);
     test$$1.verifyEqual(display$$1, worst);
     test$$1.verifyTrue(display$$1.predictions.length > 0);
     test$$1.verifyTrue(display$$1.predictions.length < 20);
-    verifyPredictionsContains("set", display$$1.predictions);
+    verifyPredictionsContains("tsv", display$$1.predictions);
+    verifyPredictionsContains("tsr", display$$1.predictions);
     test$$1.verifyNull(cli$$2.commandAssignment.value);
-    update({typed:"set", cursor:{start:3, end:3}});
+    update({typed:"tsv", cursor:{start:3, end:3}});
     test$$1.verifyEqual("000", statuses$$1);
-    test$$1.verifyEqual(1, cli$$2._hints.length);
+    test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
+    test$$1.verifyEqual(-1, display$$1.start);
+    test$$1.verifyEqual(-1, display$$1.end);
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    update({typed:"tsv ", cursor:{start:4, end:4}});
+    test$$1.verifyEqual("0000", statuses$$1);
+    test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
+    test$$1.verifyEqual(-1, display$$1.start);
+    test$$1.verifyEqual(-1, display$$1.end);
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    update({typed:"tsv ", cursor:{start:2, end:2}});
+    test$$1.verifyEqual("0000", statuses$$1);
     test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
     test$$1.verifyEqual(0, display$$1.start);
     test$$1.verifyEqual(3, display$$1.end);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    update({typed:"set ", cursor:{start:4, end:4}});
-    test$$1.verifyEqual("0000", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
-    test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
-    test$$1.verifyEqual(4, display$$1.start);
-    test$$1.verifyEqual(4, display$$1.end);
-    test$$1.verifyEqual(display$$1, worst);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    update({typed:"set ", cursor:{start:2, end:2}});
-    test$$1.verifyEqual("0000", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
-    test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
-    test$$1.verifyEqual(0, display$$1.start);
-    test$$1.verifyEqual(3, display$$1.end);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    update({typed:"set h", cursor:{start:5, end:5}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    update({typed:"tsv h", cursor:{start:5, end:5}});
     test$$1.verifyEqual("00001", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(4, display$$1.start);
     test$$1.verifyEqual(5, display$$1.end);
     test$$1.verifyTrue(display$$1.predictions.length > 0);
     verifyPredictionsContains("historyLength", display$$1.predictions);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("h", settingAssignment.arg.text);
-    test$$1.verifyEqual(undefined, settingAssignment.value);
-    update({typed:"set historyLengt", cursor:{start:16, end:16}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("h", assign1.arg.text);
+    test$$1.verifyEqual(undefined, assign1.value);
+    update({typed:"tsv historyLengt", cursor:{start:16, end:16}});
     test$$1.verifyEqual("0000111111111111", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.INCOMPLETE, display$$1.status);
     test$$1.verifyEqual(4, display$$1.start);
     test$$1.verifyEqual(16, display$$1.end);
     test$$1.verifyEqual(1, display$$1.predictions.length);
     verifyPredictionsContains("historyLength", display$$1.predictions);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLengt", settingAssignment.arg.text);
-    test$$1.verifyEqual(undefined, settingAssignment.value);
-    update({typed:"set historyLengt", cursor:{start:1, end:1}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLengt", assign1.arg.text);
+    test$$1.verifyEqual(undefined, assign1.value);
+    update({typed:"tsv historyLengt", cursor:{start:1, end:1}});
     test$$1.verifyEqual("0000222222222222", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
     test$$1.verifyEqual(0, display$$1.start);
     test$$1.verifyEqual(3, display$$1.end);
@@ -2107,44 +2160,67 @@ define("cockpit/test/testCli", ["require", "exports", "module", "cockpit/test/as
     test$$1.verifyEqual(16, worst.end);
     test$$1.verifyEqual(1, worst.predictions.length);
     verifyPredictionsContains("historyLength", worst.predictions);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLengt", settingAssignment.arg.text);
-    test$$1.verifyEqual(undefined, settingAssignment.value);
-    update({typed:"set historyLengt ", cursor:{start:17, end:17}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLengt", assign1.arg.text);
+    test$$1.verifyEqual(undefined, assign1.value);
+    update({typed:"tsv historyLengt ", cursor:{start:17, end:17}});
     test$$1.verifyEqual("00002222222222222", statuses$$1);
-    test$$1.verifyEqual(3, cli$$2._hints.length);
     test$$1.verifyEqual(Status$$4.VALID, display$$1.status);
-    test$$1.verifyEqual(17, display$$1.start);
-    test$$1.verifyEqual(17, display$$1.end);
+    test$$1.verifyEqual(-1, display$$1.start);
+    test$$1.verifyEqual(-1, display$$1.end);
     test$$1.verifyEqual(Status$$4.INVALID, worst.status);
     test$$1.verifyEqual(4, worst.start);
     test$$1.verifyEqual(16, worst.end);
     test$$1.verifyEqual(1, worst.predictions.length);
     verifyPredictionsContains("historyLength", worst.predictions);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLengt", settingAssignment.arg.text);
-    test$$1.verifyEqual(undefined, settingAssignment.value);
-    update({typed:"set historyLength", cursor:{start:17, end:17}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLengt", assign1.arg.text);
+    test$$1.verifyEqual(undefined, assign1.value);
+    update({typed:"tsv historyLength", cursor:{start:17, end:17}});
     test$$1.verifyEqual("00000000000000000", statuses$$1);
-    test$$1.verifyEqual(2, cli$$2._hints.length);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLength", settingAssignment.arg.text);
-    test$$1.verifyEqual(historyLengthSetting$$1, settingAssignment.value);
-    update({typed:"set historyLength ", cursor:{start:18, end:18}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLength", assign1.arg.text);
+    test$$1.verifyEqual(historyLengthSetting$$1, assign1.value);
+    update({typed:"tsv historyLength ", cursor:{start:18, end:18}});
     test$$1.verifyEqual("000000000000000000", statuses$$1);
-    test$$1.verifyEqual(3, cli$$2._hints.length);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLength", settingAssignment.arg.text);
-    test$$1.verifyEqual(historyLengthSetting$$1, settingAssignment.value);
-    update({typed:"set historyLength 6", cursor:{start:19, end:19}});
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLength", assign1.arg.text);
+    test$$1.verifyEqual(historyLengthSetting$$1, assign1.value);
+    update({typed:"tsv historyLength 6", cursor:{start:19, end:19}});
     test$$1.verifyEqual("0000000000000000000", statuses$$1);
-    test$$1.verifyEqual(3, cli$$2._hints.length);
-    test$$1.verifyEqual("set", cli$$2.commandAssignment.value.name);
-    test$$1.verifyEqual("historyLength", settingAssignment.arg.text);
-    test$$1.verifyEqual(historyLengthSetting$$1, settingAssignment.value);
-    test$$1.verifyEqual("6", valueAssignment.arg.text);
-    test$$1.verifyEqual(6, valueAssignment.value);
-    test$$1.verifyEqual("number", typeof valueAssignment.value);
+    test$$1.verifyEqual("tsv", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("historyLength", assign1.arg.text);
+    test$$1.verifyEqual(historyLengthSetting$$1, assign1.value);
+    test$$1.verifyEqual("6", assign2.arg.text);
+    test$$1.verifyEqual(6, assign2.value);
+    test$$1.verifyEqual("number", typeof assign2.value);
+    update({typed:"tsr", cursor:{start:3, end:3}});
+    test$$1.verifyEqual("000", statuses$$1);
+    test$$1.verifyEqual("tsr", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual(undefined, assign1.arg);
+    test$$1.verifyEqual(undefined, assign1.value);
+    test$$1.verifyEqual(undefined, assign2);
+    update({typed:"tsr ", cursor:{start:4, end:4}});
+    test$$1.verifyEqual("0000", statuses$$1);
+    test$$1.verifyEqual("tsr", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual(undefined, assign1.arg);
+    test$$1.verifyEqual(undefined, assign1.value);
+    test$$1.verifyEqual(undefined, assign2);
+    update({typed:"tsr h", cursor:{start:5, end:5}});
+    test$$1.verifyEqual("00000", statuses$$1);
+    test$$1.verifyEqual("tsr", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("h", assign1.arg.text);
+    test$$1.verifyEqual("h", assign1.value);
+    update({typed:'tsr "h h"', cursor:{start:9, end:9}});
+    test$$1.verifyEqual("000000000", statuses$$1);
+    test$$1.verifyEqual("tsr", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("h h", assign1.arg.text);
+    test$$1.verifyEqual("h h", assign1.value);
+    update({typed:"tsr h h h", cursor:{start:9, end:9}});
+    test$$1.verifyEqual("000000000", statuses$$1);
+    test$$1.verifyEqual("tsr", cli$$2.commandAssignment.value.name);
+    test$$1.verifyEqual("h h h", assign1.arg.text);
+    test$$1.verifyEqual("h h h", assign1.value);
     return"testCli Completed"
   }
 });
@@ -2224,7 +2300,13 @@ define("pilot/event", ["require", "exports", "module", "pilot/useragent"], funct
     }
   };
   exports$$26.getButton = function(e$$13) {
-    return e$$13.preventDefault ? e$$13.button : Math.max(e$$13.button - 1, 2)
+    if(e$$13.type == "dblclick") {
+      return 0
+    }else {
+      if(e$$13.type == "contextmenu") {
+        return 2
+      }
+    }return e$$13.preventDefault ? e$$13.button : {1:0, 2:2, 4:1}[e$$13.button]
   };
   exports$$26.capture = document.documentElement.setCapture ? function(el, eventHandler, releaseCaptureHandler) {
     function onReleaseCapture(e$$15) {
@@ -2325,23 +2407,23 @@ define("pilot/dom", ["require", "exports", "module"], function(require$$28, expo
       elem$$2.textContent = text$$4
     }
   };
-  exports$$27.hasCssClass = function(el$$5, name$$23) {
+  exports$$27.hasCssClass = function(el$$5, name$$20) {
     var classes = el$$5.className.split(/\s+/g);
-    return classes.indexOf(name$$23) !== -1
+    return classes.indexOf(name$$20) !== -1
   };
-  exports$$27.addCssClass = function(el$$6, name$$24) {
-    exports$$27.hasCssClass(el$$6, name$$24) || (el$$6.className += " " + name$$24)
+  exports$$27.addCssClass = function(el$$6, name$$21) {
+    exports$$27.hasCssClass(el$$6, name$$21) || (el$$6.className += " " + name$$21)
   };
   exports$$27.setCssClass = function(node, className, include) {
     include ? exports$$27.addCssClass(node, className) : exports$$27.removeCssClass(node, className)
   };
-  exports$$27.removeCssClass = function(el$$7, name$$25) {
+  exports$$27.removeCssClass = function(el$$7, name$$22) {
     var classes$$1 = el$$7.className.split(/\s+/g);
     for(;;) {
-      var index$$6 = classes$$1.indexOf(name$$25);
-      if(index$$6 == -1) {
+      var index$$7 = classes$$1.indexOf(name$$22);
+      if(index$$7 == -1) {
         break
-      }classes$$1.splice(index$$6, 1)
+      }classes$$1.splice(index$$7, 1)
     }el$$7.className = classes$$1.join(" ")
   };
   exports$$27.importCssString = function(cssText, doc) {
@@ -2393,6 +2475,28 @@ define("pilot/dom", ["require", "exports", "module"], function(require$$28, expo
   };
   exports$$27.getParentWindow = function(document$$1) {
     return document$$1.defaultView || document$$1.parentWindow
+  };
+  exports$$27.getSelectionStart = function(textarea) {
+    var start$$5;
+    try {
+      start$$5 = textarea.selectionStart || 0
+    }catch(e$$22) {
+      start$$5 = 0
+    }return start$$5
+  };
+  exports$$27.setSelectionStart = function(textarea$$1, start$$6) {
+    return textarea$$1.selectionStart = start$$6
+  };
+  exports$$27.getSelectionEnd = function(textarea$$2) {
+    var end$$4;
+    try {
+      end$$4 = textarea$$2.selectionEnd || 0
+    }catch(e$$23) {
+      end$$4 = 0
+    }return end$$4
+  };
+  exports$$27.setSelectionEnd = function(textarea$$3, end$$5) {
+    return textarea$$3.selectionEnd = end$$5
   }
 });
 define("pilot/keyboard/keyutil", ["require", "exports", "module", "pilot/event", "pilot/useragent"], function(require$$29, exports$$28) {
@@ -2408,8 +2512,8 @@ define("pilot/keyboard/keyutil", ["require", "exports", "module", "pilot/event",
         ret$$1.PRINTABLE_KEYS_CHARCODE[k$$2.toUpperCase().charCodeAt(0)] = i$$21
       }
     }for(i$$21 in ret$$1.FUNCTION_KEYS) {
-      var name$$26 = ret$$1.FUNCTION_KEYS[i$$21].toUpperCase();
-      ret$$1.KEY[name$$26] = parseInt(i$$21, 10)
+      var name$$23 = ret$$1.FUNCTION_KEYS[i$$21].toUpperCase();
+      ret$$1.KEY[name$$23] = parseInt(i$$21, 10)
     }return ret$$1
   }();
   var isFunctionOrNonPrintableKey = function(evt) {
@@ -2527,30 +2631,30 @@ define("pilot/domtemplate", ["require", "exports", "module"], function(require$$
         var i$$22 = 0;
         for(;i$$22 < attrs.length;i$$22++) {
           var value$$40 = attrs[i$$22].value;
-          var name$$27 = attrs[i$$22].name;
-          this.scope.push(name$$27);
+          var name$$24 = attrs[i$$22].name;
+          this.scope.push(name$$24);
           try {
-            if(name$$27 === "save") {
+            if(name$$24 === "save") {
               value$$40 = this.stripBraces(value$$40);
               this.property(value$$40, data$$34, node$$1);
               node$$1.removeAttribute("save")
             }else {
-              if(name$$27.substring(0, 2) === "on") {
+              if(name$$24.substring(0, 2) === "on") {
                 value$$40 = this.stripBraces(value$$40);
                 var func = this.property(value$$40, data$$34);
                 typeof func !== "function" && this.handleError("Expected " + value$$40 + " to resolve to a function, but got " + typeof func);
-                node$$1.removeAttribute(name$$27);
-                var capture = node$$1.hasAttribute("capture" + name$$27.substring(2));
-                node$$1.addEventListener(name$$27.substring(2), func, capture);
-                capture && node$$1.removeAttribute("capture" + name$$27.substring(2))
+                node$$1.removeAttribute(name$$24);
+                var capture = node$$1.hasAttribute("capture" + name$$24.substring(2));
+                node$$1.addEventListener(name$$24.substring(2), func, capture);
+                capture && node$$1.removeAttribute("capture" + name$$24.substring(2))
               }else {
                 var self$$1 = this;
                 var newValue = value$$40.replace(/\$\{[^}]*\}/g, function(path) {
                   return self$$1.envEval(path.slice(2, -1), data$$34, value$$40)
                 });
-                if(name$$27.charAt(0) === "_") {
-                  node$$1.removeAttribute(name$$27);
-                  node$$1.setAttribute(name$$27.substring(1), newValue)
+                if(name$$24.charAt(0) === "_") {
+                  node$$1.removeAttribute(name$$24);
+                  node$$1.setAttribute(name$$24.substring(1), newValue)
                 }else {
                   if(value$$40 !== newValue) {
                     attrs[i$$22].value = newValue
@@ -2649,9 +2753,9 @@ define("pilot/domtemplate", ["require", "exports", "module"], function(require$$
   Templater.prototype.processTextNode = function(node$$4, data$$38) {
     var value$$43 = node$$4.data;
     value$$43 = value$$43.replace(/\$\{([^}]*)\}/g, "\uf001$$$1\uf002");
-    var parts$$1 = value$$43.split(/\uF001|\uF002/);
-    if(parts$$1.length > 1) {
-      parts$$1.forEach(function(part) {
+    var parts = value$$43.split(/\uF001|\uF002/);
+    if(parts.length > 1) {
+      parts.forEach(function(part) {
         if(part === null || part === undefined || part === "") {
           return
         }if(part.charAt(0) === "$") {
@@ -2695,8 +2799,8 @@ define("pilot/domtemplate", ["require", "exports", "module"], function(require$$
       this.scope.pop()
     }
   };
-  Templater.prototype.envEval = function(script, env$$11, context) {
-    with(env$$11) {
+  Templater.prototype.envEval = function(script, env$$13, context) {
+    with(env$$13) {
       try {
         this.scope.push(context);
         return eval(script)
@@ -2718,11 +2822,11 @@ define("pilot/domtemplate", ["require", "exports", "module"], function(require$$
   };
   exports$$29.Templater = Templater
 });
-define("cockpit/ui/requestView", ["require", "exports", "module", "pilot/dom", "pilot/event", 'text!cockpit/ui/requestView.html!\n<div class=cptRow>\n  <!-- The div for the input (i.e. what was typed) --\>\n  <div class="cptRowIn" save="${rowin}"\n      onclick="${copyToInput}"\n      ondblclick="${executeRequest}">\n  \n    <!-- What the user actually typed --\>\n    <div class="cptGt">&gt; </div>\n    <div class="cptOutTyped">${request.typed}</div>\n\n    <!-- The extra details that appear on hover --\>\n    <div class=cptHover save="${duration}"></div>\n    <img class=cptHover onclick="${hideOutput}" save="${hide}"\n        alt="Hide command output" _src="${imagePath}/minus.png"/>\n    <img class="cptHover cptHidden" onclick="${showOutput}" save="${show}"\n        alt="Show command output" _src="${imagePath}/plus.png"/>\n    <img class=cptHover onclick="${remove}"\n        alt="Remove this command from the history" _src="${imagePath}/closer.png"/>\n  \n  </div>\n  \n  <!-- The div for the command output --\>\n  <div class="cptRowOut" save="${rowout}">\n    <div class="cptRowOutput" save="${output}"></div>\n    <img _src="${imagePath}/throbber.gif" save="${throb}"/>\n  </div>\n</div>\n', 
-"pilot/domtemplate", "text!cockpit/ui/requestView.css!\n.cptRowIn {\n  display: box; display: -moz-box; display: -webkit-box;\n  box-orient: horizontal; -moz-box-orient: horizontal; -webkit-box-orient: horizontal;\n  box-align: center; -moz-box-align: center; -webkit-box-align: center;\n  color: #333;\n  background-color: #EEE;\n  width: 100%;\n  font-family: consolas, courier, monospace;\n}\n.cptRowIn > * { padding-left: 2px; padding-right: 2px; }\n.cptRowIn > img { cursor: pointer; }\n.cptHover { display: none; }\n.cptRowIn:hover > .cptHover { display: block; }\n.cptRowIn:hover > .cptHover.cptHidden { display: none; }\n.cptOutTyped {\n  box-flex: 1; -moz-box-flex: 1; -webkit-box-flex: 1;\n  font-weight: bold; color: #000; font-size: 120%;\n}\n.cptRowOutput { padding-left: 10px; line-height: 1.2em; }\n.cptRowOutput strong,\n.cptRowOutput b,\n.cptRowOutput th,\n.cptRowOutput h1,\n.cptRowOutput h2,\n.cptRowOutput h3 { color: #000; }\n.cptRowOutput a { font-weight: bold; color: #666; text-decoration: none; }\n.cptRowOutput a: hover { text-decoration: underline; cursor: pointer; }\n.cptRowOutput input[type=password],\n.cptRowOutput input[type=text],\n.cptRowOutput textarea {\n  color: #000; font-size: 120%;\n  background: transparent; padding: 3px;\n  border-radius: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px;\n}\n.cptRowOutput table,\n.cptRowOutput td,\n.cptRowOutput th { border: 0; padding: 0 2px; }\n.cptRowOutput .right { text-align: right; }\n"], 
+define("cockpit/ui/request_view", ["require", "exports", "module", "pilot/dom", "pilot/event", 'text!cockpit/ui/request_view.html!\n<div class=cptRow>\n  <!-- The div for the input (i.e. what was typed) --\>\n  <div class="cptRowIn" save="${rowin}"\n      onclick="${copyToInput}"\n      ondblclick="${executeRequest}">\n  \n    <!-- What the user actually typed --\>\n    <div class="cptGt">&gt; </div>\n    <div class="cptOutTyped">${request.typed}</div>\n\n    <!-- The extra details that appear on hover --\>\n    <div class=cptHover save="${duration}"></div>\n    <img class=cptHover onclick="${hideOutput}" save="${hide}"\n        alt="Hide command output" _src="${imagePath}/minus.png"/>\n    <img class="cptHover cptHidden" onclick="${showOutput}" save="${show}"\n        alt="Show command output" _src="${imagePath}/plus.png"/>\n    <img class=cptHover onclick="${remove}"\n        alt="Remove this command from the history" _src="${imagePath}/closer.png"/>\n  \n  </div>\n  \n  <!-- The div for the command output --\>\n  <div class="cptRowOut" save="${rowout}">\n    <div class="cptRowOutput" save="${output}"></div>\n    <img _src="${imagePath}/throbber.gif" save="${throb}"/>\n  </div>\n</div>\n', 
+"pilot/domtemplate", "text!cockpit/ui/request_view.css!\n.cptRowIn {\n  display: box; display: -moz-box; display: -webkit-box;\n  box-orient: horizontal; -moz-box-orient: horizontal; -webkit-box-orient: horizontal;\n  box-align: center; -moz-box-align: center; -webkit-box-align: center;\n  color: #333;\n  background-color: #EEE;\n  width: 100%;\n  font-family: consolas, courier, monospace;\n}\n.cptRowIn > * { padding-left: 2px; padding-right: 2px; }\n.cptRowIn > img { cursor: pointer; }\n.cptHover { display: none; }\n.cptRowIn:hover > .cptHover { display: block; }\n.cptRowIn:hover > .cptHover.cptHidden { display: none; }\n.cptOutTyped {\n  box-flex: 1; -moz-box-flex: 1; -webkit-box-flex: 1;\n  font-weight: bold; color: #000; font-size: 120%;\n}\n.cptRowOutput { padding-left: 10px; line-height: 1.2em; }\n.cptRowOutput strong,\n.cptRowOutput b,\n.cptRowOutput th,\n.cptRowOutput h1,\n.cptRowOutput h2,\n.cptRowOutput h3 { color: #000; }\n.cptRowOutput a { font-weight: bold; color: #666; text-decoration: none; }\n.cptRowOutput a: hover { text-decoration: underline; cursor: pointer; }\n.cptRowOutput input[type=password],\n.cptRowOutput input[type=text],\n.cptRowOutput textarea {\n  color: #000; font-size: 120%;\n  background: transparent; padding: 3px;\n  border-radius: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px;\n}\n.cptRowOutput table,\n.cptRowOutput td,\n.cptRowOutput th { border: 0; padding: 0 2px; }\n.cptRowOutput .right { text-align: right; }\n"], 
 function(require$$31, exports$$30, module$$31) {
-  function RequestView(request$$8, cliView) {
-    this.request = request$$8;
+  function RequestView(request$$10, cliView) {
+    this.request = request$$10;
     this.cliView = cliView;
     this.imagePath = imagePath;
     this.rowin = null;
@@ -2739,9 +2843,9 @@ function(require$$31, exports$$30, module$$31) {
   }
   var dom = require$$31("pilot/dom");
   var event$$1 = require$$31("pilot/event");
-  var requestViewHtml = require$$31('text!cockpit/ui/requestView.html!\n<div class=cptRow>\n  <!-- The div for the input (i.e. what was typed) --\>\n  <div class="cptRowIn" save="${rowin}"\n      onclick="${copyToInput}"\n      ondblclick="${executeRequest}">\n  \n    <!-- What the user actually typed --\>\n    <div class="cptGt">&gt; </div>\n    <div class="cptOutTyped">${request.typed}</div>\n\n    <!-- The extra details that appear on hover --\>\n    <div class=cptHover save="${duration}"></div>\n    <img class=cptHover onclick="${hideOutput}" save="${hide}"\n        alt="Hide command output" _src="${imagePath}/minus.png"/>\n    <img class="cptHover cptHidden" onclick="${showOutput}" save="${show}"\n        alt="Show command output" _src="${imagePath}/plus.png"/>\n    <img class=cptHover onclick="${remove}"\n        alt="Remove this command from the history" _src="${imagePath}/closer.png"/>\n  \n  </div>\n  \n  <!-- The div for the command output --\>\n  <div class="cptRowOut" save="${rowout}">\n    <div class="cptRowOutput" save="${output}"></div>\n    <img _src="${imagePath}/throbber.gif" save="${throb}"/>\n  </div>\n</div>\n');
+  var requestViewHtml = require$$31('text!cockpit/ui/request_view.html!\n<div class=cptRow>\n  <!-- The div for the input (i.e. what was typed) --\>\n  <div class="cptRowIn" save="${rowin}"\n      onclick="${copyToInput}"\n      ondblclick="${executeRequest}">\n  \n    <!-- What the user actually typed --\>\n    <div class="cptGt">&gt; </div>\n    <div class="cptOutTyped">${request.typed}</div>\n\n    <!-- The extra details that appear on hover --\>\n    <div class=cptHover save="${duration}"></div>\n    <img class=cptHover onclick="${hideOutput}" save="${hide}"\n        alt="Hide command output" _src="${imagePath}/minus.png"/>\n    <img class="cptHover cptHidden" onclick="${showOutput}" save="${show}"\n        alt="Show command output" _src="${imagePath}/plus.png"/>\n    <img class=cptHover onclick="${remove}"\n        alt="Remove this command from the history" _src="${imagePath}/closer.png"/>\n  \n  </div>\n  \n  <!-- The div for the command output --\>\n  <div class="cptRowOut" save="${rowout}">\n    <div class="cptRowOutput" save="${output}"></div>\n    <img _src="${imagePath}/throbber.gif" save="${throb}"/>\n  </div>\n</div>\n');
   var Templater$$1 = require$$31("pilot/domtemplate").Templater;
-  var requestViewCss = require$$31("text!cockpit/ui/requestView.css!\n.cptRowIn {\n  display: box; display: -moz-box; display: -webkit-box;\n  box-orient: horizontal; -moz-box-orient: horizontal; -webkit-box-orient: horizontal;\n  box-align: center; -moz-box-align: center; -webkit-box-align: center;\n  color: #333;\n  background-color: #EEE;\n  width: 100%;\n  font-family: consolas, courier, monospace;\n}\n.cptRowIn > * { padding-left: 2px; padding-right: 2px; }\n.cptRowIn > img { cursor: pointer; }\n.cptHover { display: none; }\n.cptRowIn:hover > .cptHover { display: block; }\n.cptRowIn:hover > .cptHover.cptHidden { display: none; }\n.cptOutTyped {\n  box-flex: 1; -moz-box-flex: 1; -webkit-box-flex: 1;\n  font-weight: bold; color: #000; font-size: 120%;\n}\n.cptRowOutput { padding-left: 10px; line-height: 1.2em; }\n.cptRowOutput strong,\n.cptRowOutput b,\n.cptRowOutput th,\n.cptRowOutput h1,\n.cptRowOutput h2,\n.cptRowOutput h3 { color: #000; }\n.cptRowOutput a { font-weight: bold; color: #666; text-decoration: none; }\n.cptRowOutput a: hover { text-decoration: underline; cursor: pointer; }\n.cptRowOutput input[type=password],\n.cptRowOutput input[type=text],\n.cptRowOutput textarea {\n  color: #000; font-size: 120%;\n  background: transparent; padding: 3px;\n  border-radius: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px;\n}\n.cptRowOutput table,\n.cptRowOutput td,\n.cptRowOutput th { border: 0; padding: 0 2px; }\n.cptRowOutput .right { text-align: right; }\n");
+  var requestViewCss = require$$31("text!cockpit/ui/request_view.css!\n.cptRowIn {\n  display: box; display: -moz-box; display: -webkit-box;\n  box-orient: horizontal; -moz-box-orient: horizontal; -webkit-box-orient: horizontal;\n  box-align: center; -moz-box-align: center; -webkit-box-align: center;\n  color: #333;\n  background-color: #EEE;\n  width: 100%;\n  font-family: consolas, courier, monospace;\n}\n.cptRowIn > * { padding-left: 2px; padding-right: 2px; }\n.cptRowIn > img { cursor: pointer; }\n.cptHover { display: none; }\n.cptRowIn:hover > .cptHover { display: block; }\n.cptRowIn:hover > .cptHover.cptHidden { display: none; }\n.cptOutTyped {\n  box-flex: 1; -moz-box-flex: 1; -webkit-box-flex: 1;\n  font-weight: bold; color: #000; font-size: 120%;\n}\n.cptRowOutput { padding-left: 10px; line-height: 1.2em; }\n.cptRowOutput strong,\n.cptRowOutput b,\n.cptRowOutput th,\n.cptRowOutput h1,\n.cptRowOutput h2,\n.cptRowOutput h3 { color: #000; }\n.cptRowOutput a { font-weight: bold; color: #666; text-decoration: none; }\n.cptRowOutput a: hover { text-decoration: underline; cursor: pointer; }\n.cptRowOutput input[type=password],\n.cptRowOutput input[type=text],\n.cptRowOutput textarea {\n  color: #000; font-size: 120%;\n  background: transparent; padding: 3px;\n  border-radius: 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px;\n}\n.cptRowOutput table,\n.cptRowOutput td,\n.cptRowOutput th { border: 0; padding: 0 2px; }\n.cptRowOutput .right { text-align: right; }\n");
   dom.importCssString(requestViewCss);
   var templates = document.createElement("div");
   templates.innerHTML = requestViewHtml;
@@ -2755,8 +2859,8 @@ function(require$$31, exports$$30, module$$31) {
     console.error("Can't work out path from module.uri/module/id");
     imagePath = "."
   }else {
-    var end$$4 = module$$31.uri.length - filename.length;
-    imagePath = module$$31.uri.substr(0, end$$4) + "images"
+    var end$$6 = module$$31.uri.length - filename.length;
+    imagePath = module$$31.uri.substr(0, end$$6) + "images"
   }RequestView.prototype = {copyToInput:function() {
     this.cliView.element.value = this.request.typed
   }, executeRequest:function() {
@@ -2794,9 +2898,9 @@ function(require$$31, exports$$30, module$$31) {
   }};
   exports$$30.RequestView = RequestView
 });
-define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/cliView.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n", 
-"pilot/event", "pilot/dom", "pilot/canon", "pilot/types", "pilot/keyboard/keyutil", "cockpit/cli", "cockpit/cli", "cockpit/ui/requestView"], function(require$$32, exports$$31) {
-  function CliView(cli$$3, env$$12) {
+define("cockpit/ui/cli_view", ["require", "exports", "module", "text!cockpit/ui/cli_view.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n", 
+"pilot/event", "pilot/dom", "pilot/canon", "pilot/types", "pilot/keyboard/keyutil", "cockpit/cli", "cockpit/cli", "cockpit/ui/request_view"], function(require$$32, exports$$31) {
+  function CliView(cli$$3, env$$14) {
     this.cli = cli$$3;
     this.doc = document;
     this.win = dom$$1.getParentWindow(this.doc);
@@ -2804,7 +2908,7 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
     if(!this.element) {
       console.log("No element with an id of cockpit. Bailing on cli");
       return
-    }this.settings = env$$12.settings;
+    }this.settings = env$$14.settings;
     this.hintDirection = this.settings.getSetting("hintDirection");
     this.outputDirection = this.settings.getSetting("outputDirection");
     this.outputHeight = this.settings.getSetting("outputHeight");
@@ -2812,16 +2916,16 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
     this.createElements();
     this.update()
   }
-  var editorCss = require$$32("text!cockpit/ui/cliView.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n");
+  var editorCss = require$$32("text!cockpit/ui/cli_view.css!\n#cockpitInput { padding-left: 16px; }\n\n#cockpitOutput { overflow: auto; }\n#cockpitOutput.cptFocusPopup { position: absolute; z-index: 999; }\n\n.cptFocusPopup { display: none; }\n#cockpitInput:focus ~ .cptFocusPopup { display: block; }\n#cockpitInput:focus ~ .cptFocusPopup.cptNoPopup { display: none; }\n\n.cptCompletion { padding: 0; position: absolute; z-index: -1000; }\n.cptCompletion.VALID { background: #FFF; }\n.cptCompletion.INCOMPLETE { background: #DDD; }\n.cptCompletion.INVALID { background: #DDD; }\n.cptCompletion span { color: #FFF; }\n.cptCompletion span.INCOMPLETE { color: #DDD; border-bottom: 2px dotted #F80; }\n.cptCompletion span.INVALID { color: #DDD; border-bottom: 2px dotted #F00; }\nspan.cptPrompt { color: #66F; font-weight: bold; }\n\n\n.cptHints {\n  color: #000;\n  position: absolute;\n  border: 1px solid rgba(230, 230, 230, 0.8);\n  background: rgba(250, 250, 250, 0.8);\n  -moz-border-radius-topleft: 10px;\n  -moz-border-radius-topright: 10px;\n  border-top-left-radius: 10px; border-top-right-radius: 10px;\n  z-index: 1000;\n  padding: 8px;\n  display: none;\n}\n.cptHints ul { margin: 0; padding: 0 15px; }\n\n.cptGt { font-weight: bold; font-size: 120%; }\n");
   var event$$2 = require$$32("pilot/event");
   var dom$$1 = require$$32("pilot/dom");
   dom$$1.importCssString(editorCss);
-  var canon$$4 = require$$32("pilot/canon");
+  var canon$$5 = require$$32("pilot/canon");
   var Status$$5 = require$$32("pilot/types").Status;
   var keyutil = require$$32("pilot/keyboard/keyutil");
   var CliRequisition$$2 = require$$32("cockpit/cli").CliRequisition;
   var Hint$$1 = require$$32("cockpit/cli").Hint;
-  var RequestView$$1 = require$$32("cockpit/ui/requestView").RequestView;
+  var RequestView$$1 = require$$32("cockpit/ui/request_view").RequestView;
   new Hint$$1(Status$$5.VALID, "", 0, 0);
   exports$$31.startup = function(data$$40) {
     var cli$$4 = new CliRequisition$$2(data$$40.env);
@@ -2829,6 +2933,7 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
   };
   CliView.prototype = {createElements:function() {
     var input$$2 = this.element;
+    this.element.spellcheck = false;
     this.output = this.doc.getElementById("cockpitOutput");
     this.popupOutput = this.output == null;
     if(!this.output) {
@@ -2859,7 +2964,7 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
     this.hintDirection.addEventListener("change", resizer);
     this.outputDirection.addEventListener("change", resizer);
     resizer();
-    canon$$4.addEventListener("output", function(ev$$9) {
+    canon$$5.addEventListener("output", function(ev$$9) {
       new RequestView$$1(ev$$9.request, this)
     }.bind(this));
     keyutil.addKeyDownListener(input$$2, this.onKeyDown.bind(this));
@@ -2913,26 +3018,26 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
         this.cli.exec();
         this.element.value = ""
       }else {
-        this.element.selectionStart = worst$$1.start;
-        this.element.selectionEnd = worst$$1.end
+        dom$$1.setSelectionStart(this.element, worst$$1.start);
+        dom$$1.setSelectionEnd(this.element, worst$$1.end)
       }
     }this.update();
-    var current = this.cli.getAssignmentAt(this.element.selectionStart);
-    if(current) {
+    var current$$1 = this.cli.getAssignmentAt(dom$$1.getSelectionStart(this.element));
+    if(current$$1) {
       if(ev$$12.keyCode === keyutil.KeyHelper.KEY.TAB) {
-        current.complete();
+        current$$1.complete();
         this.update()
       }if(ev$$12.keyCode === keyutil.KeyHelper.KEY.UP) {
-        current.increment();
+        current$$1.increment();
         this.update()
       }if(ev$$12.keyCode === keyutil.KeyHelper.KEY.DOWN) {
-        current.decrement();
+        current$$1.decrement();
         this.update()
       }
     }return handled$$2
   }, update:function() {
     this.isUpdating = true;
-    var input$$3 = {typed:this.element.value, cursor:{start:this.element.selectionStart, end:this.element.selectionEnd}};
+    var input$$3 = {typed:this.element.value, cursor:{start:dom$$1.getSelectionStart(this.element), end:dom$$1.getSelectionEnd(this.element.selectionEnd)}};
     this.cli.update(input$$3);
     var display$$2 = this.cli.getAssignmentAt(input$$3.cursor.start).getHint();
     dom$$1.removeCssClass(this.completer, Status$$5.VALID.toString());
@@ -2981,31 +3086,51 @@ define("cockpit/ui/cliView", ["require", "exports", "module", "text!cockpit/ui/c
   }, onArgChange:function(ev$$13) {
     if(this.isUpdating) {
       return
-    }var prefix = this.element.value.substring(0, ev$$13.argument.start);
-    var suffix = this.element.value.substring(ev$$13.argument.end);
+    }var prefix$$2 = this.element.value.substring(0, ev$$13.argument.start);
+    var suffix$$1 = this.element.value.substring(ev$$13.argument.end);
     var insert = typeof ev$$13.text === "string" ? ev$$13.text : ev$$13.text.name;
-    this.element.value = prefix + insert + suffix;
-    var insertEnd = (prefix + insert).length;
+    this.element.value = prefix$$2 + insert + suffix$$1;
+    var insertEnd = (prefix$$2 + insert).length;
     this.element.selectionStart = insertEnd;
     this.element.selectionEnd = insertEnd
   }};
   exports$$31.CliView = CliView
 });
-define("cockpit/index", ["require", "exports", "module", "pilot/index", "cockpit/cli", "cockpit/test/testCli", "cockpit/ui/settings", "cockpit/ui/cliView"], function(require$$33, exports$$32) {
-  exports$$32.startup = function(data$$41, reason$$23) {
-    require$$33("pilot/index");
-    require$$33("cockpit/cli").startup(data$$41, reason$$23);
-    window.testCli = require$$33("cockpit/test/testCli");
-    require$$33("cockpit/ui/settings").startup(data$$41, reason$$23);
-    require$$33("cockpit/ui/cliView").startup(data$$41, reason$$23)
+define("cockpit/commands/basic", ["require", "exports", "module", "pilot/typecheck", "pilot/canon", "pilot/canon"], function(require$$33, exports$$32) {
+  require$$33("pilot/typecheck");
+  var canon$$6 = require$$33("pilot/canon");
+  var bangCommandSpec = {name:"sh", description:"Execute a system command (requires server support)", params:[{name:"command", type:"text", description:"The string to send to the os shell."}], exec:function(env$$15, args$$22, request$$11) {
+    var req$$1 = new XMLHttpRequest;
+    req$$1.open("GET", "/exec?args=" + args$$22.command, true);
+    req$$1.onreadystatechange = function() {
+      req$$1.readyState == 4 && req$$1.status == 200 && request$$11.done("<pre>" + req$$1.responseText + "</pre>")
+    };
+    req$$1.send(null)
+  }};
+  canon$$6 = require$$33("pilot/canon");
+  exports$$32.startup = function() {
+    canon$$6.addCommand(bangCommandSpec)
+  };
+  exports$$32.shutdown = function() {
+    canon$$6.removeCommand(bangCommandSpec)
   }
 });
-define("ace/textinput", ["require", "exports", "module", "pilot/event"], function(require$$34, exports$$33) {
-  var event$$3 = require$$34("pilot/event");
+define("cockpit/index", ["require", "exports", "module", "pilot/index", "cockpit/cli", "cockpit/test/testCli", "cockpit/ui/settings", "cockpit/ui/cli_view", "cockpit/commands/basic"], function(require$$34, exports$$33) {
+  exports$$33.startup = function(data$$43, reason$$25) {
+    require$$34("pilot/index");
+    require$$34("cockpit/cli").startup(data$$43, reason$$25);
+    window.testCli = require$$34("cockpit/test/testCli");
+    require$$34("cockpit/ui/settings").startup(data$$43, reason$$25);
+    require$$34("cockpit/ui/cli_view").startup(data$$43, reason$$25);
+    require$$34("cockpit/commands/basic").startup(data$$43, reason$$25)
+  }
+});
+define("ace/textinput", ["require", "exports", "module", "pilot/event"], function(require$$35, exports$$34) {
+  var event$$3 = require$$35("pilot/event");
   var TextInput = function(parentNode, host) {
-    function sendText() {
+    function sendText(valueToSend) {
       if(!copied) {
-        var value$$45 = text$$5.value;
+        var value$$45 = valueToSend || text$$5.value;
         if(value$$45) {
           if(value$$45.charCodeAt(value$$45.length - 1) == PLACEHOLDER.charCodeAt(0)) {
             value$$45 = value$$45.slice(0, -1);
@@ -3064,7 +3189,14 @@ define("ace/textinput", ["require", "exports", "module", "pilot/event"], functio
     };
     event$$3.addListener(text$$5, "keypress", onTextInput);
     event$$3.addListener(text$$5, "textInput", onTextInput);
-    event$$3.addListener(text$$5, "paste", onTextInput);
+    event$$3.addListener(text$$5, "paste", function(e$$26) {
+      if(e$$26.clipboardData && e$$26.clipboardData.getData) {
+        sendText(e$$26.clipboardData.getData("text/plain"));
+        e$$26.preventDefault()
+      }else {
+        onTextInput()
+      }
+    });
     event$$3.addListener(text$$5, "propertychange", onTextInput);
     event$$3.addListener(text$$5, "copy", onCopy);
     event$$3.addListener(text$$5, "cut", onCut);
@@ -3087,187 +3219,187 @@ define("ace/textinput", ["require", "exports", "module", "pilot/event"], functio
       text$$5.blur()
     }
   };
-  exports$$33.TextInput = TextInput
+  exports$$34.TextInput = TextInput
 });
-define("ace/conf/keybindings/default_mac", ["require", "exports", "module"], function(require$$35, exports$$34) {
-  exports$$34.bindings = {selectall:"Command-A", removeline:"Command-D", gotoline:"Command-L", togglecomment:"Command-7", findnext:"Command-K", findprevious:"Command-Shift-K", find:"Command-F", replace:"Command-R", undo:"Command-Z", redo:"Command-Shift-Z|Command-Y", overwrite:"Insert", copylinesup:"Command-Option-Up", movelinesup:"Option-Up", selecttostart:"Command-Shift-Up", gotostart:"Command-Home|Command-Up", selectup:"Shift-Up", golineup:"Up", copylinesdown:"Command-Option-Down", movelinesdown:"Option-Down", 
+define("ace/conf/keybindings/default_mac", ["require", "exports", "module"], function(require$$36, exports$$35) {
+  exports$$35.bindings = {selectall:"Command-A", removeline:"Command-D", gotoline:"Command-L", togglecomment:"Command-7", findnext:"Command-K", findprevious:"Command-Shift-K", find:"Command-F", replace:"Command-R", undo:"Command-Z", redo:"Command-Shift-Z|Command-Y", overwrite:"Insert", copylinesup:"Command-Option-Up", movelinesup:"Option-Up", selecttostart:"Command-Shift-Up", gotostart:"Command-Home|Command-Up", selectup:"Shift-Up", golineup:"Up", copylinesdown:"Command-Option-Down", movelinesdown:"Option-Down", 
   selecttoend:"Command-Shift-Down", gotoend:"Command-End|Command-Down", selectdown:"Shift-Down", godown:"Down", selectwordleft:"Option-Shift-Left", gotowordleft:"Option-Left", selecttolinestart:"Command-Shift-Left", gotolinestart:"Command-Left|Home", selectleft:"Shift-Left", gotoleft:"Left", selectwordright:"Option-Shift-Right", gotowordright:"Option-Right", selecttolineend:"Command-Shift-Right", gotolineend:"Command-Right|End", selectright:"Shift-Right", gotoright:"Right", selectpagedown:"Shift-PageDown", 
   pagedown:"PageDown", selectpageup:"Shift-PageUp", pageup:"PageUp", selectlinestart:"Shift-Home", selectlineend:"Shift-End", del:"Delete", backspace:"Ctrl-Backspace|Command-Backspace|Option-Backspace|Backspace", outdent:"Shift-Tab", indent:"Tab"}
 });
-define("ace/conf/keybindings/default_win", ["require", "exports", "module"], function(require$$36, exports$$35) {
-  exports$$35.bindings = {selectall:"Ctrl-A", removeline:"Ctrl-D", gotoline:"Ctrl-L", togglecomment:"Ctrl-7", findnext:"Ctrl-K", findprevious:"Ctrl-Shift-K", find:"Ctrl-F", replace:"Ctrl-R", undo:"Ctrl-Z", redo:"Ctrl-Shift-Z|Ctrl-Y", overwrite:"Insert", copylinesup:"Ctrl-Alt-Up", movelinesup:"Alt-Up", selecttostart:"Alt-Shift-Up", gotostart:"Ctrl-Home|Ctrl-Up", selectup:"Shift-Up", golineup:"Up", copylinesdown:"Ctrl-Alt-Down", movelinesdown:"Alt-Down", selecttoend:"Alt-Shift-Down", gotoend:"Ctrl-End|Ctrl-Down", 
+define("ace/conf/keybindings/default_win", ["require", "exports", "module"], function(require$$37, exports$$36) {
+  exports$$36.bindings = {selectall:"Ctrl-A", removeline:"Ctrl-D", gotoline:"Ctrl-L", togglecomment:"Ctrl-7", findnext:"Ctrl-K", findprevious:"Ctrl-Shift-K", find:"Ctrl-F", replace:"Ctrl-R", undo:"Ctrl-Z", redo:"Ctrl-Shift-Z|Ctrl-Y", overwrite:"Insert", copylinesup:"Ctrl-Alt-Up", movelinesup:"Alt-Up", selecttostart:"Alt-Shift-Up", gotostart:"Ctrl-Home|Ctrl-Up", selectup:"Shift-Up", golineup:"Up", copylinesdown:"Ctrl-Alt-Down", movelinesdown:"Alt-Down", selecttoend:"Alt-Shift-Down", gotoend:"Ctrl-End|Ctrl-Down", 
   selectdown:"Shift-Down", godown:"Down", selectwordleft:"Ctrl-Shift-Left", gotowordleft:"Ctrl-Left", selecttolinestart:"Alt-Shift-Left", gotolinestart:"Alt-Left|Home", selectleft:"Shift-Left", gotoleft:"Left", selectwordright:"Ctrl-Shift-Right", gotowordright:"Ctrl-Right", selecttolineend:"Alt-Shift-Right", gotolineend:"Alt-Right|End", selectright:"Shift-Right", gotoright:"Right", selectpagedown:"Shift-PageDown", pagedown:"PageDown", selectpageup:"Shift-PageUp", pageup:"PageUp", selectlinestart:"Shift-Home", 
   selectlineend:"Shift-End", del:"Delete", backspace:"Backspace", outdent:"Shift-Tab", indent:"Tab"}
 });
-define("ace/commands/default_commands", ["require", "exports", "module", "pilot/canon"], function(require$$37) {
-  var canon$$5 = require$$37("pilot/canon");
-  canon$$5.addCommand({name:"selectall", exec:function(env$$13) {
-    env$$13.editor.getSelection().selectAll()
+define("ace/commands/default_commands", ["require", "exports", "module", "pilot/canon"], function(require$$38) {
+  var canon$$7 = require$$38("pilot/canon");
+  canon$$7.addCommand({name:"selectall", exec:function(env$$16) {
+    env$$16.editor.getSelection().selectAll()
   }});
-  canon$$5.addCommand({name:"removeline", exec:function(env$$14) {
-    env$$14.editor.removeLines()
+  canon$$7.addCommand({name:"removeline", exec:function(env$$17) {
+    env$$17.editor.removeLines()
   }});
-  canon$$5.addCommand({name:"gotoline", exec:function(env$$15) {
+  canon$$7.addCommand({name:"gotoline", exec:function(env$$18) {
     var line$$2 = parseInt(prompt("Enter line number:"));
-    isNaN(line$$2) || env$$15.editor.gotoLine(line$$2)
+    isNaN(line$$2) || env$$18.editor.gotoLine(line$$2)
   }});
-  canon$$5.addCommand({name:"togglecomment", exec:function(env$$16) {
-    env$$16.editor.toggleCommentLines()
+  canon$$7.addCommand({name:"togglecomment", exec:function(env$$19) {
+    env$$19.editor.toggleCommentLines()
   }});
-  canon$$5.addCommand({name:"findnext", exec:function(env$$17) {
-    env$$17.editor.findNext()
+  canon$$7.addCommand({name:"findnext", exec:function(env$$20) {
+    env$$20.editor.findNext()
   }});
-  canon$$5.addCommand({name:"findprevious", exec:function(env$$18) {
-    env$$18.editor.findPrevious()
+  canon$$7.addCommand({name:"findprevious", exec:function(env$$21) {
+    env$$21.editor.findPrevious()
   }});
-  canon$$5.addCommand({name:"find", exec:function(env$$19) {
+  canon$$7.addCommand({name:"find", exec:function(env$$22) {
     var needle = prompt("Find:");
-    env$$19.editor.find(needle)
+    env$$22.editor.find(needle)
   }});
-  canon$$5.addCommand({name:"undo", exec:function(env$$20) {
-    env$$20.editor.undo()
+  canon$$7.addCommand({name:"undo", exec:function(env$$23) {
+    env$$23.editor.undo()
   }});
-  canon$$5.addCommand({name:"redo", exec:function(env$$21) {
-    env$$21.editor.redo()
+  canon$$7.addCommand({name:"redo", exec:function(env$$24) {
+    env$$24.editor.redo()
   }});
-  canon$$5.addCommand({name:"redo", exec:function(env$$22) {
-    env$$22.editor.redo()
+  canon$$7.addCommand({name:"redo", exec:function(env$$25) {
+    env$$25.editor.redo()
   }});
-  canon$$5.addCommand({name:"overwrite", exec:function(env$$23) {
-    env$$23.editor.toggleOverwrite()
+  canon$$7.addCommand({name:"overwrite", exec:function(env$$26) {
+    env$$26.editor.toggleOverwrite()
   }});
-  canon$$5.addCommand({name:"copylinesup", exec:function(env$$24) {
-    env$$24.editor.copyLinesUp()
+  canon$$7.addCommand({name:"copylinesup", exec:function(env$$27) {
+    env$$27.editor.copyLinesUp()
   }});
-  canon$$5.addCommand({name:"movelinesup", exec:function(env$$25) {
-    env$$25.editor.moveLinesUp()
+  canon$$7.addCommand({name:"movelinesup", exec:function(env$$28) {
+    env$$28.editor.moveLinesUp()
   }});
-  canon$$5.addCommand({name:"selecttostart", exec:function(env$$26) {
-    env$$26.editor.getSelection().selectFileStart()
+  canon$$7.addCommand({name:"selecttostart", exec:function(env$$29) {
+    env$$29.editor.getSelection().selectFileStart()
   }});
-  canon$$5.addCommand({name:"gotostart", exec:function(env$$27) {
-    env$$27.editor.navigateFileStart()
+  canon$$7.addCommand({name:"gotostart", exec:function(env$$30) {
+    env$$30.editor.navigateFileStart()
   }});
-  canon$$5.addCommand({name:"selectup", exec:function(env$$28) {
-    env$$28.editor.getSelection().selectUp()
+  canon$$7.addCommand({name:"selectup", exec:function(env$$31) {
+    env$$31.editor.getSelection().selectUp()
   }});
-  canon$$5.addCommand({name:"golineup", exec:function(env$$29) {
-    env$$29.editor.navigateUp()
+  canon$$7.addCommand({name:"golineup", exec:function(env$$32) {
+    env$$32.editor.navigateUp()
   }});
-  canon$$5.addCommand({name:"copylinesdown", exec:function(env$$30) {
-    env$$30.editor.copyLinesDown()
+  canon$$7.addCommand({name:"copylinesdown", exec:function(env$$33) {
+    env$$33.editor.copyLinesDown()
   }});
-  canon$$5.addCommand({name:"movelinesdown", exec:function(env$$31) {
-    env$$31.editor.moveLinesDown()
+  canon$$7.addCommand({name:"movelinesdown", exec:function(env$$34) {
+    env$$34.editor.moveLinesDown()
   }});
-  canon$$5.addCommand({name:"selecttoend", exec:function(env$$32) {
-    env$$32.editor.getSelection().selectFileEnd()
+  canon$$7.addCommand({name:"selecttoend", exec:function(env$$35) {
+    env$$35.editor.getSelection().selectFileEnd()
   }});
-  canon$$5.addCommand({name:"gotoend", exec:function(env$$33) {
-    env$$33.editor.navigateFileEnd()
+  canon$$7.addCommand({name:"gotoend", exec:function(env$$36) {
+    env$$36.editor.navigateFileEnd()
   }});
-  canon$$5.addCommand({name:"selectdown", exec:function(env$$34) {
-    env$$34.editor.getSelection().selectDown()
+  canon$$7.addCommand({name:"selectdown", exec:function(env$$37) {
+    env$$37.editor.getSelection().selectDown()
   }});
-  canon$$5.addCommand({name:"godown", exec:function(env$$35) {
-    env$$35.editor.navigateDown()
+  canon$$7.addCommand({name:"godown", exec:function(env$$38) {
+    env$$38.editor.navigateDown()
   }});
-  canon$$5.addCommand({name:"selectwordleft", exec:function(env$$36) {
-    env$$36.editor.getSelection().selectWordLeft()
+  canon$$7.addCommand({name:"selectwordleft", exec:function(env$$39) {
+    env$$39.editor.getSelection().selectWordLeft()
   }});
-  canon$$5.addCommand({name:"gotowordleft", exec:function(env$$37) {
-    env$$37.editor.navigateWordLeft()
+  canon$$7.addCommand({name:"gotowordleft", exec:function(env$$40) {
+    env$$40.editor.navigateWordLeft()
   }});
-  canon$$5.addCommand({name:"selecttolinestart", exec:function(env$$38) {
-    env$$38.editor.getSelection().selectLineStart()
+  canon$$7.addCommand({name:"selecttolinestart", exec:function(env$$41) {
+    env$$41.editor.getSelection().selectLineStart()
   }});
-  canon$$5.addCommand({name:"gotolinestart", exec:function(env$$39) {
-    env$$39.editor.navigateLineStart()
+  canon$$7.addCommand({name:"gotolinestart", exec:function(env$$42) {
+    env$$42.editor.navigateLineStart()
   }});
-  canon$$5.addCommand({name:"selectleft", exec:function(env$$40) {
-    env$$40.editor.getSelection().selectLeft()
+  canon$$7.addCommand({name:"selectleft", exec:function(env$$43) {
+    env$$43.editor.getSelection().selectLeft()
   }});
-  canon$$5.addCommand({name:"gotoleft", exec:function(env$$41) {
-    env$$41.editor.navigateLeft()
+  canon$$7.addCommand({name:"gotoleft", exec:function(env$$44) {
+    env$$44.editor.navigateLeft()
   }});
-  canon$$5.addCommand({name:"selectwordright", exec:function(env$$42) {
-    env$$42.editor.getSelection().selectWordRight()
+  canon$$7.addCommand({name:"selectwordright", exec:function(env$$45) {
+    env$$45.editor.getSelection().selectWordRight()
   }});
-  canon$$5.addCommand({name:"gotowordright", exec:function(env$$43) {
-    env$$43.editor.navigateWordRight()
+  canon$$7.addCommand({name:"gotowordright", exec:function(env$$46) {
+    env$$46.editor.navigateWordRight()
   }});
-  canon$$5.addCommand({name:"selecttolineend", exec:function(env$$44) {
-    env$$44.editor.getSelection().selectLineEnd()
+  canon$$7.addCommand({name:"selecttolineend", exec:function(env$$47) {
+    env$$47.editor.getSelection().selectLineEnd()
   }});
-  canon$$5.addCommand({name:"gotolineend", exec:function(env$$45) {
-    env$$45.editor.navigateLineEnd()
+  canon$$7.addCommand({name:"gotolineend", exec:function(env$$48) {
+    env$$48.editor.navigateLineEnd()
   }});
-  canon$$5.addCommand({name:"selectright", exec:function(env$$46) {
-    env$$46.editor.getSelection().selectRight()
+  canon$$7.addCommand({name:"selectright", exec:function(env$$49) {
+    env$$49.editor.getSelection().selectRight()
   }});
-  canon$$5.addCommand({name:"gotoright", exec:function(env$$47) {
-    env$$47.editor.navigateRight()
+  canon$$7.addCommand({name:"gotoright", exec:function(env$$50) {
+    env$$50.editor.navigateRight()
   }});
-  canon$$5.addCommand({name:"selectpagedown", exec:function(env$$48) {
-    env$$48.editor.selectPageDown()
+  canon$$7.addCommand({name:"selectpagedown", exec:function(env$$51) {
+    env$$51.editor.selectPageDown()
   }});
-  canon$$5.addCommand({name:"pagedown", exec:function(env$$49) {
-    env$$49.editor.scrollPageDown()
+  canon$$7.addCommand({name:"pagedown", exec:function(env$$52) {
+    env$$52.editor.scrollPageDown()
   }});
-  canon$$5.addCommand({name:"gotopagedown", exec:function(env$$50) {
-    env$$50.editor.gotoPageDown()
+  canon$$7.addCommand({name:"gotopagedown", exec:function(env$$53) {
+    env$$53.editor.gotoPageDown()
   }});
-  canon$$5.addCommand({name:"selectpageup", exec:function(env$$51) {
-    env$$51.editor.selectPageUp()
+  canon$$7.addCommand({name:"selectpageup", exec:function(env$$54) {
+    env$$54.editor.selectPageUp()
   }});
-  canon$$5.addCommand({name:"pageup", exec:function(env$$52) {
-    env$$52.editor.scrollPageUp()
+  canon$$7.addCommand({name:"pageup", exec:function(env$$55) {
+    env$$55.editor.scrollPageUp()
   }});
-  canon$$5.addCommand({name:"gotopageup", exec:function(env$$53) {
-    env$$53.editor.gotoPageUp()
+  canon$$7.addCommand({name:"gotopageup", exec:function(env$$56) {
+    env$$56.editor.gotoPageUp()
   }});
-  canon$$5.addCommand({name:"selectlinestart", exec:function(env$$54) {
-    env$$54.editor.getSelection().selectLineStart()
+  canon$$7.addCommand({name:"selectlinestart", exec:function(env$$57) {
+    env$$57.editor.getSelection().selectLineStart()
   }});
-  canon$$5.addCommand({name:"gotolinestart", exec:function(env$$55) {
-    env$$55.editor.navigateLineStart()
+  canon$$7.addCommand({name:"gotolinestart", exec:function(env$$58) {
+    env$$58.editor.navigateLineStart()
   }});
-  canon$$5.addCommand({name:"selectlineend", exec:function(env$$56) {
-    env$$56.editor.getSelection().selectLineEnd()
+  canon$$7.addCommand({name:"selectlineend", exec:function(env$$59) {
+    env$$59.editor.getSelection().selectLineEnd()
   }});
-  canon$$5.addCommand({name:"gotolineend", exec:function(env$$57) {
-    env$$57.editor.navigateLineEnd()
+  canon$$7.addCommand({name:"gotolineend", exec:function(env$$60) {
+    env$$60.editor.navigateLineEnd()
   }});
-  canon$$5.addCommand({name:"del", exec:function(env$$58) {
-    env$$58.editor.removeRight()
+  canon$$7.addCommand({name:"del", exec:function(env$$61) {
+    env$$61.editor.removeRight()
   }});
-  canon$$5.addCommand({name:"backspace", exec:function(env$$59) {
-    env$$59.editor.removeLeft()
+  canon$$7.addCommand({name:"backspace", exec:function(env$$62) {
+    env$$62.editor.removeLeft()
   }});
-  canon$$5.addCommand({name:"outdent", exec:function(env$$60) {
-    env$$60.editor.blockOutdent()
+  canon$$7.addCommand({name:"outdent", exec:function(env$$63) {
+    env$$63.editor.blockOutdent()
   }});
-  canon$$5.addCommand({name:"indent", exec:function(env$$61) {
-    env$$61.editor.indent()
+  canon$$7.addCommand({name:"indent", exec:function(env$$64) {
+    env$$64.editor.indent()
   }})
 });
-define("ace/keybinding", ["require", "exports", "module", "pilot/useragent", "pilot/event", "ace/conf/keybindings/default_mac", "ace/conf/keybindings/default_win", "pilot/canon", "ace/commands/default_commands"], function(require$$38, exports$$37) {
-  var useragent$$2 = require$$38("pilot/useragent");
-  var event$$4 = require$$38("pilot/event");
-  var default_mac = require$$38("ace/conf/keybindings/default_mac").bindings;
-  var default_win = require$$38("ace/conf/keybindings/default_win").bindings;
-  var canon$$6 = require$$38("pilot/canon");
-  require$$38("ace/commands/default_commands");
+define("ace/keybinding", ["require", "exports", "module", "pilot/useragent", "pilot/event", "ace/conf/keybindings/default_mac", "ace/conf/keybindings/default_win", "pilot/canon", "ace/commands/default_commands"], function(require$$39, exports$$38) {
+  var useragent$$2 = require$$39("pilot/useragent");
+  var event$$4 = require$$39("pilot/event");
+  var default_mac = require$$39("ace/conf/keybindings/default_mac").bindings;
+  var default_win = require$$39("ace/conf/keybindings/default_win").bindings;
+  var canon$$8 = require$$39("pilot/canon");
+  require$$39("ace/commands/default_commands");
   var KeyBinding = function(element$$5, editor, config$$1) {
     this.setConfig(config$$1);
     var _self = this;
-    event$$4.addKeyListener(element$$5, function(e$$24) {
-      var hashId = useragent$$2.isOpera && useragent$$2.isMac ? 0 | (e$$24.metaKey ? 1 : 0) | (e$$24.altKey ? 2 : 0) | (e$$24.shiftKey ? 4 : 0) | (e$$24.ctrlKey ? 8 : 0) : 0 | (e$$24.ctrlKey ? 1 : 0) | (e$$24.altKey ? 2 : 0) | (e$$24.shiftKey ? 4 : 0) | (e$$24.metaKey ? 8 : 0);
-      var key$$11 = _self.keyNames[e$$24.keyCode];
-      var commandName = (_self.config.reverse[hashId] || {})[(key$$11 || String.fromCharCode(e$$24.keyCode)).toLowerCase()];
-      var success = canon$$6.exec(commandName, {editor:editor});
+    event$$4.addKeyListener(element$$5, function(e$$27) {
+      var hashId = useragent$$2.isOpera && useragent$$2.isMac ? 0 | (e$$27.metaKey ? 1 : 0) | (e$$27.altKey ? 2 : 0) | (e$$27.shiftKey ? 4 : 0) | (e$$27.ctrlKey ? 8 : 0) : 0 | (e$$27.ctrlKey ? 1 : 0) | (e$$27.altKey ? 2 : 0) | (e$$27.shiftKey ? 4 : 0) | (e$$27.metaKey ? 8 : 0);
+      var key$$11 = _self.keyNames[e$$27.keyCode];
+      var commandName = (_self.config.reverse[hashId] || {})[(key$$11 || String.fromCharCode(e$$27.keyCode)).toLowerCase()];
+      var success = canon$$8.exec(commandName, {editor:editor});
       if(success) {
-        return event$$4.stopEvent(e$$24)
+        return event$$4.stopEvent(e$$27)
       }
     })
   };
@@ -3278,14 +3410,14 @@ define("ace/keybinding", ["require", "exports", "module", "pilot/useragent", "pi
     function parseKeys(keys, val, ret$$3) {
       var key$$12;
       var hashId$$1 = 0;
-      var parts$$2 = splitSafe(keys, "\\-", null, true);
+      var parts$$1 = splitSafe(keys, "\\-", null, true);
       var i$$26 = 0;
-      var l = parts$$2.length;
+      var l = parts$$1.length;
       for(;i$$26 < l;++i$$26) {
-        if(this.keyMods[parts$$2[i$$26]]) {
-          hashId$$1 |= this.keyMods[parts$$2[i$$26]]
+        if(this.keyMods[parts$$1[i$$26]]) {
+          hashId$$1 |= this.keyMods[parts$$1[i$$26]]
         }else {
-          key$$12 = parts$$2[i$$26] || "-"
+          key$$12 = parts$$1[i$$26] || "-"
         }
       }(ret$$3[hashId$$1] || (ret$$3[hashId$$1] = {}))[key$$12] = val;
       return ret$$3
@@ -3319,9 +3451,9 @@ define("ace/keybinding", ["require", "exports", "module", "pilot/useragent", "pi
       }
     }
   }).call(KeyBinding.prototype);
-  exports$$37.KeyBinding = KeyBinding
+  exports$$38.KeyBinding = KeyBinding
 });
-define("ace/range", ["require", "exports", "module"], function(require$$39, exports$$38) {
+define("ace/range", ["require", "exports", "module"], function(require$$40, exports$$39) {
   var Range = function(startRow, startColumn, endRow, endColumn) {
     this.start = {row:startRow, column:startColumn};
     this.end = {row:endRow, column:endColumn}
@@ -3350,14 +3482,14 @@ define("ace/range", ["require", "exports", "module"], function(require$$39, expo
     };
     this.clipRows = function(firstRow, lastRow) {
       if(this.end.row > lastRow) {
-        var end$$5 = {row:lastRow + 1, column:0}
+        var end$$7 = {row:lastRow + 1, column:0}
       }if(this.start.row > lastRow) {
-        var start$$5 = {row:lastRow + 1, column:0}
+        var start$$7 = {row:lastRow + 1, column:0}
       }if(this.start.row < firstRow) {
-        start$$5 = {row:firstRow, column:0}
+        start$$7 = {row:firstRow, column:0}
       }if(this.end.row < firstRow) {
-        end$$5 = {row:firstRow, column:0}
-      }return Range.fromPoints(start$$5 || this.start, end$$5 || this.end)
+        end$$7 = {row:firstRow, column:0}
+      }return Range.fromPoints(start$$7 || this.start, end$$7 || this.end)
     };
     this.extend = function(row$$3, column$$2) {
       var cmp = this.compare(row$$3, column$$2);
@@ -3365,11 +3497,11 @@ define("ace/range", ["require", "exports", "module"], function(require$$39, expo
         return this
       }else {
         if(cmp == -1) {
-          var start$$6 = {row:row$$3, column:column$$2}
+          var start$$8 = {row:row$$3, column:column$$2}
         }else {
-          var end$$6 = {row:row$$3, column:column$$2}
+          var end$$8 = {row:row$$3, column:column$$2}
         }
-      }return Range.fromPoints(start$$6 || this.start, end$$6 || this.end)
+      }return Range.fromPoints(start$$8 || this.start, end$$8 || this.end)
     };
     this.isEmpty = function() {
       return this.start.row == this.end.row && this.start.column == this.end.column
@@ -3387,16 +3519,16 @@ define("ace/range", ["require", "exports", "module"], function(require$$39, expo
       return new Range(this.start.row, doc$$1.documentToScreenColumn(this.start.row, this.start.column), this.end.row, doc$$1.documentToScreenColumn(this.end.row, this.end.column))
     }
   }).call(Range.prototype);
-  Range.fromPoints = function(start$$7, end$$7) {
-    return new Range(start$$7.row, start$$7.column, end$$7.row, end$$7.column)
+  Range.fromPoints = function(start$$9, end$$9) {
+    return new Range(start$$9.row, start$$9.column, end$$9.row, end$$9.column)
   };
-  exports$$38.Range = Range
+  exports$$39.Range = Range
 });
-define("ace/selection", ["require", "exports", "module", "pilot/oop", "pilot/lang", "pilot/event_emitter", "ace/range"], function(require$$40, exports$$39) {
-  var oop$$3 = require$$40("pilot/oop");
-  var lang$$2 = require$$40("pilot/lang");
-  var EventEmitter$$4 = require$$40("pilot/event_emitter").EventEmitter;
-  var Range$$1 = require$$40("ace/range").Range;
+define("ace/selection", ["require", "exports", "module", "pilot/oop", "pilot/lang", "pilot/event_emitter", "ace/range"], function(require$$41, exports$$40) {
+  var oop$$3 = require$$41("pilot/oop");
+  var lang$$2 = require$$41("pilot/lang");
+  var EventEmitter$$4 = require$$41("pilot/event_emitter").EventEmitter;
+  var Range$$1 = require$$41("ace/range").Range;
   var Selection = function(doc$$2) {
     this.doc = doc$$2;
     this.clearSelection();
@@ -3644,8 +3776,8 @@ define("ace/selection", ["require", "exports", "module", "pilot/oop", "pilot/lan
     this.moveCursorBy = function(rows, chars) {
       this.moveCursorTo(this.selectionLead.row + rows, this.selectionLead.column + chars)
     };
-    this.moveCursorToPosition = function(position$$1) {
-      this.moveCursorTo(position$$1.row, position$$1.column)
+    this.moveCursorToPosition = function(position$$2) {
+      this.moveCursorTo(position$$2.row, position$$2.column)
     };
     this.moveCursorTo = function(row$$10, column$$10) {
       var cursor$$6 = this.$clipPositionToDocument(row$$10, column$$10);
@@ -3676,9 +3808,9 @@ define("ace/selection", ["require", "exports", "module", "pilot/oop", "pilot/lan
       return{row:pos$$2.row, column:pos$$2.column}
     }
   }).call(Selection.prototype);
-  exports$$39.Selection = Selection
+  exports$$40.Selection = Selection
 });
-define("ace/tokenizer", ["require", "exports", "module"], function(require$$41, exports$$40) {
+define("ace/tokenizer", ["require", "exports", "module"], function(require$$42, exports$$41) {
   var Tokenizer = function(rules) {
     this.rules = rules;
     this.regExps = {};
@@ -3729,32 +3861,32 @@ define("ace/tokenizer", ["require", "exports", "module"], function(require$$41, 
       return{tokens:tokens, state:currentState}
     }
   }).call(Tokenizer.prototype);
-  exports$$40.Tokenizer = Tokenizer
+  exports$$41.Tokenizer = Tokenizer
 });
-define("ace/mode/text_highlight_rules", ["require", "exports", "module"], function(require$$42, exports$$41) {
+define("ace/mode/text_highlight_rules", ["require", "exports", "module"], function(require$$43, exports$$42) {
   var TextHighlightRules = function() {
     this.$rules = {start:[{token:"text", regex:".+"}]}
   };
   (function() {
-    this.addRules = function(rules$$1, prefix$$1) {
+    this.addRules = function(rules$$1, prefix$$3) {
       for(var key$$15 in rules$$1) {
         var state$$2 = rules$$1[key$$15];
         var i$$30 = 0;
         for(;i$$30 < state$$2.length;i$$30++) {
           var rule = state$$2[i$$30];
-          rule.next = rule.next ? prefix$$1 + rule.next : prefix$$1 + key$$15
-        }this.$rules[prefix$$1 + key$$15] = state$$2
+          rule.next = rule.next ? prefix$$3 + rule.next : prefix$$3 + key$$15
+        }this.$rules[prefix$$3 + key$$15] = state$$2
       }
     };
     this.getRules = function() {
       return this.$rules
     }
   }).call(TextHighlightRules.prototype);
-  exports$$41.TextHighlightRules = TextHighlightRules
+  exports$$42.TextHighlightRules = TextHighlightRules
 });
-define("ace/mode/text", ["require", "exports", "module", "ace/tokenizer", "ace/mode/text_highlight_rules"], function(require$$43, exports$$42) {
-  var Tokenizer$$1 = require$$43("ace/tokenizer").Tokenizer;
-  var TextHighlightRules$$1 = require$$43("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/text", ["require", "exports", "module", "ace/tokenizer", "ace/mode/text_highlight_rules"], function(require$$44, exports$$43) {
+  var Tokenizer$$1 = require$$44("ace/tokenizer").Tokenizer;
+  var TextHighlightRules$$1 = require$$44("ace/mode/text_highlight_rules").TextHighlightRules;
   var Mode = function() {
     this.$tokenizer = new Tokenizer$$1((new TextHighlightRules$$1).getRules())
   };
@@ -3780,15 +3912,15 @@ define("ace/mode/text", ["require", "exports", "module", "ace/tokenizer", "ace/m
       }return""
     }
   }).call(Mode.prototype);
-  exports$$42.Mode = Mode
+  exports$$43.Mode = Mode
 });
-define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang", "pilot/event_emitter", "ace/selection", "ace/mode/text", "ace/range"], function(require$$44, exports$$43) {
-  var oop$$4 = require$$44("pilot/oop");
-  var lang$$3 = require$$44("pilot/lang");
-  var EventEmitter$$5 = require$$44("pilot/event_emitter").EventEmitter;
-  var Selection$$1 = require$$44("ace/selection").Selection;
-  var TextMode = require$$44("ace/mode/text").Mode;
-  var Range$$2 = require$$44("ace/range").Range;
+define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang", "pilot/event_emitter", "ace/selection", "ace/mode/text", "ace/range"], function(require$$45, exports$$44) {
+  var oop$$4 = require$$45("pilot/oop");
+  var lang$$3 = require$$45("pilot/lang");
+  var EventEmitter$$5 = require$$45("pilot/event_emitter").EventEmitter;
+  var Selection$$1 = require$$45("ace/selection").Selection;
+  var TextMode = require$$45("ace/mode/text").Mode;
+  var Range$$2 = require$$45("ace/range").Range;
   var Document = function(text$$6, mode$$2) {
     this.modified = true;
     this.lines = [];
@@ -3801,13 +3933,15 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
   (function() {
     oop$$4.implement(this, EventEmitter$$5);
     this.$undoManager = null;
-    this.$split = function(text$$7) {
-      return text$$7.split(/\r\n|\r|\n/)
+    this.$split = "aaa".split(/a/).length == 0 ? function(text$$7) {
+      return text$$7.replace(/\r\n|\r/g, "\n").split("\n")
+    } : function(text$$8) {
+      return text$$8.split(/\r\n|\r|\n/)
     };
-    this.setValue = function(text$$8) {
-      var args$$68 = [0, this.lines.length];
-      args$$68.push.apply(args$$68, this.$split(text$$8));
-      this.lines.splice.apply(this.lines, args$$68);
+    this.setValue = function(text$$9) {
+      var args$$72 = [0, this.lines.length];
+      args$$72.push.apply(args$$72, this.$split(text$$9));
+      this.lines.splice.apply(this.lines, args$$72);
       this.modified = true;
       this.fireChangeEvent(0)
     };
@@ -3818,8 +3952,8 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
       return this.selection
     };
     this.fireChangeEvent = function(firstRow$$1, lastRow$$2) {
-      var data$$42 = {firstRow:firstRow$$1, lastRow:lastRow$$2};
-      this._dispatchEvent("change", {data:data$$42})
+      var data$$44 = {firstRow:firstRow$$1, lastRow:lastRow$$2};
+      this._dispatchEvent("change", {data:data$$44})
     };
     this.setUndoManager = function(undoManager) {
       this.$undoManager = undoManager;
@@ -3862,8 +3996,8 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
     this.getTabSize = function() {
       return this.$tabSize
     };
-    this.isTabStop = function(position$$2) {
-      return this.$useSoftTabs && position$$2.column % this.$tabSize == 0
+    this.isTabStop = function(position$$3) {
+      return this.$useSoftTabs && position$$3.column % this.$tabSize == 0
     };
     this.getBreakpoints = function() {
       return this.$breakpoints
@@ -3887,8 +4021,8 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
       delete this.$breakpoints[row$$14];
       this._dispatchEvent("changeBreakpoint", {})
     };
-    this.$detectNewLine = function(text$$9) {
-      var match$$4 = text$$9.match(/^.*?(\r?\n)/m);
+    this.$detectNewLine = function(text$$10) {
+      var match$$4 = text$$10.match(/^.*?(\r?\n)/m);
       this.$autoNewLine = match$$4 ? match$$4[1] : "\n"
     };
     this.tokenRe = /^[\w\d]+/g;
@@ -3900,16 +4034,16 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         inToken = !!line$$9.charAt(column$$12 - 1).match(this.tokenRe)
       }inToken || (inToken = !!line$$9.charAt(column$$12).match(this.tokenRe));
       var re$$1 = inToken ? this.tokenRe : this.nonTokenRe;
-      var start$$8 = column$$12;
-      if(start$$8 > 0) {
+      var start$$10 = column$$12;
+      if(start$$10 > 0) {
         do {
-          start$$8--
-        }while(start$$8 >= 0 && line$$9.charAt(start$$8).match(re$$1));
-        start$$8++
-      }var end$$8 = column$$12;
-      for(;end$$8 < line$$9.length && line$$9.charAt(end$$8).match(re$$1);) {
-        end$$8++
-      }return new Range$$2(row$$15, start$$8, row$$15, end$$8)
+          start$$10--
+        }while(start$$10 >= 0 && line$$9.charAt(start$$10).match(re$$1));
+        start$$10++
+      }var end$$10 = column$$12;
+      for(;end$$10 < line$$9.length && line$$9.charAt(end$$10).match(re$$1);) {
+        end$$10++
+      }return new Range$$2(row$$15, start$$10, row$$15, end$$10)
     };
     this.$getNewLineCharacter = function() {
       switch(this.$newLineMode) {
@@ -4005,22 +4139,22 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         return lines$$3.join(this.$getNewLineCharacter())
       }
     };
-    this.findMatchingBracket = function(position$$3) {
-      if(position$$3.column == 0) {
+    this.findMatchingBracket = function(position$$4) {
+      if(position$$4.column == 0) {
         return null
-      }var charBeforeCursor = this.getLine(position$$3.row).charAt(position$$3.column - 1);
+      }var charBeforeCursor = this.getLine(position$$4.row).charAt(position$$4.column - 1);
       if(charBeforeCursor == "") {
         return null
       }var match$$5 = charBeforeCursor.match(/([\(\[\{])|([\)\]\}])/);
       if(!match$$5) {
         return null
-      }return match$$5[1] ? this.$findClosingBracket(match$$5[1], position$$3) : this.$findOpeningBracket(match$$5[2], position$$3)
+      }return match$$5[1] ? this.$findClosingBracket(match$$5[1], position$$4) : this.$findOpeningBracket(match$$5[2], position$$4)
     };
     this.$brackets = {")":"(", "(":")", "]":"[", "[":"]", "{":"}", "}":"{"};
-    this.$findOpeningBracket = function(bracket, position$$4) {
+    this.$findOpeningBracket = function(bracket, position$$5) {
       var openBracket = this.$brackets[bracket];
-      var column$$13 = position$$4.column - 2;
-      var row$$18 = position$$4.row;
+      var column$$13 = position$$5.column - 2;
+      var row$$18 = position$$5.row;
       var depth$$1 = 1;
       var line$$10 = this.getLine(row$$18);
       for(;;) {
@@ -4043,10 +4177,10 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         column$$13 = line$$10.length - 1
       }return null
     };
-    this.$findClosingBracket = function(bracket$$1, position$$5) {
+    this.$findClosingBracket = function(bracket$$1, position$$6) {
       var closingBracket = this.$brackets[bracket$$1];
-      var column$$14 = position$$5.column;
-      var row$$19 = position$$5.row;
+      var column$$14 = position$$6.column;
+      var row$$19 = position$$6.row;
       var depth$$2 = 1;
       var line$$11 = this.getLine(row$$19);
       var lineCount = this.getLength();
@@ -4070,12 +4204,12 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         column$$14 = 0
       }return null
     };
-    this.insert = function(position$$6, text$$10, fromUndo) {
-      var end$$9 = this.$insert(position$$6, text$$10, fromUndo);
-      this.fireChangeEvent(position$$6.row, position$$6.row == end$$9.row ? position$$6.row : undefined);
-      return end$$9
+    this.insert = function(position$$7, text$$11, fromUndo) {
+      var end$$11 = this.$insert(position$$7, text$$11, fromUndo);
+      this.fireChangeEvent(position$$7.row, position$$7.row == end$$11.row ? position$$7.row : undefined);
+      return end$$11
     };
-    this.multiRowInsert = function(rows$$2, column$$15, text$$11) {
+    this.multiRowInsert = function(rows$$2, column$$15, text$$12) {
       var lines$$4 = this.lines;
       var i$$33 = rows$$2.length - 1;
       for(;i$$33 >= 0;i$$33--) {
@@ -4084,15 +4218,15 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
           continue
         }var diff$$1 = column$$15 - lines$$4[row$$20].length;
         if(diff$$1 > 0) {
-          var padded = lang$$3.stringRepeat(" ", diff$$1) + text$$11;
+          var padded = lang$$3.stringRepeat(" ", diff$$1) + text$$12;
           var offset = -diff$$1
         }else {
-          padded = text$$11;
+          padded = text$$12;
           offset = 0
-        }var end$$10 = this.$insert({row:row$$20, column:column$$15 + offset}, padded, false)
-      }if(end$$10) {
-        this.fireChangeEvent(rows$$2[0], rows$$2[rows$$2.length - 1] + end$$10.row - rows$$2[0]);
-        return{rows:end$$10.row - rows$$2[0], columns:end$$10.column - column$$15}
+        }var end$$12 = this.$insert({row:row$$20, column:column$$15 + offset}, padded, false)
+      }if(end$$12) {
+        this.fireChangeEvent(rows$$2[0], rows$$2[rows$$2.length - 1] + end$$12.row - rows$$2[0]);
+        return{rows:end$$12.row - rows$$2[0], columns:end$$12.column - column$$15}
       }else {
         return{rows:0, columns:0}
       }
@@ -4100,47 +4234,47 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
     this.$insertLines = function(row$$21, lines$$5, fromUndo$$1) {
       if(lines$$5.length == 0) {
         return
-      }var args$$69 = [row$$21, 0];
-      args$$69.push.apply(args$$69, lines$$5);
-      this.lines.splice.apply(this.lines, args$$69);
+      }var args$$73 = [row$$21, 0];
+      args$$73.push.apply(args$$73, lines$$5);
+      this.lines.splice.apply(this.lines, args$$73);
       if(!fromUndo$$1 && this.$undoManager) {
         var nl = this.$getNewLineCharacter();
         this.$deltas.push({action:"insertText", range:new Range$$2(row$$21, 0, row$$21 + lines$$5.length, 0), text:lines$$5.join(nl) + nl});
         this.$informUndoManager.schedule()
       }
     };
-    this.$insert = function(position$$7, text$$12, fromUndo$$2) {
-      if(text$$12.length == 0) {
-        return position$$7
+    this.$insert = function(position$$8, text$$13, fromUndo$$2) {
+      if(text$$13.length == 0) {
+        return position$$8
       }this.modified = true;
-      this.lines.length <= 1 && this.$detectNewLine(text$$12);
-      var newLines = this.$split(text$$12);
-      if(this.$isNewLine(text$$12)) {
-        var line$$12 = this.lines[position$$7.row] || "";
-        this.lines[position$$7.row] = line$$12.substring(0, position$$7.column);
-        this.lines.splice(position$$7.row + 1, 0, line$$12.substring(position$$7.column));
-        var end$$11 = {row:position$$7.row + 1, column:0}
+      this.lines.length <= 1 && this.$detectNewLine(text$$13);
+      var newLines = this.$split(text$$13);
+      if(this.$isNewLine(text$$13)) {
+        var line$$12 = this.lines[position$$8.row] || "";
+        this.lines[position$$8.row] = line$$12.substring(0, position$$8.column);
+        this.lines.splice(position$$8.row + 1, 0, line$$12.substring(position$$8.column));
+        var end$$13 = {row:position$$8.row + 1, column:0}
       }else {
         if(newLines.length == 1) {
-          line$$12 = this.lines[position$$7.row] || "";
-          this.lines[position$$7.row] = line$$12.substring(0, position$$7.column) + text$$12 + line$$12.substring(position$$7.column);
-          end$$11 = {row:position$$7.row, column:position$$7.column + text$$12.length}
+          line$$12 = this.lines[position$$8.row] || "";
+          this.lines[position$$8.row] = line$$12.substring(0, position$$8.column) + text$$13 + line$$12.substring(position$$8.column);
+          end$$13 = {row:position$$8.row, column:position$$8.column + text$$13.length}
         }else {
-          line$$12 = this.lines[position$$7.row] || "";
-          var firstLine = line$$12.substring(0, position$$7.column) + newLines[0];
-          var lastLine = newLines[newLines.length - 1] + line$$12.substring(position$$7.column);
-          this.lines[position$$7.row] = firstLine;
-          this.$insertLines(position$$7.row + 1, [lastLine], true);
-          newLines.length > 2 && this.$insertLines(position$$7.row + 1, newLines.slice(1, -1), true);
-          end$$11 = {row:position$$7.row + newLines.length - 1, column:newLines[newLines.length - 1].length}
+          line$$12 = this.lines[position$$8.row] || "";
+          var firstLine = line$$12.substring(0, position$$8.column) + newLines[0];
+          var lastLine = newLines[newLines.length - 1] + line$$12.substring(position$$8.column);
+          this.lines[position$$8.row] = firstLine;
+          this.$insertLines(position$$8.row + 1, [lastLine], true);
+          newLines.length > 2 && this.$insertLines(position$$8.row + 1, newLines.slice(1, -1), true);
+          end$$13 = {row:position$$8.row + newLines.length - 1, column:newLines[newLines.length - 1].length}
         }
       }if(!fromUndo$$2 && this.$undoManager) {
-        this.$deltas.push({action:"insertText", range:Range$$2.fromPoints(position$$7, end$$11), text:text$$12});
+        this.$deltas.push({action:"insertText", range:Range$$2.fromPoints(position$$8, end$$13), text:text$$13});
         this.$informUndoManager.schedule()
-      }return end$$11
+      }return end$$13
     };
-    this.$isNewLine = function(text$$13) {
-      return text$$13 == "\r\n" || text$$13 == "\r" || text$$13 == "\n"
+    this.$isNewLine = function(text$$14) {
+      return text$$14 == "\r\n" || text$$14 == "\r" || text$$14 == "\n"
     };
     this.remove = function(range$$3, fromUndo$$3) {
       if(range$$3.isEmpty()) {
@@ -4158,8 +4292,8 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         var row$$22 = rows$$3[i$$34];
         if(row$$22 >= this.lines.length) {
           continue
-        }var end$$12 = this.$remove(new Range$$2(row$$22, range$$4.start.column, row$$22 + height$$1, range$$4.end.column), false)
-      }if(end$$12) {
+        }var end$$14 = this.$remove(new Range$$2(row$$22, range$$4.start.column, row$$22 + height$$1, range$$4.end.column), false)
+      }if(end$$14) {
         height$$1 < 0 ? this.fireChangeEvent(rows$$3[0] + height$$1, undefined) : this.fireChangeEvent(rows$$3[0], height$$1 == 0 ? rows$$3[rows$$3.length - 1] : undefined)
       }
     };
@@ -4205,12 +4339,18 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
         }
       }
     };
-    this.replace = function(range$$6, text$$14) {
-      this.$remove(range$$6);
-      var end$$13 = text$$14 ? this.$insert(range$$6.start, text$$14) : range$$6.start;
+    this.replace = function(range$$6, text$$15) {
+      if(text$$15.length == 0 && range$$6.isEmpty()) {
+        return range$$6.start
+      }else {
+        if(text$$15 == this.getTextRange(range$$6)) {
+          return range$$6.end
+        }
+      }this.$remove(range$$6);
+      var end$$15 = text$$15 ? this.$insert(range$$6.start, text$$15) : range$$6.start;
       var lastRemoved = range$$6.end.column == 0 ? range$$6.end.column - 1 : range$$6.end.column;
-      this.fireChangeEvent(range$$6.start.row, lastRemoved == end$$13.row ? lastRemoved : undefined);
-      return end$$13
+      this.fireChangeEvent(range$$6.start.row, lastRemoved == end$$15.row ? lastRemoved : undefined);
+      return end$$15
     };
     this.indentRows = function(startRow$$2, endRow$$2, indentString) {
       indentString = indentString.replace("\t", this.getTabString());
@@ -4251,18 +4391,18 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
     this.moveLinesUp = function(firstRow$$4, lastRow$$5) {
       if(firstRow$$4 <= 0) {
         return 0
-      }var removed = this.lines.slice(firstRow$$4, lastRow$$5 + 1);
+      }var removed$$1 = this.lines.slice(firstRow$$4, lastRow$$5 + 1);
       this.$remove(new Range$$2(firstRow$$4 - 1, this.lines[firstRow$$4 - 1].length, lastRow$$5, this.lines[lastRow$$5].length));
-      this.$insertLines(firstRow$$4 - 1, removed);
+      this.$insertLines(firstRow$$4 - 1, removed$$1);
       this.fireChangeEvent(firstRow$$4 - 1, lastRow$$5);
       return-1
     };
     this.moveLinesDown = function(firstRow$$5, lastRow$$6) {
       if(lastRow$$6 >= this.lines.length - 1) {
         return 0
-      }var removed$$1 = this.lines.slice(firstRow$$5, lastRow$$6 + 1);
+      }var removed$$2 = this.lines.slice(firstRow$$5, lastRow$$6 + 1);
       this.$remove(new Range$$2(firstRow$$5, 0, lastRow$$6 + 1, 0));
-      this.$insertLines(firstRow$$5 + 1, removed$$1);
+      this.$insertLines(firstRow$$5 + 1, removed$$2);
       this.fireChangeEvent(firstRow$$5, lastRow$$6 + 1);
       return 1
     };
@@ -4313,12 +4453,12 @@ define("ace/document", ["require", "exports", "module", "pilot/oop", "pilot/lang
       }return docColumn$$1
     }
   }).call(Document.prototype);
-  exports$$43.Document = Document
+  exports$$44.Document = Document
 });
-define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop", "ace/range"], function(require$$45, exports$$44) {
-  var lang$$4 = require$$45("pilot/lang");
-  var oop$$5 = require$$45("pilot/oop");
-  var Range$$3 = require$$45("ace/range").Range;
+define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop", "ace/range"], function(require$$46, exports$$45) {
+  var lang$$4 = require$$46("pilot/lang");
+  var oop$$5 = require$$46("pilot/oop");
+  var Range$$3 = require$$46("ace/range").Range;
   var Search = function() {
     this.$options = {needle:"", backwards:false, wrap:false, caseSensitive:false, wholeWord:false, scope:Search.ALL, regExp:false}
   };
@@ -4426,15 +4566,15 @@ define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop",
       }
       var searchSelection = this.$options.scope == Search.SELECTION;
       var range$$12 = doc$$11.getSelection().getRange();
-      var start$$9 = doc$$11.getSelection().getCursor();
+      var start$$11 = doc$$11.getSelection().getCursor();
       var firstRow$$7 = searchSelection ? range$$12.start.row : 0;
       var firstColumn = searchSelection ? range$$12.start.column : 0;
       var lastRow$$8 = searchSelection ? range$$12.end.row : doc$$11.getLength() - 1;
       var wrap = this.$options.wrap;
       return{forEach:function(callback$$10) {
-        var row$$32 = start$$9.row;
+        var row$$32 = start$$11.row;
         var line$$19 = getLine(row$$32);
-        var startIndex$$2 = start$$9.column;
+        var startIndex$$2 = start$$11.column;
         var stop = false;
         for(;!callback$$10(line$$19, startIndex$$2, row$$32);) {
           if(stop) {
@@ -4448,7 +4588,7 @@ define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop",
             }else {
               return
             }
-          }if(row$$32 == start$$9.row) {
+          }if(row$$32 == start$$11.row) {
             stop = true
           }line$$19 = getLine(row$$32)
         }
@@ -4457,14 +4597,14 @@ define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop",
     this.$backwardLineIterator = function(doc$$12) {
       var searchSelection$$1 = this.$options.scope == Search.SELECTION;
       var range$$13 = doc$$12.getSelection().getRange();
-      var start$$10 = searchSelection$$1 ? range$$13.end : range$$13.start;
+      var start$$12 = searchSelection$$1 ? range$$13.end : range$$13.start;
       var firstRow$$8 = searchSelection$$1 ? range$$13.start.row : 0;
       var firstColumn$$1 = searchSelection$$1 ? range$$13.start.column : 0;
       var lastRow$$9 = searchSelection$$1 ? range$$13.end.row : doc$$12.getLength() - 1;
       var wrap$$1 = this.$options.wrap;
       return{forEach:function(callback$$11) {
-        var row$$33 = start$$10.row;
-        var line$$20 = doc$$12.getLine(row$$33).substring(0, start$$10.column);
+        var row$$33 = start$$12.row;
+        var line$$20 = doc$$12.getLine(row$$33).substring(0, start$$12.column);
         var startIndex$$3 = 0;
         var stop$$1 = false;
         for(;!callback$$11(line$$20, startIndex$$3, row$$33);) {
@@ -4478,7 +4618,7 @@ define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop",
             }else {
               return
             }
-          }if(row$$33 == start$$10.row) {
+          }if(row$$33 == start$$12.row) {
             stop$$1 = true
           }line$$20 = doc$$12.getLine(row$$33);
           if(searchSelection$$1) {
@@ -4494,11 +4634,11 @@ define("ace/search", ["require", "exports", "module", "pilot/lang", "pilot/oop",
       }}
     }
   }).call(Search.prototype);
-  exports$$44.Search = Search
+  exports$$45.Search = Search
 });
-define("ace/background_tokenizer", ["require", "exports", "module", "pilot/oop", "pilot/event_emitter"], function(require$$46, exports$$45) {
-  var oop$$6 = require$$46("pilot/oop");
-  var EventEmitter$$6 = require$$46("pilot/event_emitter").EventEmitter;
+define("ace/background_tokenizer", ["require", "exports", "module", "pilot/oop", "pilot/event_emitter"], function(require$$47, exports$$46) {
+  var oop$$6 = require$$47("pilot/oop");
+  var EventEmitter$$6 = require$$47("pilot/event_emitter").EventEmitter;
   var BackgroundTokenizer = function(tokenizer, editor$$1) {
     this.running = false;
     this.textLines = [];
@@ -4541,8 +4681,8 @@ define("ace/background_tokenizer", ["require", "exports", "module", "pilot/oop",
       this.stop()
     };
     this.fireUpdateEvent = function(firstRow$$9, lastRow$$10) {
-      var data$$43 = {first:firstRow$$9, last:lastRow$$10};
-      this._dispatchEvent("update", {data:data$$43})
+      var data$$45 = {first:firstRow$$9, last:lastRow$$10};
+      this._dispatchEvent("update", {data:data$$45})
     };
     this.start = function(startRow$$3) {
       this.currentLine = Math.min(startRow$$3 || 0, this.currentLine, this.textLines.length);
@@ -4584,19 +4724,19 @@ define("ace/background_tokenizer", ["require", "exports", "module", "pilot/oop",
       }return rows$$4
     }
   }).call(BackgroundTokenizer.prototype);
-  exports$$45.BackgroundTokenizer = BackgroundTokenizer
+  exports$$46.BackgroundTokenizer = BackgroundTokenizer
 });
-define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event", "pilot/lang", "ace/textinput", "ace/keybinding", "ace/document", "ace/search", "ace/background_tokenizer", "ace/range", "pilot/event_emitter"], function(require$$47, exports$$46) {
-  var oop$$7 = require$$47("pilot/oop");
-  var event$$5 = require$$47("pilot/event");
-  var lang$$5 = require$$47("pilot/lang");
-  var TextInput$$1 = require$$47("ace/textinput").TextInput;
-  var KeyBinding$$1 = require$$47("ace/keybinding").KeyBinding;
-  var Document$$1 = require$$47("ace/document").Document;
-  var Search$$1 = require$$47("ace/search").Search;
-  var BackgroundTokenizer$$1 = require$$47("ace/background_tokenizer").BackgroundTokenizer;
-  var Range$$4 = require$$47("ace/range").Range;
-  var EventEmitter$$7 = require$$47("pilot/event_emitter").EventEmitter;
+define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event", "pilot/lang", "ace/textinput", "ace/keybinding", "ace/document", "ace/search", "ace/background_tokenizer", "ace/range", "pilot/event_emitter"], function(require$$48, exports$$47) {
+  var oop$$7 = require$$48("pilot/oop");
+  var event$$5 = require$$48("pilot/event");
+  var lang$$5 = require$$48("pilot/lang");
+  var TextInput$$1 = require$$48("ace/textinput").TextInput;
+  var KeyBinding$$1 = require$$48("ace/keybinding").KeyBinding;
+  var Document$$1 = require$$48("ace/document").Document;
+  var Search$$1 = require$$48("ace/search").Search;
+  var BackgroundTokenizer$$1 = require$$48("ace/background_tokenizer").BackgroundTokenizer;
+  var Range$$4 = require$$48("ace/range").Range;
+  var EventEmitter$$7 = require$$48("pilot/event_emitter").EventEmitter;
   var Editor = function(renderer, doc$$13) {
     var container = renderer.getContainerElement();
     this.container = container;
@@ -4604,14 +4744,14 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
     this.textInput = new TextInput$$1(container, this);
     this.keyBinding = new KeyBinding$$1(container, this);
     var self$$7 = this;
-    event$$5.addListener(container, "mousedown", function(e$$25) {
+    event$$5.addListener(container, "mousedown", function(e$$28) {
       setTimeout(function() {
         self$$7.focus()
       });
-      return event$$5.preventDefault(e$$25)
+      return event$$5.preventDefault(e$$28)
     });
-    event$$5.addListener(container, "selectstart", function(e$$26) {
-      return event$$5.preventDefault(e$$26)
+    event$$5.addListener(container, "selectstart", function(e$$29) {
+      return event$$5.preventDefault(e$$29)
     });
     var mouseTarget = renderer.getMouseEventTarget();
     event$$5.addListener(mouseTarget, "mousedown", this.onMouseDown.bind(this));
@@ -4716,20 +4856,20 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       this.renderer.hideCursor();
       this.renderer.visualizeBlur()
     };
-    this.onDocumentChange = function(e$$27) {
-      var data$$44 = e$$27.data;
-      this.bgTokenizer.start(data$$44.firstRow);
-      this.renderer.updateLines(data$$44.firstRow, data$$44.lastRow);
+    this.onDocumentChange = function(e$$30) {
+      var data$$46 = e$$30.data;
+      this.bgTokenizer.start(data$$46.firstRow);
+      this.renderer.updateLines(data$$46.firstRow, data$$46.lastRow);
       this.renderer.updateCursor(this.getCursorPosition(), this.$overwrite)
     };
-    this.onTokenizerUpdate = function(e$$28) {
-      var rows$$5 = e$$28.data;
+    this.onTokenizerUpdate = function(e$$31) {
+      var rows$$5 = e$$31.data;
       this.renderer.updateLines(rows$$5.first, rows$$5.last)
     };
-    this.onCursorChange = function(e$$29) {
+    this.onCursorChange = function(e$$32) {
       this.$highlightBrackets();
       this.renderer.updateCursor(this.getCursorPosition(), this.$overwrite);
-      if(!this.$blockScrolling && (!e$$29 || !e$$29.blockScrolling)) {
+      if(!this.$blockScrolling && (!e$$32 || !e$$32.blockScrolling)) {
         this.renderer.scrollCursorIntoView()
       }this.$updateHighlightActiveLine()
     };
@@ -4742,14 +4882,14 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
         this.$highlightLineMarker = this.renderer.addMarker(range$$15, "ace_active_line", "line")
       }
     };
-    this.onSelectionChange = function(e$$30) {
+    this.onSelectionChange = function(e$$33) {
       this.$selectionMarker && this.renderer.removeMarker(this.$selectionMarker);
       this.$selectionMarker = null;
       if(!this.selection.isEmpty()) {
         var range$$16 = this.selection.getRange();
         var style$$4 = this.getSelectionStyle();
         this.$selectionMarker = this.renderer.addMarker(range$$16, "ace_selection", style$$4)
-      }this.onCursorChange(e$$30)
+      }this.onCursorChange(e$$33)
     };
     this.onDocumentChangeBreakpoint = function() {
       this.renderer.setBreakpoints(this.doc.getBreakpoints())
@@ -4768,15 +4908,15 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
         this.bgTokenizer.addEventListener("update", onUpdate)
       }this.renderer.setTokenizer(this.bgTokenizer)
     };
-    this.onMouseDown = function(e$$31) {
-      var pageX = event$$5.getDocumentX(e$$31);
-      var pageY = event$$5.getDocumentY(e$$31);
+    this.onMouseDown = function(e$$34) {
+      var pageX = event$$5.getDocumentX(e$$34);
+      var pageY = event$$5.getDocumentY(e$$34);
       var pos$$4 = this.renderer.screenToTextCoordinates(pageX, pageY);
       pos$$4.row = Math.max(0, Math.min(pos$$4.row, this.doc.getLength() - 1));
-      if(event$$5.getButton(e$$31) != 0) {
+      if(event$$5.getButton(e$$34) != 0) {
         this.selection.isEmpty() && this.moveCursorToPosition(pos$$4);
         return
-      }if(e$$31.shiftKey) {
+      }if(e$$34.shiftKey) {
         this.selection.selectToPosition(pos$$4)
       }else {
         this.moveCursorToPosition(pos$$4);
@@ -4785,9 +4925,9 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       var self$$9 = this;
       var mousePageX;
       var mousePageY;
-      var onMouseSelection = function(e$$32) {
-        mousePageX = event$$5.getDocumentX(e$$32);
-        mousePageY = event$$5.getDocumentY(e$$32)
+      var onMouseSelection = function(e$$35) {
+        mousePageX = event$$5.getDocumentX(e$$35);
+        mousePageY = event$$5.getDocumentY(e$$35)
       };
       var onMouseSelectionEnd = function() {
         clearInterval(timerId);
@@ -4812,7 +4952,7 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       };
       event$$5.capture(this.container, onMouseSelection, onMouseSelectionEnd);
       var timerId = setInterval(onSelectionInterval, 20);
-      return event$$5.preventDefault(e$$31)
+      return event$$5.preventDefault(e$$34)
     };
     this.onMouseDoubleClick = function() {
       this.selection.selectWord();
@@ -4824,10 +4964,10 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       this.$clickSelection = this.getSelectionRange();
       this.$updateDesiredColumn()
     };
-    this.onMouseWheel = function(e$$35) {
+    this.onMouseWheel = function(e$$38) {
       var speed = this.$scrollSpeed * 2;
-      this.renderer.scrollBy(e$$35.wheelX * speed, e$$35.wheelY * speed);
-      return event$$5.preventDefault(e$$35)
+      this.renderer.scrollBy(e$$38.wheelX * speed, e$$38.wheelY * speed);
+      return event$$5.preventDefault(e$$38)
     };
     this.getCopyText = function() {
       if(this.selection.isEmpty()) {
@@ -4844,15 +4984,15 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
         this.clearSelection()
       }
     };
-    this.onTextInput = function(text$$15) {
+    this.onTextInput = function(text$$16) {
       if(this.$readOnly) {
         return
       }var cursor$$9 = this.getCursorPosition();
-      text$$15 = text$$15.replace("\t", this.doc.getTabString());
+      text$$16 = text$$16.replace("\t", this.doc.getTabString());
       if(this.selection.isEmpty()) {
         if(this.$overwrite) {
           var range$$17 = new Range$$4.fromPoints(cursor$$9, cursor$$9);
-          range$$17.end.column += text$$15.length;
+          range$$17.end.column += text$$16.length;
           this.doc.remove(range$$17)
         }
       }else {
@@ -4861,16 +5001,16 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       }this.clearSelection();
       var _self$$1 = this;
       this.bgTokenizer.getState(cursor$$9.row, function(lineState) {
-        var shouldOutdent = _self$$1.mode.checkOutdent(lineState, _self$$1.doc.getLine(cursor$$9.row), text$$15);
+        var shouldOutdent = _self$$1.mode.checkOutdent(lineState, _self$$1.doc.getLine(cursor$$9.row), text$$16);
         var line$$21 = _self$$1.doc.getLine(cursor$$9.row);
         var lineIndent = _self$$1.mode.getNextLineIndent(lineState, line$$21.slice(0, cursor$$9.column), _self$$1.doc.getTabString());
-        var end$$14 = _self$$1.doc.insert(cursor$$9, text$$15);
+        var end$$16 = _self$$1.doc.insert(cursor$$9, text$$16);
         _self$$1.bgTokenizer.getState(cursor$$9.row, function(lineState$$1) {
-          if(cursor$$9.row !== end$$14.row) {
+          if(cursor$$9.row !== end$$16.row) {
             var size$$1 = _self$$1.doc.getTabSize();
             var minIndent = Number.MAX_VALUE;
             var row$$36 = cursor$$9.row + 1;
-            for(;row$$36 <= end$$14.row;++row$$36) {
+            for(;row$$36 <= end$$16.row;++row$$36) {
               var indent = 0;
               line$$21 = _self$$1.doc.getLine(row$$36);
               var i$$42 = 0;
@@ -4888,7 +5028,7 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
                 minIndent = Math.min(indent, minIndent)
               }
             }row$$36 = cursor$$9.row + 1;
-            for(;row$$36 <= end$$14.row;++row$$36) {
+            for(;row$$36 <= end$$16.row;++row$$36) {
               var outdent = minIndent;
               line$$21 = _self$$1.doc.getLine(row$$36);
               i$$42 = 0;
@@ -4901,12 +5041,12 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
                   }
                 }
               }_self$$1.doc.replace(new Range$$4(row$$36, 0, row$$36, line$$21.length), line$$21.substr(i$$42))
-            }end$$14.column += _self$$1.doc.indentRows(cursor$$9.row + 1, end$$14.row, lineIndent)
+            }end$$16.column += _self$$1.doc.indentRows(cursor$$9.row + 1, end$$16.row, lineIndent)
           }else {
             if(shouldOutdent) {
-              end$$14.column += _self$$1.mode.autoOutdent(lineState$$1, _self$$1.doc, cursor$$9.row)
+              end$$16.column += _self$$1.mode.autoOutdent(lineState$$1, _self$$1.doc, cursor$$9.row)
             }
-          }_self$$1.moveCursorToPosition(end$$14);
+          }_self$$1.moveCursorToPosition(end$$16);
           _self$$1.renderer.scrollCursorIntoView()
         })
       })
@@ -5009,8 +5149,8 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
         var indentString$$1;
         if(this.doc.getUseSoftTabs()) {
           var size$$2 = doc$$15.getTabSize();
-          var position$$8 = this.getCursorPosition();
-          var column$$17 = doc$$15.documentToScreenColumn(position$$8.row, position$$8.column);
+          var position$$9 = this.getCursorPosition();
+          var column$$17 = doc$$15.documentToScreenColumn(position$$9.row, position$$9.column);
           count$$2 = size$$2 - column$$17 % size$$2;
           indentString$$1 = lang$$5.stringRepeat(" ", count$$2)
         }else {
@@ -5090,8 +5230,8 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
     this.onCompositionStart = function() {
       this.renderer.showComposition(this.getCursorPosition())
     };
-    this.onCompositionUpdate = function(text$$17) {
-      this.renderer.setCompositionText(text$$17)
+    this.onCompositionUpdate = function(text$$18) {
+      this.renderer.setCompositionText(text$$18)
     };
     this.onCompositionEnd = function() {
       this.renderer.hideComposition()
@@ -5317,10 +5457,10 @@ define("ace/editor", ["require", "exports", "module", "pilot/oop", "pilot/event"
       this.doc.getUndoManager().redo()
     }
   }).call(Editor.prototype);
-  exports$$46.Editor = Editor
+  exports$$47.Editor = Editor
 });
-define("ace/layer/gutter", ["require", "exports", "module", "pilot/dom"], function(require$$48, exports$$47) {
-  var dom$$2 = require$$48("pilot/dom");
+define("ace/layer/gutter", ["require", "exports", "module", "pilot/dom"], function(require$$49, exports$$48) {
+  var dom$$2 = require$$49("pilot/dom");
   var Gutter = function(parentEl) {
     this.element = document.createElement("div");
     this.element.className = "ace_layer ace_gutter-layer";
@@ -5350,11 +5490,11 @@ define("ace/layer/gutter", ["require", "exports", "module", "pilot/dom"], functi
       this.element.style.height = config$$3.minHeight + "px"
     }
   }).call(Gutter.prototype);
-  exports$$47.Gutter = Gutter
+  exports$$48.Gutter = Gutter
 });
-define("ace/layer/marker", ["require", "exports", "module", "ace/range", "pilot/dom"], function(require$$49, exports$$48) {
-  var Range$$5 = require$$49("ace/range").Range;
-  var dom$$3 = require$$49("pilot/dom");
+define("ace/layer/marker", ["require", "exports", "module", "ace/range", "pilot/dom"], function(require$$50, exports$$49) {
+  var Range$$5 = require$$50("ace/range").Range;
+  var dom$$3 = require$$50("pilot/dom");
   var Marker = function(parentEl$$1) {
     this.element = document.createElement("div");
     this.element.className = "ace_layer ace_marker-layer";
@@ -5433,13 +5573,13 @@ define("ace/layer/marker", ["require", "exports", "module", "ace/range", "pilot/
       stringBuilder$$2.push("<div class='", clazz$$3, "' style='", "height:", height$$3, "px;", "width:", width$$2, "px;", "top:", top$$1, "px;", "left:", left$$1, "px;'></div>")
     }
   }).call(Marker.prototype);
-  exports$$48.Marker = Marker
+  exports$$49.Marker = Marker
 });
-define("ace/layer/text", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/lang", "pilot/event_emitter"], function(require$$50, exports$$49) {
-  var oop$$8 = require$$50("pilot/oop");
-  var dom$$4 = require$$50("pilot/dom");
-  var lang$$6 = require$$50("pilot/lang");
-  var EventEmitter$$8 = require$$50("pilot/event_emitter").EventEmitter;
+define("ace/layer/text", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/lang", "pilot/event_emitter"], function(require$$51, exports$$50) {
+  var oop$$8 = require$$51("pilot/oop");
+  var dom$$4 = require$$51("pilot/dom");
+  var lang$$6 = require$$51("pilot/lang");
+  var EventEmitter$$8 = require$$51("pilot/event_emitter").EventEmitter;
   var Text = function(parentEl$$2) {
     this.element = document.createElement("div");
     this.element.className = "ace_layer ace_text-layer";
@@ -5615,10 +5755,10 @@ define("ace/layer/text", ["require", "exports", "module", "pilot/oop", "pilot/do
       }
     }
   }).call(Text.prototype);
-  exports$$49.Text = Text
+  exports$$50.Text = Text
 });
-define("ace/layer/cursor", ["require", "exports", "module", "pilot/dom"], function(require$$51, exports$$50) {
-  var dom$$5 = require$$51("pilot/dom");
+define("ace/layer/cursor", ["require", "exports", "module", "pilot/dom"], function(require$$52, exports$$51) {
+  var dom$$5 = require$$52("pilot/dom");
   var Cursor = function(parentEl$$3) {
     this.element = document.createElement("div");
     this.element.className = "ace_layer ace_cursor-layer";
@@ -5631,8 +5771,8 @@ define("ace/layer/cursor", ["require", "exports", "module", "pilot/dom"], functi
     this.setDocument = function(doc$$18) {
       this.doc = doc$$18
     };
-    this.setCursor = function(position$$9, overwrite$$1) {
-      this.position = {row:position$$9.row, column:this.doc.documentToScreenColumn(position$$9.row, position$$9.column)};
+    this.setCursor = function(position$$10, overwrite$$1) {
+      this.position = {row:position$$10.row, column:this.doc.documentToScreenColumn(position$$10.row, position$$10.column)};
       overwrite$$1 ? dom$$5.addCssClass(this.cursor, "ace_overwrite") : dom$$5.removeCssClass(this.cursor, "ace_overwrite")
     };
     this.hideCursor = function() {
@@ -5681,13 +5821,13 @@ define("ace/layer/cursor", ["require", "exports", "module", "pilot/dom"], functi
       this.restartTimer()
     }
   }).call(Cursor.prototype);
-  exports$$50.Cursor = Cursor
+  exports$$51.Cursor = Cursor
 });
-define("ace/scrollbar", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/event", "pilot/event_emitter"], function(require$$52, exports$$51) {
-  var oop$$9 = require$$52("pilot/oop");
-  var dom$$6 = require$$52("pilot/dom");
-  var event$$6 = require$$52("pilot/event");
-  var EventEmitter$$9 = require$$52("pilot/event_emitter").EventEmitter;
+define("ace/scrollbar", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/event", "pilot/event_emitter"], function(require$$53, exports$$52) {
+  var oop$$9 = require$$53("pilot/oop");
+  var dom$$6 = require$$53("pilot/dom");
+  var event$$6 = require$$53("pilot/event");
+  var EventEmitter$$9 = require$$53("pilot/event_emitter").EventEmitter;
   var ScrollBar = function(parent) {
     this.element = document.createElement("div");
     this.element.className = "ace_sb";
@@ -5716,10 +5856,10 @@ define("ace/scrollbar", ["require", "exports", "module", "pilot/oop", "pilot/dom
       this.element.scrollTop = scrollTop$$1
     }
   }).call(ScrollBar.prototype);
-  exports$$51.ScrollBar = ScrollBar
+  exports$$52.ScrollBar = ScrollBar
 });
-define("ace/renderloop", ["require", "exports", "module", "pilot/event"], function(require$$53, exports$$52) {
-  var event$$7 = require$$53("pilot/event");
+define("ace/renderloop", ["require", "exports", "module", "pilot/event"], function(require$$54, exports$$53) {
+  var event$$7 = require$$54("pilot/event");
   var RenderLoop = function(onRender) {
     this.onRender = onRender;
     this.pending = false;
@@ -5744,9 +5884,9 @@ define("ace/renderloop", ["require", "exports", "module", "pilot/event"], functi
       this.setTimeoutZero = function(callback$$18) {
         if(!this.attached) {
           var _self$$8 = this;
-          event$$7.addListener(window, "message", function(e$$36) {
-            if(e$$36.source == window && _self$$8.callback && e$$36.data == _self$$8.messageName) {
-              event$$7.stopPropagation(e$$36);
+          event$$7.addListener(window, "message", function(e$$39) {
+            if(e$$39.source == window && _self$$8.callback && e$$39.data == _self$$8.messageName) {
+              event$$7.stopPropagation(e$$39);
               _self$$8.callback()
             }
           });
@@ -5760,21 +5900,21 @@ define("ace/renderloop", ["require", "exports", "module", "pilot/event"], functi
       }
     }
   }).call(RenderLoop.prototype);
-  exports$$52.RenderLoop = RenderLoop
+  exports$$53.RenderLoop = RenderLoop
 });
-define("ace/virtual_renderer", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/event", "ace/layer/gutter", "ace/layer/marker", "ace/layer/text", "ace/layer/cursor", "ace/scrollbar", "ace/renderloop", "pilot/event_emitter", 'text!ace/css/editor.css!.ace_editor {\n  position: absolute;\n  overflow: hidden;\n\n  font-family: "Menlo", "Monaco", "Courier New", monospace;\n  font-size: 12px;  \n}\n\n.ace_scroller {\n  position: absolute;\n  overflow-x: scroll;\n  overflow-y: hidden;     \n}\n\n.ace_gutter {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  height: 100%;\n}\n\n.ace_editor .ace_sb {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: scroll;\n  right: 0;\n}\n\n.ace_editor .ace_sb div {\n  position: absolute;\n  width: 1px;\n  left: 0px;\n}\n\n.ace_editor .ace_printMargin {\n  position: absolute;\n  height: 100%;\n}\n\n.ace_layer {\n  z-index: 0;\n  position: absolute;\n  overflow: hidden;  \n  white-space: nowrap;\n  height: 100%;\n}\n\n.ace_text-layer {\n  font-family: Monaco, "Courier New", monospace;\n  color: black;\n}\n\n.ace_cursor-layer {\n  cursor: text;\n}\n\n.ace_cursor {\n  z-index: 3;\n  position: absolute;\n}\n\n.ace_line {\n  white-space: nowrap;\n}\n\n.ace_marker-layer {\n}\n\n.ace_marker-layer .ace_step {\n  position: absolute;\n  z-index: 2;\n}\n\n.ace_marker-layer .ace_selection {\n  position: absolute;\n  z-index: 3;\n}\n\n.ace_marker-layer .ace_bracket {\n  position: absolute;\n  z-index: 4;\n}\n\n.ace_marker-layer .ace_active_line {\n  position: absolute;\n  z-index: 1;\n}'], 
-function(require$$54, exports$$53) {
-  var oop$$10 = require$$54("pilot/oop");
-  var dom$$7 = require$$54("pilot/dom");
-  var event$$8 = require$$54("pilot/event");
-  var GutterLayer = require$$54("ace/layer/gutter").Gutter;
-  var MarkerLayer = require$$54("ace/layer/marker").Marker;
-  var TextLayer = require$$54("ace/layer/text").Text;
-  var CursorLayer = require$$54("ace/layer/cursor").Cursor;
-  var ScrollBar$$1 = require$$54("ace/scrollbar").ScrollBar;
-  var RenderLoop$$1 = require$$54("ace/renderloop").RenderLoop;
-  var EventEmitter$$10 = require$$54("pilot/event_emitter").EventEmitter;
-  var editorCss$$1 = require$$54('text!ace/css/editor.css!.ace_editor {\n  position: absolute;\n  overflow: hidden;\n\n  font-family: "Menlo", "Monaco", "Courier New", monospace;\n  font-size: 12px;  \n}\n\n.ace_scroller {\n  position: absolute;\n  overflow-x: scroll;\n  overflow-y: hidden;     \n}\n\n.ace_gutter {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  height: 100%;\n}\n\n.ace_editor .ace_sb {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: scroll;\n  right: 0;\n}\n\n.ace_editor .ace_sb div {\n  position: absolute;\n  width: 1px;\n  left: 0px;\n}\n\n.ace_editor .ace_printMargin {\n  position: absolute;\n  height: 100%;\n}\n\n.ace_layer {\n  z-index: 0;\n  position: absolute;\n  overflow: hidden;  \n  white-space: nowrap;\n  height: 100%;\n}\n\n.ace_text-layer {\n  font-family: Monaco, "Courier New", monospace;\n  color: black;\n}\n\n.ace_cursor-layer {\n  cursor: text;\n}\n\n.ace_cursor {\n  z-index: 3;\n  position: absolute;\n}\n\n.ace_line {\n  white-space: nowrap;\n}\n\n.ace_marker-layer {\n}\n\n.ace_marker-layer .ace_step {\n  position: absolute;\n  z-index: 2;\n}\n\n.ace_marker-layer .ace_selection {\n  position: absolute;\n  z-index: 3;\n}\n\n.ace_marker-layer .ace_bracket {\n  position: absolute;\n  z-index: 4;\n}\n\n.ace_marker-layer .ace_active_line {\n  position: absolute;\n  z-index: 1;\n}');
+define("ace/virtual_renderer", ["require", "exports", "module", "pilot/oop", "pilot/dom", "pilot/event", "ace/layer/gutter", "ace/layer/marker", "ace/layer/text", "ace/layer/cursor", "ace/scrollbar", "ace/renderloop", "pilot/event_emitter", 'text!ace/css/editor.css!.ace_editor {\n  position: absolute;\n  overflow: hidden;\n\n  font-family: "Menlo", "Monaco", "Courier New", monospace;\n  font-size: 12px;  \n}\n\n.ace_scroller {\n  position: absolute;\n  overflow-x: scroll;\n  overflow-y: hidden;     \n}\n\n.ace_gutter {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  height: 100%;\n}\n\n.ace_editor .ace_sb {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: scroll;\n  right: 0;\n}\n\n.ace_editor .ace_sb div {\n  position: absolute;\n  width: 1px;\n  left: 0px;\n}\n\n.ace_editor .ace_printMargin {\n  position: absolute;\n  height: 100%;\n}\n\n.ace_layer {\n  z-index: 0;\n  position: absolute;\n  overflow: hidden;  \n  white-space: nowrap;\n  height: 100%;\n  width: 100%;\n}\n\n.ace_text-layer {\n  font-family: Monaco, "Courier New", monospace;\n  color: black;\n}\n\n.ace_cursor-layer {\n  cursor: text;\n}\n\n.ace_cursor {\n  z-index: 3;\n  position: absolute;\n}\n\n.ace_line {\n  white-space: nowrap;\n}\n\n.ace_marker-layer {\n}\n\n.ace_marker-layer .ace_step {\n  position: absolute;\n  z-index: 2;\n}\n\n.ace_marker-layer .ace_selection {\n  position: absolute;\n  z-index: 3;\n}\n\n.ace_marker-layer .ace_bracket {\n  position: absolute;\n  z-index: 4;\n}\n\n.ace_marker-layer .ace_active_line {\n  position: absolute;\n  z-index: 1;\n}'], 
+function(require$$55, exports$$54) {
+  var oop$$10 = require$$55("pilot/oop");
+  var dom$$7 = require$$55("pilot/dom");
+  var event$$8 = require$$55("pilot/event");
+  var GutterLayer = require$$55("ace/layer/gutter").Gutter;
+  var MarkerLayer = require$$55("ace/layer/marker").Marker;
+  var TextLayer = require$$55("ace/layer/text").Text;
+  var CursorLayer = require$$55("ace/layer/cursor").Cursor;
+  var ScrollBar$$1 = require$$55("ace/scrollbar").ScrollBar;
+  var RenderLoop$$1 = require$$55("ace/renderloop").RenderLoop;
+  var EventEmitter$$10 = require$$55("pilot/event_emitter").EventEmitter;
+  var editorCss$$1 = require$$55('text!ace/css/editor.css!.ace_editor {\n  position: absolute;\n  overflow: hidden;\n\n  font-family: "Menlo", "Monaco", "Courier New", monospace;\n  font-size: 12px;  \n}\n\n.ace_scroller {\n  position: absolute;\n  overflow-x: scroll;\n  overflow-y: hidden;     \n}\n\n.ace_gutter {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  height: 100%;\n}\n\n.ace_editor .ace_sb {\n  position: absolute;\n  overflow-x: hidden;\n  overflow-y: scroll;\n  right: 0;\n}\n\n.ace_editor .ace_sb div {\n  position: absolute;\n  width: 1px;\n  left: 0px;\n}\n\n.ace_editor .ace_printMargin {\n  position: absolute;\n  height: 100%;\n}\n\n.ace_layer {\n  z-index: 0;\n  position: absolute;\n  overflow: hidden;  \n  white-space: nowrap;\n  height: 100%;\n  width: 100%;\n}\n\n.ace_text-layer {\n  font-family: Monaco, "Courier New", monospace;\n  color: black;\n}\n\n.ace_cursor-layer {\n  cursor: text;\n}\n\n.ace_cursor {\n  z-index: 3;\n  position: absolute;\n}\n\n.ace_line {\n  white-space: nowrap;\n}\n\n.ace_marker-layer {\n}\n\n.ace_marker-layer .ace_step {\n  position: absolute;\n  z-index: 2;\n}\n\n.ace_marker-layer .ace_selection {\n  position: absolute;\n  z-index: 3;\n}\n\n.ace_marker-layer .ace_bracket {\n  position: absolute;\n  z-index: 4;\n}\n\n.ace_marker-layer .ace_active_line {\n  position: absolute;\n  z-index: 1;\n}');
   dom$$7.importCssString(editorCss$$1);
   var VirtualRenderer = function(container$$1, theme$$1) {
     this.container = container$$1;
@@ -5787,7 +5927,7 @@ function(require$$54, exports$$53) {
     this.scroller.className = "ace_scroller";
     this.container.appendChild(this.scroller);
     this.content = document.createElement("div");
-    this.content.style.position = "absolute";
+    this.content.style.cssText = "position:absolute;box-sizing:border-box;-moz-box-sizing:border-box;-webkit-box-sizing:border-box";
     this.scroller.appendChild(this.content);
     this.$gutterLayer = new GutterLayer(this.$gutter);
     this.$markerLayer = new MarkerLayer(this.content);
@@ -5879,10 +6019,10 @@ function(require$$54, exports$$53) {
       this.$textLayer.setTokenizer(tokenizer$$4);
       this.$loop.schedule(this.CHANGE_TEXT)
     };
-    this.$onGutterClick = function(e$$37) {
-      var pageX$$1 = event$$8.getDocumentX(e$$37);
-      var pageY$$1 = event$$8.getDocumentY(e$$37);
-      this._dispatchEvent("gutter" + e$$37.type, {row:this.screenToTextCoordinates(pageX$$1, pageY$$1).row, htmlEvent:e$$37})
+    this.$onGutterClick = function(e$$40) {
+      var pageX$$1 = event$$8.getDocumentX(e$$40);
+      var pageY$$1 = event$$8.getDocumentY(e$$40);
+      this._dispatchEvent("gutter" + e$$40.type, {row:this.screenToTextCoordinates(pageX$$1, pageY$$1).row, htmlEvent:e$$40})
     };
     this.setShowInvisibles = function(showInvisibles$$2) {
       this.$textLayer.setShowInvisibles(showInvisibles$$2) && this.$loop.schedule(this.CHANGE_TEXT)
@@ -5951,8 +6091,8 @@ function(require$$54, exports$$53) {
       this.content.style.padding = "0 " + padding + "px";
       this.$loop.schedule(this.CHANGE_FULL)
     };
-    this.onScroll = function(e$$38) {
-      this.scrollToY(e$$38.data)
+    this.onScroll = function(e$$41) {
+      this.scrollToY(e$$41.data)
     };
     this.$updateScrollBar = function() {
       this.scrollBar.setInnerHeight(this.doc.getLength() * this.lineHeight);
@@ -5996,19 +6136,11 @@ function(require$$54, exports$$53) {
       var offset$$3 = this.scrollTop % this.lineHeight;
       var minHeight = this.$size.scrollerHeight + this.lineHeight;
       var longestLine$$1 = this.$getLongestLine();
-      var widthChanged = !this.layerConfig ? true : this.layerConfig.width != longestLine$$1;
       var lineCount$$1 = Math.ceil(minHeight / this.lineHeight);
       var firstRow$$20 = Math.max(0, Math.round((this.scrollTop - offset$$3) / this.lineHeight));
       var lastRow$$21 = Math.max(0, Math.min(this.lines.length, firstRow$$20 + lineCount$$1) - 1);
       this.layerConfig = {width:longestLine$$1, padding:this.$padding, firstRow:firstRow$$20, lastRow:lastRow$$21, lineHeight:this.lineHeight, characterWidth:this.characterWidth, minHeight:minHeight, offset:offset$$3, height:this.$size.scrollerHeight};
-      var i$$48 = 0;
-      for(;i$$48 < this.layers.length;i$$48++) {
-        var layer = this.layers[i$$48];
-        if(widthChanged) {
-          var style$$9 = layer.element.style;
-          style$$9.width = longestLine$$1 + "px"
-        }
-      }this.$gutterLayer.element.style.marginTop = -offset$$3 + "px";
+      this.$gutterLayer.element.style.marginTop = -offset$$3 + "px";
       this.content.style.marginTop = -offset$$3 + "px";
       this.content.style.width = longestLine$$1 + "px";
       this.content.style.height = minHeight + "px"
@@ -6057,8 +6189,8 @@ function(require$$54, exports$$53) {
       this.$gutterLayer.setBreakpoints(rows$$11);
       this.$loop.schedule(this.CHANGE_GUTTER)
     };
-    this.updateCursor = function(position$$10, overwrite$$2) {
-      this.$cursorLayer.setCursor(position$$10, overwrite$$2);
+    this.updateCursor = function(position$$11, overwrite$$2) {
+      this.$cursorLayer.setCursor(position$$11, overwrite$$2);
       this.$loop.schedule(this.CHANGE_CURSOR)
     };
     this.hideCursor = function() {
@@ -6142,7 +6274,7 @@ function(require$$54, exports$$53) {
       var _self$$9 = this;
       if(!theme$$2 || typeof theme$$2 == "string") {
         theme$$2 = theme$$2 || "ace/theme/textmate";
-        require$$54([theme$$2], function(theme$$4) {
+        require$$55([theme$$2], function(theme$$4) {
           afterLoad(theme$$4)
         })
       }else {
@@ -6150,40 +6282,40 @@ function(require$$54, exports$$53) {
       }_self$$9 = this
     }
   }).call(VirtualRenderer.prototype);
-  exports$$53.VirtualRenderer = VirtualRenderer
+  exports$$54.VirtualRenderer = VirtualRenderer
 });
 define("ace/theme/textmate", ["require", "exports", "module", "pilot/dom", "text!ace/theme/tm.css!.ace-tm .ace_editor {\n  border: 2px solid rgb(159, 159, 159);\n}\n\n.ace-tm .ace_editor.ace_focus {\n  border: 2px solid #327fbd;\n}\n\n.ace-tm .ace_gutter {\n  width: 50px;\n  background: #e8e8e8;\n  color: #333;\n  overflow : hidden;\n}\n\n.ace-tm .ace_gutter-layer {\n  width: 100%;\n  text-align: right;\n}\n\n.ace-tm .ace_gutter-layer .ace_gutter-cell {\n  padding-right: 6px;\n}\n\n.ace-tm .ace_editor .ace_printMargin {\n  width: 1px;\n  background: #e8e8e8;\n}\n\n.ace-tm .ace_text-layer {\n  cursor: text;\n}\n\n.ace-tm .ace_cursor {\n  border-left: 2px solid black;\n}\n\n.ace-tm .ace_cursor.ace_overwrite {\n  border-left: 0px;\n  border-bottom: 1px solid black;\n}\n        \n.ace-tm .ace_line .ace_invisible {\n  color: rgb(191, 191, 191);\n}\n\n.ace-tm .ace_line .ace_keyword {\n  color: blue;\n}\n\n.ace-tm .ace_line .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_language {\n  color: rgb(88, 92, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_invalid {\n  background-color: rgb(153, 0, 0);\n  color: white;\n}\n\n.ace-tm .ace_line .ace_support.ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-tm .ace_line .ace_support.ace_constant {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_support.ace_type,\n.ace-tm .ace_line .ace_support.ace_class {\n  color: rgb(109, 121, 222);\n}\n\n.ace-tm .ace_line .ace_keyword.ace_operator {\n  color: rgb(104, 118, 135);\n}\n\n.ace-tm .ace_line .ace_string {\n  color: rgb(3, 106, 7);\n}\n\n.ace-tm .ace_line .ace_comment {\n  color: rgb(76, 136, 107);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc {\n  color: rgb(0, 102, 255);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc.ace_tag {\n  color: rgb(128, 159, 191);\n}\n\n.ace-tm .ace_line .ace_constant.ace_numeric {\n  color: rgb(0, 0, 205);\n}\n\n.ace-tm .ace_line .ace_variable {\n  color: rgb(49, 132, 149);\n}\n\n.ace-tm .ace_line .ace_xml_pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-tm .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n\n.ace-tm .ace_marker-layer .ace_step {\n  background: rgb(252, 255, 0);\n}\n\n.ace-tm .ace_marker-layer .ace_stack {\n  background: rgb(164, 229, 101);\n}\n\n.ace-tm .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-tm .ace_marker-layer .ace_active_line {\n  background: rgb(232, 242, 254);\n}\n\n.ace-tm .ace_string.ace_regex {\n  color: rgb(255, 0, 0)   \n}"], 
-function(require$$55, exports$$54) {
-  var dom$$8 = require$$55("pilot/dom");
-  var cssText$$1 = require$$55("text!ace/theme/tm.css!.ace-tm .ace_editor {\n  border: 2px solid rgb(159, 159, 159);\n}\n\n.ace-tm .ace_editor.ace_focus {\n  border: 2px solid #327fbd;\n}\n\n.ace-tm .ace_gutter {\n  width: 50px;\n  background: #e8e8e8;\n  color: #333;\n  overflow : hidden;\n}\n\n.ace-tm .ace_gutter-layer {\n  width: 100%;\n  text-align: right;\n}\n\n.ace-tm .ace_gutter-layer .ace_gutter-cell {\n  padding-right: 6px;\n}\n\n.ace-tm .ace_editor .ace_printMargin {\n  width: 1px;\n  background: #e8e8e8;\n}\n\n.ace-tm .ace_text-layer {\n  cursor: text;\n}\n\n.ace-tm .ace_cursor {\n  border-left: 2px solid black;\n}\n\n.ace-tm .ace_cursor.ace_overwrite {\n  border-left: 0px;\n  border-bottom: 1px solid black;\n}\n        \n.ace-tm .ace_line .ace_invisible {\n  color: rgb(191, 191, 191);\n}\n\n.ace-tm .ace_line .ace_keyword {\n  color: blue;\n}\n\n.ace-tm .ace_line .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_language {\n  color: rgb(88, 92, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_invalid {\n  background-color: rgb(153, 0, 0);\n  color: white;\n}\n\n.ace-tm .ace_line .ace_support.ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-tm .ace_line .ace_support.ace_constant {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_support.ace_type,\n.ace-tm .ace_line .ace_support.ace_class {\n  color: rgb(109, 121, 222);\n}\n\n.ace-tm .ace_line .ace_keyword.ace_operator {\n  color: rgb(104, 118, 135);\n}\n\n.ace-tm .ace_line .ace_string {\n  color: rgb(3, 106, 7);\n}\n\n.ace-tm .ace_line .ace_comment {\n  color: rgb(76, 136, 107);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc {\n  color: rgb(0, 102, 255);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc.ace_tag {\n  color: rgb(128, 159, 191);\n}\n\n.ace-tm .ace_line .ace_constant.ace_numeric {\n  color: rgb(0, 0, 205);\n}\n\n.ace-tm .ace_line .ace_variable {\n  color: rgb(49, 132, 149);\n}\n\n.ace-tm .ace_line .ace_xml_pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-tm .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n\n.ace-tm .ace_marker-layer .ace_step {\n  background: rgb(252, 255, 0);\n}\n\n.ace-tm .ace_marker-layer .ace_stack {\n  background: rgb(164, 229, 101);\n}\n\n.ace-tm .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-tm .ace_marker-layer .ace_active_line {\n  background: rgb(232, 242, 254);\n}\n\n.ace-tm .ace_string.ace_regex {\n  color: rgb(255, 0, 0)   \n}");
+function(require$$56, exports$$55) {
+  var dom$$8 = require$$56("pilot/dom");
+  var cssText$$1 = require$$56("text!ace/theme/tm.css!.ace-tm .ace_editor {\n  border: 2px solid rgb(159, 159, 159);\n}\n\n.ace-tm .ace_editor.ace_focus {\n  border: 2px solid #327fbd;\n}\n\n.ace-tm .ace_gutter {\n  width: 50px;\n  background: #e8e8e8;\n  color: #333;\n  overflow : hidden;\n}\n\n.ace-tm .ace_gutter-layer {\n  width: 100%;\n  text-align: right;\n}\n\n.ace-tm .ace_gutter-layer .ace_gutter-cell {\n  padding-right: 6px;\n}\n\n.ace-tm .ace_editor .ace_printMargin {\n  width: 1px;\n  background: #e8e8e8;\n}\n\n.ace-tm .ace_text-layer {\n  cursor: text;\n}\n\n.ace-tm .ace_cursor {\n  border-left: 2px solid black;\n}\n\n.ace-tm .ace_cursor.ace_overwrite {\n  border-left: 0px;\n  border-bottom: 1px solid black;\n}\n        \n.ace-tm .ace_line .ace_invisible {\n  color: rgb(191, 191, 191);\n}\n\n.ace-tm .ace_line .ace_keyword {\n  color: blue;\n}\n\n.ace-tm .ace_line .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_language {\n  color: rgb(88, 92, 246);\n}\n\n.ace-tm .ace_line .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_invalid {\n  background-color: rgb(153, 0, 0);\n  color: white;\n}\n\n.ace-tm .ace_line .ace_support.ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-tm .ace_line .ace_support.ace_constant {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_line .ace_support.ace_type,\n.ace-tm .ace_line .ace_support.ace_class {\n  color: rgb(109, 121, 222);\n}\n\n.ace-tm .ace_line .ace_keyword.ace_operator {\n  color: rgb(104, 118, 135);\n}\n\n.ace-tm .ace_line .ace_string {\n  color: rgb(3, 106, 7);\n}\n\n.ace-tm .ace_line .ace_comment {\n  color: rgb(76, 136, 107);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc {\n  color: rgb(0, 102, 255);\n}\n\n.ace-tm .ace_line .ace_comment.ace_doc.ace_tag {\n  color: rgb(128, 159, 191);\n}\n\n.ace-tm .ace_line .ace_constant.ace_numeric {\n  color: rgb(0, 0, 205);\n}\n\n.ace-tm .ace_line .ace_variable {\n  color: rgb(49, 132, 149);\n}\n\n.ace-tm .ace_line .ace_xml_pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-tm .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n\n.ace-tm .ace_marker-layer .ace_step {\n  background: rgb(252, 255, 0);\n}\n\n.ace-tm .ace_marker-layer .ace_stack {\n  background: rgb(164, 229, 101);\n}\n\n.ace-tm .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-tm .ace_marker-layer .ace_active_line {\n  background: rgb(232, 242, 254);\n}\n\n.ace-tm .ace_string.ace_regex {\n  color: rgb(255, 0, 0)   \n}");
   dom$$8.importCssString(cssText$$1);
-  exports$$54.cssClass = "ace-tm"
+  exports$$55.cssClass = "ace-tm"
 });
-define("ace/mode/doc_comment_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/text_highlight_rules"], function(require$$56, exports$$55) {
-  var oop$$11 = require$$56("pilot/oop");
-  var TextHighlightRules$$2 = require$$56("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/doc_comment_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/text_highlight_rules"], function(require$$57, exports$$56) {
+  var oop$$11 = require$$57("pilot/oop");
+  var TextHighlightRules$$2 = require$$57("ace/mode/text_highlight_rules").TextHighlightRules;
   var DocCommentHighlightRules = function() {
     this.$rules = {start:[{token:"comment.doc", regex:"\\*\\/", next:"start"}, {token:"comment.doc.tag", regex:"@[\\w\\d_]+"}, {token:"comment.doc", regex:"s+"}, {token:"comment.doc", regex:"TODO"}, {token:"comment.doc", regex:"[^@\\*]+"}, {token:"comment.doc", regex:"."}]}
   };
   oop$$11.inherits(DocCommentHighlightRules, TextHighlightRules$$2);
   (function() {
-    this.getStartRule = function(start$$11) {
-      return{token:"comment.doc", regex:"\\/\\*(?=\\*)", next:start$$11}
+    this.getStartRule = function(start$$13) {
+      return{token:"comment.doc", regex:"\\/\\*(?=\\*)", next:start$$13}
     }
   }).call(DocCommentHighlightRules.prototype);
-  exports$$55.DocCommentHighlightRules = DocCommentHighlightRules
+  exports$$56.DocCommentHighlightRules = DocCommentHighlightRules
 });
-define("ace/mode/javascript_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/doc_comment_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$57, exports$$56) {
-  var oop$$12 = require$$57("pilot/oop");
-  var lang$$7 = require$$57("pilot/lang");
-  var DocCommentHighlightRules$$1 = require$$57("ace/mode/doc_comment_highlight_rules").DocCommentHighlightRules;
-  var TextHighlightRules$$3 = require$$57("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/javascript_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/doc_comment_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$58, exports$$57) {
+  var oop$$12 = require$$58("pilot/oop");
+  var lang$$7 = require$$58("pilot/lang");
+  var DocCommentHighlightRules$$1 = require$$58("ace/mode/doc_comment_highlight_rules").DocCommentHighlightRules;
+  var TextHighlightRules$$3 = require$$58("ace/mode/text_highlight_rules").TextHighlightRules;
   JavaScriptHighlightRules = function() {
     var docComment = new DocCommentHighlightRules$$1;
     var keywords = lang$$7.arrayToMap("break|case|catch|continue|default|delete|do|else|finally|for|function|if|in|instanceof|new|return|switch|throw|try|typeof|var|while|with".split("|"));
     var buildinConstants = lang$$7.arrayToMap("null|Infinity|NaN|undefined".split("|"));
     var futureReserved = lang$$7.arrayToMap("class|enum|extends|super|const|export|import|implements|let|private|public|yield|interface|package|protected|static".split("|"));
-    this.$rules = {start:[{token:"comment", regex:"\\/\\/.*$"}, docComment.getStartRule("doc-start"), {token:"comment", regex:"\\/\\*", next:"comment"}, {token:"string.regexp", regex:"[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/][gimy]*\\s*(?=[).,;]|$)"}, {token:"string", regex:'["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'}, {token:"string", regex:'["].*\\\\$', next:"qqstring"}, {token:"string", regex:"['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"}, {token:"string", regex:"['].*\\\\$", next:"qstring"}, {token:"constant.numeric", 
+    this.$rules = {start:[{token:"comment", regex:"\\/\\/.*$"}, docComment.getStartRule("doc-start"), {token:"comment", regex:"\\/\\*", next:"comment"}, {token:"string.regexp", regex:"[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"}, {token:"string", regex:'["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'}, {token:"string", regex:'["].*\\\\$', next:"qqstring"}, {token:"string", regex:"['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"}, {token:"string", regex:"['].*\\\\$", next:"qstring"}, {token:"constant.numeric", 
     regex:"0[xX][0-9a-fA-F]+\\b"}, {token:"constant.numeric", regex:"[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"}, {token:"constant.language.boolean", regex:"(?:true|false)\\b"}, {token:function(value$$48) {
       return value$$48 == "this" ? "variable.language" : keywords[value$$48] ? "keyword" : buildinConstants[value$$48] ? "constant.language" : futureReserved[value$$48] ? "invalid.illegal" : value$$48 == "debugger" ? "invalid.deprecated" : "identifier"
     }, regex:"[a-zA-Z_$][a-zA-Z0-9_$]*\\b"}, {token:"keyword.operator", regex:"!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|===|==|=|!=|!==|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|instanceof|new|delete|typeof|void)"}, {token:"lparen", regex:"[[({]"}, {token:"rparen", regex:"[\\])}]"}, {token:"text", regex:"\\s+"}], comment:[{token:"comment", regex:".*?\\*\\/", next:"start"}, {token:"comment", regex:".+"}], qqstring:[{token:"string", regex:'(?:(?:\\\\.)|(?:[^"\\\\]))*?"', 
@@ -6192,10 +6324,10 @@ define("ace/mode/javascript_highlight_rules", ["require", "exports", "module", "
     this.$rules["doc-start"][0].next = "start"
   };
   oop$$12.inherits(JavaScriptHighlightRules, TextHighlightRules$$3);
-  exports$$56.JavaScriptHighlightRules = JavaScriptHighlightRules
+  exports$$57.JavaScriptHighlightRules = JavaScriptHighlightRules
 });
-define("ace/mode/matching_brace_outdent", ["require", "exports", "module", "ace/range"], function(require$$58, exports$$57) {
-  var Range$$6 = require$$58("ace/range").Range;
+define("ace/mode/matching_brace_outdent", ["require", "exports", "module", "ace/range"], function(require$$59, exports$$58) {
+  var Range$$6 = require$$59("ace/range").Range;
   var MatchingBraceOutdent = function() {
   };
   (function() {
@@ -6224,15 +6356,15 @@ define("ace/mode/matching_brace_outdent", ["require", "exports", "module", "ace/
       }return""
     }
   }).call(MatchingBraceOutdent.prototype);
-  exports$$57.MatchingBraceOutdent = MatchingBraceOutdent
+  exports$$58.MatchingBraceOutdent = MatchingBraceOutdent
 });
-define("ace/mode/javascript", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/javascript_highlight_rules", "ace/mode/matching_brace_outdent", "ace/range"], function(require$$59, exports$$58) {
-  var oop$$13 = require$$59("pilot/oop");
-  var TextMode$$1 = require$$59("ace/mode/text").Mode;
-  var Tokenizer$$2 = require$$59("ace/tokenizer").Tokenizer;
-  var JavaScriptHighlightRules$$1 = require$$59("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
-  var MatchingBraceOutdent$$1 = require$$59("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
-  var Range$$7 = require$$59("ace/range").Range;
+define("ace/mode/javascript", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/javascript_highlight_rules", "ace/mode/matching_brace_outdent", "ace/range"], function(require$$60, exports$$59) {
+  var oop$$13 = require$$60("pilot/oop");
+  var TextMode$$1 = require$$60("ace/mode/text").Mode;
+  var Tokenizer$$2 = require$$60("ace/tokenizer").Tokenizer;
+  var JavaScriptHighlightRules$$1 = require$$60("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
+  var MatchingBraceOutdent$$1 = require$$60("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+  var Range$$7 = require$$60("ace/range").Range;
   var Mode$$1 = function() {
     this.$tokenizer = new Tokenizer$$2((new JavaScriptHighlightRules$$1).getRules());
     this.$outdent = new MatchingBraceOutdent$$1
@@ -6242,19 +6374,19 @@ define("ace/mode/javascript", ["require", "exports", "module", "pilot/oop", "ace
     this.toggleCommentLines = function(state$$9, doc$$21, startRow$$4, endRow$$3) {
       var outdent$$1 = true;
       var re$$6 = /^(\s*)\/\//;
-      var i$$49 = startRow$$4;
-      for(;i$$49 <= endRow$$3;i$$49++) {
-        if(!re$$6.test(doc$$21.getLine(i$$49))) {
+      var i$$48 = startRow$$4;
+      for(;i$$48 <= endRow$$3;i$$48++) {
+        if(!re$$6.test(doc$$21.getLine(i$$48))) {
           outdent$$1 = false;
           break
         }
       }if(outdent$$1) {
         var deleteRange$$1 = new Range$$7(0, 0, 0, 0);
-        i$$49 = startRow$$4;
-        for(;i$$49 <= endRow$$3;i$$49++) {
-          var line$$25 = doc$$21.getLine(i$$49).replace(re$$6, "$1");
-          deleteRange$$1.start.row = i$$49;
-          deleteRange$$1.end.row = i$$49;
+        i$$48 = startRow$$4;
+        for(;i$$48 <= endRow$$3;i$$48++) {
+          var line$$25 = doc$$21.getLine(i$$48).replace(re$$6, "$1");
+          deleteRange$$1.start.row = i$$48;
+          deleteRange$$1.end.row = i$$48;
           deleteRange$$1.end.column = line$$25.length + 2;
           doc$$21.replace(deleteRange$$1, line$$25)
         }return-2
@@ -6294,19 +6426,19 @@ define("ace/mode/javascript", ["require", "exports", "module", "pilot/oop", "ace
       return this.$outdent.autoOutdent(doc$$22, row$$58)
     }
   }).call(Mode$$1.prototype);
-  exports$$58.Mode = Mode$$1
+  exports$$59.Mode = Mode$$1
 });
-define("ace/mode/css_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/text_highlight_rules"], function(require$$60, exports$$59) {
-  var oop$$14 = require$$60("pilot/oop");
-  var lang$$8 = require$$60("pilot/lang");
-  var TextHighlightRules$$4 = require$$60("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/css_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/text_highlight_rules"], function(require$$61, exports$$60) {
+  var oop$$14 = require$$61("pilot/oop");
+  var lang$$8 = require$$61("pilot/lang");
+  var TextHighlightRules$$4 = require$$61("ace/mode/text_highlight_rules").TextHighlightRules;
   var CssHighlightRules = function() {
     function ic(str$$12) {
       var re$$7 = [];
       var chars$$1 = str$$12.split("");
-      var i$$50 = 0;
-      for(;i$$50 < chars$$1.length;i$$50++) {
-        re$$7.push("[", chars$$1[i$$50].toLowerCase(), chars$$1[i$$50].toUpperCase(), "]")
+      var i$$49 = 0;
+      for(;i$$49 < chars$$1.length;i$$49++) {
+        re$$7.push("[", chars$$1[i$$49].toLowerCase(), chars$$1[i$$49].toUpperCase(), "]")
       }return re$$7.join("")
     }
     var properties = lang$$8.arrayToMap("azimuth|background-attachment|background-color|background-image|background-position|background-repeat|background|border-bottom-color|border-bottom-style|border-bottom-width|border-bottom|border-collapse|border-color|border-left-color|border-left-style|border-left-width|border-left|border-right-color|border-right-style|border-right-width|border-right|border-spacing|border-style|border-top-color|border-top-style|border-top-width|border-top|border-width|border|bottom|caption-side|clear|clip|color|content|counter-increment|counter-reset|cue-after|cue-before|cue|cursor|direction|display|elevation|empty-cells|float|font-family|font-size-adjust|font-size|font-stretch|font-style|font-variant|font-weight|font|height|left|letter-spacing|line-height|list-style-image|list-style-position|list-style-type|list-style|margin-bottom|margin-left|margin-right|margin-top|marker-offset|margin|marks|max-height|max-width|min-height|min-width|-moz-border-radius|opacity|orphans|outline-color|outline-style|outline-width|outline|overflow|overflow-x|overflow-y|padding-bottom|padding-left|padding-right|padding-top|padding|page-break-after|page-break-before|page-break-inside|page|pause-after|pause-before|pause|pitch-range|pitch|play-during|position|quotes|richness|right|size|speak-header|speak-numeral|speak-punctuation|speech-rate|speak|stress|table-layout|text-align|text-decoration|text-indent|text-shadow|text-transform|top|unicode-bidi|vertical-align|visibility|voice-family|volume|white-space|widows|width|word-spacing|z-index".split("|"));
@@ -6321,14 +6453,14 @@ define("ace/mode/css_highlight_rules", ["require", "exports", "module", "pilot/o
     }, regex:"\\-?[a-zA-Z_][a-zA-Z0-9_\\-]*"}], comment:[{token:"comment", regex:".*?\\*\\/", next:"start"}, {token:"comment", regex:".+"}]}
   };
   oop$$14.inherits(CssHighlightRules, TextHighlightRules$$4);
-  exports$$59.CssHighlightRules = CssHighlightRules
+  exports$$60.CssHighlightRules = CssHighlightRules
 });
-define("ace/mode/css", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/css_highlight_rules", "ace/mode/matching_brace_outdent"], function(require$$61, exports$$60) {
-  var oop$$15 = require$$61("pilot/oop");
-  var TextMode$$2 = require$$61("ace/mode/text").Mode;
-  var Tokenizer$$3 = require$$61("ace/tokenizer").Tokenizer;
-  var CssHighlightRules$$1 = require$$61("ace/mode/css_highlight_rules").CssHighlightRules;
-  var MatchingBraceOutdent$$2 = require$$61("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+define("ace/mode/css", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/css_highlight_rules", "ace/mode/matching_brace_outdent"], function(require$$62, exports$$61) {
+  var oop$$15 = require$$62("pilot/oop");
+  var TextMode$$2 = require$$62("ace/mode/text").Mode;
+  var Tokenizer$$3 = require$$62("ace/tokenizer").Tokenizer;
+  var CssHighlightRules$$1 = require$$62("ace/mode/css_highlight_rules").CssHighlightRules;
+  var MatchingBraceOutdent$$2 = require$$62("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
   var Mode$$2 = function() {
     this.$tokenizer = new Tokenizer$$3((new CssHighlightRules$$1).getRules());
     this.$outdent = new MatchingBraceOutdent$$2
@@ -6352,13 +6484,13 @@ define("ace/mode/css", ["require", "exports", "module", "pilot/oop", "ace/mode/t
       return this.$outdent.autoOutdent(doc$$23, row$$59)
     }
   }).call(Mode$$2.prototype);
-  exports$$60.Mode = Mode$$2
+  exports$$61.Mode = Mode$$2
 });
-define("ace/mode/html_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/css_highlight_rules", "ace/mode/javascript_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$62, exports$$61) {
-  var oop$$16 = require$$62("pilot/oop");
-  var CssHighlightRules$$2 = require$$62("ace/mode/css_highlight_rules").CssHighlightRules;
-  var JavaScriptHighlightRules$$2 = require$$62("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
-  var TextHighlightRules$$5 = require$$62("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/html_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/css_highlight_rules", "ace/mode/javascript_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$63, exports$$62) {
+  var oop$$16 = require$$63("pilot/oop");
+  var CssHighlightRules$$2 = require$$63("ace/mode/css_highlight_rules").CssHighlightRules;
+  var JavaScriptHighlightRules$$2 = require$$63("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
+  var TextHighlightRules$$5 = require$$63("ace/mode/text_highlight_rules").TextHighlightRules;
   var HtmlHighlightRules = function() {
     this.$rules = {start:[{token:"text", regex:"<\\!\\[CDATA\\[", next:"cdata"}, {token:"xml_pe", regex:"<\\?.*?\\?>"}, {token:"comment", regex:"<\\!--", next:"comment"}, {token:"text", regex:"<(?=s*script)", next:"script"}, {token:"text", regex:"<(?=s*style)", next:"css"}, {token:"text", regex:"<\\/?", next:"tag"}, {token:"text", regex:"\\s+"}, {token:"text", regex:"[^<]+"}], script:[{token:"text", regex:">", next:"js-start"}, {token:"keyword", regex:"[-_a-zA-Z0-9:]+"}, {token:"text", regex:"\\s+"}, 
     {token:"string", regex:'".*?"'}, {token:"string", regex:"'.*?'"}], css:[{token:"text", regex:">", next:"css-start"}, {token:"keyword", regex:"[-_a-zA-Z0-9:]+"}, {token:"text", regex:"\\s+"}, {token:"string", regex:'".*?"'}, {token:"string", regex:"'.*?'"}], tag:[{token:"text", regex:">", next:"start"}, {token:"keyword", regex:"[-_a-zA-Z0-9:]+"}, {token:"text", regex:"\\s+"}, {token:"string", regex:'".*?"'}, {token:"string", regex:"'.*?'"}], cdata:[{token:"text", regex:"\\]\\]>", next:"start"}, 
@@ -6371,15 +6503,15 @@ define("ace/mode/html_highlight_rules", ["require", "exports", "module", "pilot/
     this.$rules["css-start"].unshift({token:"text", regex:"<\\/(?=style)", next:"tag"})
   };
   oop$$16.inherits(HtmlHighlightRules, TextHighlightRules$$5);
-  exports$$61.HtmlHighlightRules = HtmlHighlightRules
+  exports$$62.HtmlHighlightRules = HtmlHighlightRules
 });
-define("ace/mode/html", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/mode/javascript", "ace/mode/css", "ace/tokenizer", "ace/mode/html_highlight_rules"], function(require$$63, exports$$62) {
-  var oop$$17 = require$$63("pilot/oop");
-  var TextMode$$3 = require$$63("ace/mode/text").Mode;
-  var JavaScriptMode = require$$63("ace/mode/javascript").Mode;
-  var CssMode = require$$63("ace/mode/css").Mode;
-  var Tokenizer$$4 = require$$63("ace/tokenizer").Tokenizer;
-  var HtmlHighlightRules$$1 = require$$63("ace/mode/html_highlight_rules").HtmlHighlightRules;
+define("ace/mode/html", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/mode/javascript", "ace/mode/css", "ace/tokenizer", "ace/mode/html_highlight_rules"], function(require$$64, exports$$63) {
+  var oop$$17 = require$$64("pilot/oop");
+  var TextMode$$3 = require$$64("ace/mode/text").Mode;
+  var JavaScriptMode = require$$64("ace/mode/javascript").Mode;
+  var CssMode = require$$64("ace/mode/css").Mode;
+  var Tokenizer$$4 = require$$64("ace/tokenizer").Tokenizer;
+  var HtmlHighlightRules$$1 = require$$64("ace/mode/html_highlight_rules").HtmlHighlightRules;
   var Mode$$3 = function() {
     this.$tokenizer = new Tokenizer$$4((new HtmlHighlightRules$$1).getRules());
     this.$js = new JavaScriptMode;
@@ -6406,36 +6538,36 @@ define("ace/mode/html", ["require", "exports", "module", "pilot/oop", "ace/mode/
     this.autoOutdent = function() {
       return this.$delegate("autoOutdent", arguments)
     };
-    this.$delegate = function(method, args$$70, defaultHandler) {
-      var state$$20 = args$$70[0];
+    this.$delegate = function(method, args$$74, defaultHandler) {
+      var state$$20 = args$$74[0];
       var split$$1 = state$$20.split("js-");
       if(!split$$1[0] && split$$1[1]) {
-        args$$70[0] = split$$1[1];
-        return this.$js[method].apply(this.$js, args$$70)
+        args$$74[0] = split$$1[1];
+        return this.$js[method].apply(this.$js, args$$74)
       }split$$1 = state$$20.split("css-");
       if(!split$$1[0] && split$$1[1]) {
-        args$$70[0] = split$$1[1];
-        return this.$css[method].apply(this.$css, args$$70)
+        args$$74[0] = split$$1[1];
+        return this.$css[method].apply(this.$css, args$$74)
       }return defaultHandler ? defaultHandler() : undefined
     }
   }).call(Mode$$3.prototype);
-  exports$$62.Mode = Mode$$3
+  exports$$63.Mode = Mode$$3
 });
-define("ace/mode/xml_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/text_highlight_rules"], function(require$$64, exports$$63) {
-  var oop$$18 = require$$64("pilot/oop");
-  var TextHighlightRules$$6 = require$$64("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/xml_highlight_rules", ["require", "exports", "module", "pilot/oop", "ace/mode/text_highlight_rules"], function(require$$65, exports$$64) {
+  var oop$$18 = require$$65("pilot/oop");
+  var TextHighlightRules$$6 = require$$65("ace/mode/text_highlight_rules").TextHighlightRules;
   var XmlHighlightRules = function() {
     this.$rules = {start:[{token:"text", regex:"<\\!\\[CDATA\\[", next:"cdata"}, {token:"xml_pe", regex:"<\\?.*?\\?>"}, {token:"comment", regex:"<\\!--", next:"comment"}, {token:"text", regex:"<\\/?", next:"tag"}, {token:"text", regex:"\\s+"}, {token:"text", regex:"[^<]+"}], tag:[{token:"text", regex:">", next:"start"}, {token:"keyword", regex:"[-_a-zA-Z0-9:]+"}, {token:"text", regex:"\\s+"}, {token:"string", regex:'".*?"'}, {token:"string", regex:"'.*?'"}], cdata:[{token:"text", regex:"\\]\\]>", 
     next:"start"}, {token:"text", regex:"\\s+"}, {token:"text", regex:"(?:[^\\]]|\\](?!\\]>))+"}], comment:[{token:"comment", regex:".*?--\>", next:"start"}, {token:"comment", regex:".+"}]}
   };
   oop$$18.inherits(XmlHighlightRules, TextHighlightRules$$6);
-  exports$$63.XmlHighlightRules = XmlHighlightRules
+  exports$$64.XmlHighlightRules = XmlHighlightRules
 });
-define("ace/mode/xml", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/xml_highlight_rules"], function(require$$65, exports$$64) {
-  var oop$$19 = require$$65("pilot/oop");
-  var TextMode$$4 = require$$65("ace/mode/text").Mode;
-  var Tokenizer$$5 = require$$65("ace/tokenizer").Tokenizer;
-  var XmlHighlightRules$$1 = require$$65("ace/mode/xml_highlight_rules").XmlHighlightRules;
+define("ace/mode/xml", ["require", "exports", "module", "pilot/oop", "ace/mode/text", "ace/tokenizer", "ace/mode/xml_highlight_rules"], function(require$$66, exports$$65) {
+  var oop$$19 = require$$66("pilot/oop");
+  var TextMode$$4 = require$$66("ace/mode/text").Mode;
+  var Tokenizer$$5 = require$$66("ace/tokenizer").Tokenizer;
+  var XmlHighlightRules$$1 = require$$66("ace/mode/xml_highlight_rules").XmlHighlightRules;
   var Mode$$4 = function() {
     this.$tokenizer = new Tokenizer$$5((new XmlHighlightRules$$1).getRules())
   };
@@ -6445,12 +6577,12 @@ define("ace/mode/xml", ["require", "exports", "module", "pilot/oop", "ace/mode/t
       return this.$getIndent(line$$32)
     }
   }).call(Mode$$4.prototype);
-  exports$$64.Mode = Mode$$4
+  exports$$65.Mode = Mode$$4
 });
-define("ace/mode/python_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "./text_highlight_rules"], function(require$$66, exports$$65) {
-  var oop$$20 = require$$66("pilot/oop");
-  var lang$$9 = require$$66("pilot/lang");
-  var TextHighlightRules$$7 = require$$66("./text_highlight_rules").TextHighlightRules;
+define("ace/mode/python_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "./text_highlight_rules"], function(require$$67, exports$$66) {
+  var oop$$20 = require$$67("pilot/oop");
+  var lang$$9 = require$$67("pilot/lang");
+  var TextHighlightRules$$7 = require$$67("./text_highlight_rules").TextHighlightRules;
   PythonHighlightRules = function() {
     var keywords$$1 = lang$$9.arrayToMap("and|as|assert|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|not|or|pass|print|raise|return|try|while|with|yield".split("|"));
     var builtinConstants = lang$$9.arrayToMap("True|False|None|NotImplemented|Ellipsis|__debug__".split("|"));
@@ -6474,15 +6606,15 @@ define("ace/mode/python_highlight_rules", ["require", "exports", "module", "pilo
     }, regex:"[a-zA-Z_$][a-zA-Z0-9_$]*\\b"}, {token:"keyword.operator", regex:"\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="}, {token:"lparen", regex:"[\\[\\(\\{]"}, {token:"rparen", regex:"[\\]\\)\\}]"}, {token:"text", regex:"\\s+"}], qqstring:[{token:"string", regex:'(?:^"{3})*?"{3}', next:"start"}, {token:"string", regex:".+"}], qstring:[{token:"string", regex:"(?:^'{3})*?'{3}", next:"start"}, {token:"string", regex:".+"}]}
   };
   oop$$20.inherits(PythonHighlightRules, TextHighlightRules$$7);
-  exports$$65.PythonHighlightRules = PythonHighlightRules
+  exports$$66.PythonHighlightRules = PythonHighlightRules
 });
-define("ace/mode/python", ["require", "exports", "module", "pilot/oop", "./text", "../tokenizer", "./python_highlight_rules", "./matching_brace_outdent", "../range"], function(require$$67, exports$$66) {
-  var oop$$21 = require$$67("pilot/oop");
-  var TextMode$$5 = require$$67("./text").Mode;
-  var Tokenizer$$6 = require$$67("../tokenizer").Tokenizer;
-  var PythonHighlightRules$$1 = require$$67("./python_highlight_rules").PythonHighlightRules;
-  var MatchingBraceOutdent$$3 = require$$67("./matching_brace_outdent").MatchingBraceOutdent;
-  var Range$$8 = require$$67("../range").Range;
+define("ace/mode/python", ["require", "exports", "module", "pilot/oop", "./text", "../tokenizer", "./python_highlight_rules", "./matching_brace_outdent", "../range"], function(require$$68, exports$$67) {
+  var oop$$21 = require$$68("pilot/oop");
+  var TextMode$$5 = require$$68("./text").Mode;
+  var Tokenizer$$6 = require$$68("../tokenizer").Tokenizer;
+  var PythonHighlightRules$$1 = require$$68("./python_highlight_rules").PythonHighlightRules;
+  var MatchingBraceOutdent$$3 = require$$68("./matching_brace_outdent").MatchingBraceOutdent;
+  var Range$$8 = require$$68("../range").Range;
   var Mode$$5 = function() {
     this.$tokenizer = new Tokenizer$$6((new PythonHighlightRules$$1).getRules());
     this.$outdent = new MatchingBraceOutdent$$3
@@ -6492,19 +6624,19 @@ define("ace/mode/python", ["require", "exports", "module", "pilot/oop", "./text"
     this.toggleCommentLines = function(state$$22, doc$$26, startRow$$6, endRow$$5) {
       var outdent$$2 = true;
       var re$$8 = /^(\s*)#/;
-      var i$$51 = startRow$$6;
-      for(;i$$51 <= endRow$$5;i$$51++) {
-        if(!re$$8.test(doc$$26.getLine(i$$51))) {
+      var i$$50 = startRow$$6;
+      for(;i$$50 <= endRow$$5;i$$50++) {
+        if(!re$$8.test(doc$$26.getLine(i$$50))) {
           outdent$$2 = false;
           break
         }
       }if(outdent$$2) {
         var deleteRange$$2 = new Range$$8(0, 0, 0, 0);
-        i$$51 = startRow$$6;
-        for(;i$$51 <= endRow$$5;i$$51++) {
-          var line$$33 = doc$$26.getLine(i$$51).replace(re$$8, "$1");
-          deleteRange$$2.start.row = i$$51;
-          deleteRange$$2.end.row = i$$51;
+        i$$50 = startRow$$6;
+        for(;i$$50 <= endRow$$5;i$$50++) {
+          var line$$33 = doc$$26.getLine(i$$50).replace(re$$8, "$1");
+          deleteRange$$2.start.row = i$$50;
+          deleteRange$$2.end.row = i$$50;
           deleteRange$$2.end.column = line$$33.length + 2;
           doc$$26.replace(deleteRange$$2, line$$33)
         }return-2
@@ -6532,13 +6664,13 @@ define("ace/mode/python", ["require", "exports", "module", "pilot/oop", "./text"
       return this.$outdent.autoOutdent(doc$$27, row$$61)
     }
   }).call(Mode$$5.prototype);
-  exports$$66.Mode = Mode$$5
+  exports$$67.Mode = Mode$$5
 });
-define("ace/mode/php_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/doc_comment_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$68, exports$$67) {
-  var oop$$22 = require$$68("pilot/oop");
-  var lang$$10 = require$$68("pilot/lang");
-  var DocCommentHighlightRules$$2 = require$$68("ace/mode/doc_comment_highlight_rules").DocCommentHighlightRules;
-  var TextHighlightRules$$8 = require$$68("ace/mode/text_highlight_rules").TextHighlightRules;
+define("ace/mode/php_highlight_rules", ["require", "exports", "module", "pilot/oop", "pilot/lang", "ace/mode/doc_comment_highlight_rules", "ace/mode/text_highlight_rules"], function(require$$69, exports$$68) {
+  var oop$$22 = require$$69("pilot/oop");
+  var lang$$10 = require$$69("pilot/lang");
+  var DocCommentHighlightRules$$2 = require$$69("ace/mode/doc_comment_highlight_rules").DocCommentHighlightRules;
+  var TextHighlightRules$$8 = require$$69("ace/mode/text_highlight_rules").TextHighlightRules;
   PhpHighlightRules = function() {
     var docComment$$1 = new DocCommentHighlightRules$$2;
     var builtinFunctions$$1 = lang$$10.arrayToMap("abs|acos|acosh|addcslashes|addslashes|aggregate|aggregate_info|aggregate_methods|aggregate_methods_by_list|aggregate_methods_by_regexp|aggregate_properties|aggregate_properties_by_list|aggregate_properties_by_regexp|aggregation_info|apache_child_terminate|apache_get_modules|apache_get_version|apache_getenv|apache_lookup_uri|apache_note|apache_request_headers|apache_response_headers|apache_setenv|array|array_change_key_case|array_chunk|array_combine|array_count_values|array_diff|array_diff_assoc|array_diff_uassoc|array_fill|array_filter|array_flip|array_intersect|array_intersect_assoc|array_key_exists|array_keys|array_map|array_merge|array_merge_recursive|array_multisort|array_pad|array_pop|array_push|array_rand|array_reduce|array_reverse|array_search|array_shift|array_slice|array_splice|array_sum|array_udiff|array_udiff_assoc|array_udiff_uassoc|array_unique|array_unshift|array_values|array_walk|arsort|ascii2ebcdic|asin|asinh|asort|aspell_check|aspell_check_raw|aspell_new|aspell_suggest|assert|assert_options|atan|atan2|atanh|base64_decode|base64_encode|base_convert|basename|bcadd|bccomp|bcdiv|bcmod|bcmul|bcpow|bcpowmod|bcscale|bcsqrt|bcsub|bin2hex|bind_textdomain_codeset|bindec|bindtextdomain|bzclose|bzcompress|bzdecompress|bzerrno|bzerror|bzerrstr|bzflush|bzopen|bzread|bzwrite|cal_days_in_month|cal_from_jd|cal_info|cal_to_jd|call_user_func|call_user_func_array|call_user_method|call_user_method_array|ccvs_add|ccvs_auth|ccvs_command|ccvs_count|ccvs_delete|ccvs_done|ccvs_init|ccvs_lookup|ccvs_new|ccvs_report|ccvs_return|ccvs_reverse|ccvs_sale|ccvs_status|ccvs_textvalue|ccvs_void|ceil|chdir|checkdate|checkdnsrr|chgrp|chmod|chop|chown|chr|chroot|chunk_split|class_exists|clearstatcache|closedir|closelog|com|com_addref|com_get|com_invoke|com_isenum|com_load|com_load_typelib|com_propget|com_propput|com_propset|com_release|com_set|compact|connection_aborted|connection_status|connection_timeout|constant|convert_cyr_string|copy|cos|cosh|count|count_chars|cpdf_add_annotation|cpdf_add_outline|cpdf_arc|cpdf_begin_text|cpdf_circle|cpdf_clip|cpdf_close|cpdf_closepath|cpdf_closepath_fill_stroke|cpdf_closepath_stroke|cpdf_continue_text|cpdf_curveto|cpdf_end_text|cpdf_fill|cpdf_fill_stroke|cpdf_finalize|cpdf_finalize_page|cpdf_global_set_document_limits|cpdf_import_jpeg|cpdf_lineto|cpdf_moveto|cpdf_newpath|cpdf_open|cpdf_output_buffer|cpdf_page_init|cpdf_place_inline_image|cpdf_rect|cpdf_restore|cpdf_rlineto|cpdf_rmoveto|cpdf_rotate|cpdf_rotate_text|cpdf_save|cpdf_save_to_file|cpdf_scale|cpdf_set_action_url|cpdf_set_char_spacing|cpdf_set_creator|cpdf_set_current_page|cpdf_set_font|cpdf_set_font_directories|cpdf_set_font_map_file|cpdf_set_horiz_scaling|cpdf_set_keywords|cpdf_set_leading|cpdf_set_page_animation|cpdf_set_subject|cpdf_set_text_matrix|cpdf_set_text_pos|cpdf_set_text_rendering|cpdf_set_text_rise|cpdf_set_title|cpdf_set_viewer_preferences|cpdf_set_word_spacing|cpdf_setdash|cpdf_setflat|cpdf_setgray|cpdf_setgray_fill|cpdf_setgray_stroke|cpdf_setlinecap|cpdf_setlinejoin|cpdf_setlinewidth|cpdf_setmiterlimit|cpdf_setrgbcolor|cpdf_setrgbcolor_fill|cpdf_setrgbcolor_stroke|cpdf_show|cpdf_show_xy|cpdf_stringwidth|cpdf_stroke|cpdf_text|cpdf_translate|crack_check|crack_closedict|crack_getlastmessage|crack_opendict|crc32|create_function|crypt|ctype_alnum|ctype_alpha|ctype_cntrl|ctype_digit|ctype_graph|ctype_lower|ctype_print|ctype_punct|ctype_space|ctype_upper|ctype_xdigit|curl_close|curl_errno|curl_error|curl_exec|curl_getinfo|curl_init|curl_multi_add_handle|curl_multi_close|curl_multi_exec|curl_multi_getcontent|curl_multi_info_read|curl_multi_init|curl_multi_remove_handle|curl_multi_select|curl_setopt|curl_version|current|cybercash_base64_decode|cybercash_base64_encode|cybercash_decr|cybercash_encr|cyrus_authenticate|cyrus_bind|cyrus_close|cyrus_connect|cyrus_query|cyrus_unbind|date|dba_close|dba_delete|dba_exists|dba_fetch|dba_firstkey|dba_handlers|dba_insert|dba_key_split|dba_list|dba_nextkey|dba_open|dba_optimize|dba_popen|dba_replace|dba_sync|dbase_add_record|dbase_close|dbase_create|dbase_delete_record|dbase_get_header_info|dbase_get_record|dbase_get_record_with_names|dbase_numfields|dbase_numrecords|dbase_open|dbase_pack|dbase_replace_record|dblist|dbmclose|dbmdelete|dbmexists|dbmfetch|dbmfirstkey|dbminsert|dbmnextkey|dbmopen|dbmreplace|dbplus_add|dbplus_aql|dbplus_chdir|dbplus_close|dbplus_curr|dbplus_errcode|dbplus_errno|dbplus_find|dbplus_first|dbplus_flush|dbplus_freealllocks|dbplus_freelock|dbplus_freerlocks|dbplus_getlock|dbplus_getunique|dbplus_info|dbplus_last|dbplus_lockrel|dbplus_next|dbplus_open|dbplus_prev|dbplus_rchperm|dbplus_rcreate|dbplus_rcrtexact|dbplus_rcrtlike|dbplus_resolve|dbplus_restorepos|dbplus_rkeys|dbplus_ropen|dbplus_rquery|dbplus_rrename|dbplus_rsecindex|dbplus_runlink|dbplus_rzap|dbplus_savepos|dbplus_setindex|dbplus_setindexbynumber|dbplus_sql|dbplus_tcl|dbplus_tremove|dbplus_undo|dbplus_undoprepare|dbplus_unlockrel|dbplus_unselect|dbplus_update|dbplus_xlockrel|dbplus_xunlockrel|dbx_close|dbx_compare|dbx_connect|dbx_error|dbx_escape_string|dbx_fetch_row|dbx_query|dbx_sort|dcgettext|dcngettext|deaggregate|debug_backtrace|debug_print_backtrace|debugger_off|debugger_on|decbin|dechex|decoct|define|define_syslog_variables|defined|deg2rad|delete|dgettext|die|dio_close|dio_fcntl|dio_open|dio_read|dio_seek|dio_stat|dio_tcsetattr|dio_truncate|dio_write|dir|dirname|disk_free_space|disk_total_space|diskfreespace|dl|dngettext|dns_check_record|dns_get_mx|dns_get_record|domxml_new_doc|domxml_open_file|domxml_open_mem|domxml_version|domxml_xmltree|domxml_xslt_stylesheet|domxml_xslt_stylesheet_doc|domxml_xslt_stylesheet_file|dotnet_load|doubleval|each|easter_date|easter_days|ebcdic2ascii|echo|empty|end|ereg|ereg_replace|eregi|eregi_replace|error_log|error_reporting|escapeshellarg|escapeshellcmd|eval|exec|exif_imagetype|exif_read_data|exif_thumbnail|exit|exp|explode|expm1|extension_loaded|extract|ezmlm_hash|fam_cancel_monitor|fam_close|fam_monitor_collection|fam_monitor_directory|fam_monitor_file|fam_next_event|fam_open|fam_pending|fam_resume_monitor|fam_suspend_monitor|fbsql_affected_rows|fbsql_autocommit|fbsql_blob_size|fbsql_change_user|fbsql_clob_size|fbsql_close|fbsql_commit|fbsql_connect|fbsql_create_blob|fbsql_create_clob|fbsql_create_db|fbsql_data_seek|fbsql_database|fbsql_database_password|fbsql_db_query|fbsql_db_status|fbsql_drop_db|fbsql_errno|fbsql_error|fbsql_fetch_array|fbsql_fetch_assoc|fbsql_fetch_field|fbsql_fetch_lengths|fbsql_fetch_object|fbsql_fetch_row|fbsql_field_flags|fbsql_field_len|fbsql_field_name|fbsql_field_seek|fbsql_field_table|fbsql_field_type|fbsql_free_result|fbsql_get_autostart_info|fbsql_hostname|fbsql_insert_id|fbsql_list_dbs|fbsql_list_fields|fbsql_list_tables|fbsql_next_result|fbsql_num_fields|fbsql_num_rows|fbsql_password|fbsql_pconnect|fbsql_query|fbsql_read_blob|fbsql_read_clob|fbsql_result|fbsql_rollback|fbsql_select_db|fbsql_set_lob_mode|fbsql_set_password|fbsql_set_transaction|fbsql_start_db|fbsql_stop_db|fbsql_tablename|fbsql_username|fbsql_warnings|fclose|fdf_add_doc_javascript|fdf_add_template|fdf_close|fdf_create|fdf_enum_values|fdf_errno|fdf_error|fdf_get_ap|fdf_get_attachment|fdf_get_encoding|fdf_get_file|fdf_get_flags|fdf_get_opt|fdf_get_status|fdf_get_value|fdf_get_version|fdf_header|fdf_next_field_name|fdf_open|fdf_open_string|fdf_remove_item|fdf_save|fdf_save_string|fdf_set_ap|fdf_set_encoding|fdf_set_file|fdf_set_flags|fdf_set_javascript_action|fdf_set_opt|fdf_set_status|fdf_set_submit_form_action|fdf_set_target_frame|fdf_set_value|fdf_set_version|feof|fflush|fgetc|fgetcsv|fgets|fgetss|file|file_exists|file_get_contents|file_put_contents|fileatime|filectime|filegroup|fileinode|filemtime|fileowner|fileperms|filepro|filepro_fieldcount|filepro_fieldname|filepro_fieldtype|filepro_fieldwidth|filepro_retrieve|filepro_rowcount|filesize|filetype|floatval|flock|floor|flush|fmod|fnmatch|fopen|fpassthru|fprintf|fputs|fread|frenchtojd|fribidi_log2vis|fscanf|fseek|fsockopen|fstat|ftell|ftok|ftp_alloc|ftp_cdup|ftp_chdir|ftp_chmod|ftp_close|ftp_connect|ftp_delete|ftp_exec|ftp_fget|ftp_fput|ftp_get|ftp_get_option|ftp_login|ftp_mdtm|ftp_mkdir|ftp_nb_continue|ftp_nb_fget|ftp_nb_fput|ftp_nb_get|ftp_nb_put|ftp_nlist|ftp_pasv|ftp_put|ftp_pwd|ftp_quit|ftp_raw|ftp_rawlist|ftp_rename|ftp_rmdir|ftp_set_option|ftp_site|ftp_size|ftp_ssl_connect|ftp_systype|ftruncate|func_get_arg|func_get_args|func_num_args|function_exists|fwrite|gd_info|get_browser|get_cfg_var|get_class|get_class_methods|get_class_vars|get_current_user|get_declared_classes|get_declared_interfaces|get_defined_constants|get_defined_functions|get_defined_vars|get_extension_funcs|get_headers|get_html_translation_table|get_include_path|get_included_files|get_loaded_extensions|get_magic_quotes_gpc|get_magic_quotes_runtime|get_meta_tags|get_object_vars|get_parent_class|get_required_files|get_resource_type|getallheaders|getcwd|getdate|getenv|gethostbyaddr|gethostbyname|gethostbynamel|getimagesize|getlastmod|getmxrr|getmygid|getmyinode|getmypid|getmyuid|getopt|getprotobyname|getprotobynumber|getrandmax|getrusage|getservbyname|getservbyport|gettext|gettimeofday|gettype|glob|gmdate|gmmktime|gmp_abs|gmp_add|gmp_and|gmp_clrbit|gmp_cmp|gmp_com|gmp_div|gmp_div_q|gmp_div_qr|gmp_div_r|gmp_divexact|gmp_fact|gmp_gcd|gmp_gcdext|gmp_hamdist|gmp_init|gmp_intval|gmp_invert|gmp_jacobi|gmp_legendre|gmp_mod|gmp_mul|gmp_neg|gmp_or|gmp_perfect_square|gmp_popcount|gmp_pow|gmp_powm|gmp_prob_prime|gmp_random|gmp_scan0|gmp_scan1|gmp_setbit|gmp_sign|gmp_sqrt|gmp_sqrtrem|gmp_strval|gmp_sub|gmp_xor|gmstrftime|gregoriantojd|gzclose|gzcompress|gzdeflate|gzencode|gzeof|gzfile|gzgetc|gzgets|gzgetss|gzinflate|gzopen|gzpassthru|gzputs|gzread|gzrewind|gzseek|gztell|gzuncompress|gzwrite|header|headers_list|headers_sent|hebrev|hebrevc|hexdec|highlight_file|highlight_string|html_entity_decode|htmlentities|htmlspecialchars|http_build_query|hw_api_attribute|hw_api_content|hw_api_object|hw_array2objrec|hw_changeobject|hw_children|hw_childrenobj|hw_close|hw_connect|hw_connection_info|hw_cp|hw_deleteobject|hw_docbyanchor|hw_docbyanchorobj|hw_document_attributes|hw_document_bodytag|hw_document_content|hw_document_setcontent|hw_document_size|hw_dummy|hw_edittext|hw_error|hw_errormsg|hw_free_document|hw_getanchors|hw_getanchorsobj|hw_getandlock|hw_getchildcoll|hw_getchildcollobj|hw_getchilddoccoll|hw_getchilddoccollobj|hw_getobject|hw_getobjectbyquery|hw_getobjectbyquerycoll|hw_getobjectbyquerycollobj|hw_getobjectbyqueryobj|hw_getparents|hw_getparentsobj|hw_getrellink|hw_getremote|hw_getremotechildren|hw_getsrcbydestobj|hw_gettext|hw_getusername|hw_identify|hw_incollections|hw_info|hw_inscoll|hw_insdoc|hw_insertanchors|hw_insertdocument|hw_insertobject|hw_mapid|hw_modifyobject|hw_mv|hw_new_document|hw_objrec2array|hw_output_document|hw_pconnect|hw_pipedocument|hw_root|hw_setlinkroot|hw_stat|hw_unlock|hw_who|hwapi_hgcsp|hypot|ibase_add_user|ibase_affected_rows|ibase_backup|ibase_blob_add|ibase_blob_cancel|ibase_blob_close|ibase_blob_create|ibase_blob_echo|ibase_blob_get|ibase_blob_import|ibase_blob_info|ibase_blob_open|ibase_close|ibase_commit|ibase_commit_ret|ibase_connect|ibase_db_info|ibase_delete_user|ibase_drop_db|ibase_errcode|ibase_errmsg|ibase_execute|ibase_fetch_assoc|ibase_fetch_object|ibase_fetch_row|ibase_field_info|ibase_free_event_handler|ibase_free_query|ibase_free_result|ibase_gen_id|ibase_maintain_db|ibase_modify_user|ibase_name_result|ibase_num_fields|ibase_num_params|ibase_param_info|ibase_pconnect|ibase_prepare|ibase_query|ibase_restore|ibase_rollback|ibase_rollback_ret|ibase_server_info|ibase_service_attach|ibase_service_detach|ibase_set_event_handler|ibase_timefmt|ibase_trans|ibase_wait_event|iconv|iconv_get_encoding|iconv_mime_decode|iconv_mime_decode_headers|iconv_mime_encode|iconv_set_encoding|iconv_strlen|iconv_strpos|iconv_strrpos|iconv_substr|idate|ifx_affected_rows|ifx_blobinfile_mode|ifx_byteasvarchar|ifx_close|ifx_connect|ifx_copy_blob|ifx_create_blob|ifx_create_char|ifx_do|ifx_error|ifx_errormsg|ifx_fetch_row|ifx_fieldproperties|ifx_fieldtypes|ifx_free_blob|ifx_free_char|ifx_free_result|ifx_get_blob|ifx_get_char|ifx_getsqlca|ifx_htmltbl_result|ifx_nullformat|ifx_num_fields|ifx_num_rows|ifx_pconnect|ifx_prepare|ifx_query|ifx_textasvarchar|ifx_update_blob|ifx_update_char|ifxus_close_slob|ifxus_create_slob|ifxus_free_slob|ifxus_open_slob|ifxus_read_slob|ifxus_seek_slob|ifxus_tell_slob|ifxus_write_slob|ignore_user_abort|image2wbmp|image_type_to_mime_type|imagealphablending|imageantialias|imagearc|imagechar|imagecharup|imagecolorallocate|imagecolorallocatealpha|imagecolorat|imagecolorclosest|imagecolorclosestalpha|imagecolorclosesthwb|imagecolordeallocate|imagecolorexact|imagecolorexactalpha|imagecolormatch|imagecolorresolve|imagecolorresolvealpha|imagecolorset|imagecolorsforindex|imagecolorstotal|imagecolortransparent|imagecopy|imagecopymerge|imagecopymergegray|imagecopyresampled|imagecopyresized|imagecreate|imagecreatefromgd|imagecreatefromgd2|imagecreatefromgd2part|imagecreatefromgif|imagecreatefromjpeg|imagecreatefrompng|imagecreatefromstring|imagecreatefromwbmp|imagecreatefromxbm|imagecreatefromxpm|imagecreatetruecolor|imagedashedline|imagedestroy|imageellipse|imagefill|imagefilledarc|imagefilledellipse|imagefilledpolygon|imagefilledrectangle|imagefilltoborder|imagefilter|imagefontheight|imagefontwidth|imageftbbox|imagefttext|imagegammacorrect|imagegd|imagegd2|imagegif|imageinterlace|imageistruecolor|imagejpeg|imagelayereffect|imageline|imageloadfont|imagepalettecopy|imagepng|imagepolygon|imagepsbbox|imagepscopyfont|imagepsencodefont|imagepsextendfont|imagepsfreefont|imagepsloadfont|imagepsslantfont|imagepstext|imagerectangle|imagerotate|imagesavealpha|imagesetbrush|imagesetpixel|imagesetstyle|imagesetthickness|imagesettile|imagestring|imagestringup|imagesx|imagesy|imagetruecolortopalette|imagettfbbox|imagettftext|imagetypes|imagewbmp|imagexbm|imap_8bit|imap_alerts|imap_append|imap_base64|imap_binary|imap_body|imap_bodystruct|imap_check|imap_clearflag_full|imap_close|imap_createmailbox|imap_delete|imap_deletemailbox|imap_errors|imap_expunge|imap_fetch_overview|imap_fetchbody|imap_fetchheader|imap_fetchstructure|imap_get_quota|imap_get_quotaroot|imap_getacl|imap_getmailboxes|imap_getsubscribed|imap_header|imap_headerinfo|imap_headers|imap_last_error|imap_list|imap_listmailbox|imap_listscan|imap_listsubscribed|imap_lsub|imap_mail|imap_mail_compose|imap_mail_copy|imap_mail_move|imap_mailboxmsginfo|imap_mime_header_decode|imap_msgno|imap_num_msg|imap_num_recent|imap_open|imap_ping|imap_qprint|imap_renamemailbox|imap_reopen|imap_rfc822_parse_adrlist|imap_rfc822_parse_headers|imap_rfc822_write_address|imap_scanmailbox|imap_search|imap_set_quota|imap_setacl|imap_setflag_full|imap_sort|imap_status|imap_subscribe|imap_thread|imap_timeout|imap_uid|imap_undelete|imap_unsubscribe|imap_utf7_decode|imap_utf7_encode|imap_utf8|implode|import_request_variables|in_array|ingres_autocommit|ingres_close|ingres_commit|ingres_connect|ingres_fetch_array|ingres_fetch_object|ingres_fetch_row|ingres_field_length|ingres_field_name|ingres_field_nullable|ingres_field_precision|ingres_field_scale|ingres_field_type|ingres_num_fields|ingres_num_rows|ingres_pconnect|ingres_query|ingres_rollback|ini_alter|ini_get|ini_get_all|ini_restore|ini_set|intval|ip2long|iptcembed|iptcparse|ircg_channel_mode|ircg_disconnect|ircg_fetch_error_msg|ircg_get_username|ircg_html_encode|ircg_ignore_add|ircg_ignore_del|ircg_invite|ircg_is_conn_alive|ircg_join|ircg_kick|ircg_list|ircg_lookup_format_messages|ircg_lusers|ircg_msg|ircg_nick|ircg_nickname_escape|ircg_nickname_unescape|ircg_notice|ircg_oper|ircg_part|ircg_pconnect|ircg_register_format_messages|ircg_set_current|ircg_set_file|ircg_set_on_die|ircg_topic|ircg_who|ircg_whois|is_a|is_array|is_bool|is_callable|is_dir|is_double|is_executable|is_file|is_finite|is_float|is_infinite|is_int|is_integer|is_link|is_long|is_nan|is_null|is_numeric|is_object|is_readable|is_real|is_resource|is_scalar|is_soap_fault|is_string|is_subclass_of|is_uploaded_file|is_writable|is_writeable|isset|java_last_exception_clear|java_last_exception_get|jddayofweek|jdmonthname|jdtofrench|jdtogregorian|jdtojewish|jdtojulian|jdtounix|jewishtojd|join|jpeg2wbmp|juliantojd|key|krsort|ksort|lcg_value|ldap_8859_to_t61|ldap_add|ldap_bind|ldap_close|ldap_compare|ldap_connect|ldap_count_entries|ldap_delete|ldap_dn2ufn|ldap_err2str|ldap_errno|ldap_error|ldap_explode_dn|ldap_first_attribute|ldap_first_entry|ldap_first_reference|ldap_free_result|ldap_get_attributes|ldap_get_dn|ldap_get_entries|ldap_get_option|ldap_get_values|ldap_get_values_len|ldap_list|ldap_mod_add|ldap_mod_del|ldap_mod_replace|ldap_modify|ldap_next_attribute|ldap_next_entry|ldap_next_reference|ldap_parse_reference|ldap_parse_result|ldap_read|ldap_rename|ldap_search|ldap_set_option|ldap_set_rebind_proc|ldap_sort|ldap_start_tls|ldap_t61_to_8859|ldap_unbind|levenshtein|link|linkinfo|list|localeconv|localtime|log|log10|log1p|long2ip|lstat|ltrim|lzf_compress|lzf_decompress|lzf_optimized_for|mail|mailparse_determine_best_xfer_encoding|mailparse_msg_create|mailparse_msg_extract_part|mailparse_msg_extract_part_file|mailparse_msg_free|mailparse_msg_get_part|mailparse_msg_get_part_data|mailparse_msg_get_structure|mailparse_msg_parse|mailparse_msg_parse_file|mailparse_rfc822_parse_addresses|mailparse_stream_encode|mailparse_uudecode_all|main|max|mb_convert_case|mb_convert_encoding|mb_convert_kana|mb_convert_variables|mb_decode_mimeheader|mb_decode_numericentity|mb_detect_encoding|mb_detect_order|mb_encode_mimeheader|mb_encode_numericentity|mb_ereg|mb_ereg_match|mb_ereg_replace|mb_ereg_search|mb_ereg_search_getpos|mb_ereg_search_getregs|mb_ereg_search_init|mb_ereg_search_pos|mb_ereg_search_regs|mb_ereg_search_setpos|mb_eregi|mb_eregi_replace|mb_get_info|mb_http_input|mb_http_output|mb_internal_encoding|mb_language|mb_output_handler|mb_parse_str|mb_preferred_mime_name|mb_regex_encoding|mb_regex_set_options|mb_send_mail|mb_split|mb_strcut|mb_strimwidth|mb_strlen|mb_strpos|mb_strrpos|mb_strtolower|mb_strtoupper|mb_strwidth|mb_substitute_character|mb_substr|mb_substr_count|mcal_append_event|mcal_close|mcal_create_calendar|mcal_date_compare|mcal_date_valid|mcal_day_of_week|mcal_day_of_year|mcal_days_in_month|mcal_delete_calendar|mcal_delete_event|mcal_event_add_attribute|mcal_event_init|mcal_event_set_alarm|mcal_event_set_category|mcal_event_set_class|mcal_event_set_description|mcal_event_set_end|mcal_event_set_recur_daily|mcal_event_set_recur_monthly_mday|mcal_event_set_recur_monthly_wday|mcal_event_set_recur_none|mcal_event_set_recur_weekly|mcal_event_set_recur_yearly|mcal_event_set_start|mcal_event_set_title|mcal_expunge|mcal_fetch_current_stream_event|mcal_fetch_event|mcal_is_leap_year|mcal_list_alarms|mcal_list_events|mcal_next_recurrence|mcal_open|mcal_popen|mcal_rename_calendar|mcal_reopen|mcal_snooze|mcal_store_event|mcal_time_valid|mcal_week_of_year|mcrypt_cbc|mcrypt_cfb|mcrypt_create_iv|mcrypt_decrypt|mcrypt_ecb|mcrypt_enc_get_algorithms_name|mcrypt_enc_get_block_size|mcrypt_enc_get_iv_size|mcrypt_enc_get_key_size|mcrypt_enc_get_modes_name|mcrypt_enc_get_supported_key_sizes|mcrypt_enc_is_block_algorithm|mcrypt_enc_is_block_algorithm_mode|mcrypt_enc_is_block_mode|mcrypt_enc_self_test|mcrypt_encrypt|mcrypt_generic|mcrypt_generic_deinit|mcrypt_generic_end|mcrypt_generic_init|mcrypt_get_block_size|mcrypt_get_cipher_name|mcrypt_get_iv_size|mcrypt_get_key_size|mcrypt_list_algorithms|mcrypt_list_modes|mcrypt_module_close|mcrypt_module_get_algo_block_size|mcrypt_module_get_algo_key_size|mcrypt_module_get_supported_key_sizes|mcrypt_module_is_block_algorithm|mcrypt_module_is_block_algorithm_mode|mcrypt_module_is_block_mode|mcrypt_module_open|mcrypt_module_self_test|mcrypt_ofb|mcve_adduser|mcve_adduserarg|mcve_bt|mcve_checkstatus|mcve_chkpwd|mcve_chngpwd|mcve_completeauthorizations|mcve_connect|mcve_connectionerror|mcve_deleteresponse|mcve_deletetrans|mcve_deleteusersetup|mcve_deluser|mcve_destroyconn|mcve_destroyengine|mcve_disableuser|mcve_edituser|mcve_enableuser|mcve_force|mcve_getcell|mcve_getcellbynum|mcve_getcommadelimited|mcve_getheader|mcve_getuserarg|mcve_getuserparam|mcve_gft|mcve_gl|mcve_gut|mcve_initconn|mcve_initengine|mcve_initusersetup|mcve_iscommadelimited|mcve_liststats|mcve_listusers|mcve_maxconntimeout|mcve_monitor|mcve_numcolumns|mcve_numrows|mcve_override|mcve_parsecommadelimited|mcve_ping|mcve_preauth|mcve_preauthcompletion|mcve_qc|mcve_responseparam|mcve_return|mcve_returncode|mcve_returnstatus|mcve_sale|mcve_setblocking|mcve_setdropfile|mcve_setip|mcve_setssl|mcve_setssl_files|mcve_settimeout|mcve_settle|mcve_text_avs|mcve_text_code|mcve_text_cv|mcve_transactionauth|mcve_transactionavs|mcve_transactionbatch|mcve_transactioncv|mcve_transactionid|mcve_transactionitem|mcve_transactionssent|mcve_transactiontext|mcve_transinqueue|mcve_transnew|mcve_transparam|mcve_transsend|mcve_ub|mcve_uwait|mcve_verifyconnection|mcve_verifysslcert|mcve_void|md5|md5_file|mdecrypt_generic|memory_get_usage|metaphone|method_exists|mhash|mhash_count|mhash_get_block_size|mhash_get_hash_name|mhash_keygen_s2k|microtime|mime_content_type|min|ming_setcubicthreshold|ming_setscale|ming_useswfversion|mkdir|mktime|money_format|move_uploaded_file|msession_connect|msession_count|msession_create|msession_destroy|msession_disconnect|msession_find|msession_get|msession_get_array|msession_getdata|msession_inc|msession_list|msession_listvar|msession_lock|msession_plugin|msession_randstr|msession_set|msession_set_array|msession_setdata|msession_timeout|msession_uniq|msession_unlock|msg_get_queue|msg_receive|msg_remove_queue|msg_send|msg_set_queue|msg_stat_queue|msql|msql|msql_affected_rows|msql_close|msql_connect|msql_create_db|msql_createdb|msql_data_seek|msql_dbname|msql_drop_db|msql_error|msql_fetch_array|msql_fetch_field|msql_fetch_object|msql_fetch_row|msql_field_flags|msql_field_len|msql_field_name|msql_field_seek|msql_field_table|msql_field_type|msql_fieldflags|msql_fieldlen|msql_fieldname|msql_fieldtable|msql_fieldtype|msql_free_result|msql_list_dbs|msql_list_fields|msql_list_tables|msql_num_fields|msql_num_rows|msql_numfields|msql_numrows|msql_pconnect|msql_query|msql_regcase|msql_result|msql_select_db|msql_tablename|mssql_bind|mssql_close|mssql_connect|mssql_data_seek|mssql_execute|mssql_fetch_array|mssql_fetch_assoc|mssql_fetch_batch|mssql_fetch_field|mssql_fetch_object|mssql_fetch_row|mssql_field_length|mssql_field_name|mssql_field_seek|mssql_field_type|mssql_free_result|mssql_free_statement|mssql_get_last_message|mssql_guid_string|mssql_init|mssql_min_error_severity|mssql_min_message_severity|mssql_next_result|mssql_num_fields|mssql_num_rows|mssql_pconnect|mssql_query|mssql_result|mssql_rows_affected|mssql_select_db|mt_getrandmax|mt_rand|mt_srand|muscat_close|muscat_get|muscat_give|muscat_setup|muscat_setup_net|mysql_affected_rows|mysql_change_user|mysql_client_encoding|mysql_close|mysql_connect|mysql_create_db|mysql_data_seek|mysql_db_name|mysql_db_query|mysql_drop_db|mysql_errno|mysql_error|mysql_escape_string|mysql_fetch_array|mysql_fetch_assoc|mysql_fetch_field|mysql_fetch_lengths|mysql_fetch_object|mysql_fetch_row|mysql_field_flags|mysql_field_len|mysql_field_name|mysql_field_seek|mysql_field_table|mysql_field_type|mysql_free_result|mysql_get_client_info|mysql_get_host_info|mysql_get_proto_info|mysql_get_server_info|mysql_info|mysql_insert_id|mysql_list_dbs|mysql_list_fields|mysql_list_processes|mysql_list_tables|mysql_num_fields|mysql_num_rows|mysql_pconnect|mysql_ping|mysql_query|mysql_real_escape_string|mysql_result|mysql_select_db|mysql_stat|mysql_tablename|mysql_thread_id|mysql_unbuffered_query|mysqli_affected_rows|mysqli_autocommit|mysqli_bind_param|mysqli_bind_result|mysqli_change_user|mysqli_character_set_name|mysqli_client_encoding|mysqli_close|mysqli_commit|mysqli_connect|mysqli_connect_errno|mysqli_connect_error|mysqli_data_seek|mysqli_debug|mysqli_disable_reads_from_master|mysqli_disable_rpl_parse|mysqli_dump_debug_info|mysqli_embedded_connect|mysqli_enable_reads_from_master|mysqli_enable_rpl_parse|mysqli_errno|mysqli_error|mysqli_escape_string|mysqli_execute|mysqli_fetch|mysqli_fetch_array|mysqli_fetch_assoc|mysqli_fetch_field|mysqli_fetch_field_direct|mysqli_fetch_fields|mysqli_fetch_lengths|mysqli_fetch_object|mysqli_fetch_row|mysqli_field_count|mysqli_field_seek|mysqli_field_tell|mysqli_free_result|mysqli_get_client_info|mysqli_get_client_version|mysqli_get_host_info|mysqli_get_metadata|mysqli_get_proto_info|mysqli_get_server_info|mysqli_get_server_version|mysqli_info|mysqli_init|mysqli_insert_id|mysqli_kill|mysqli_master_query|mysqli_more_results|mysqli_multi_query|mysqli_next_result|mysqli_num_fields|mysqli_num_rows|mysqli_options|mysqli_param_count|mysqli_ping|mysqli_prepare|mysqli_query|mysqli_real_connect|mysqli_real_escape_string|mysqli_real_query|mysqli_report|mysqli_rollback|mysqli_rpl_parse_enabled|mysqli_rpl_probe|mysqli_rpl_query_type|mysqli_select_db|mysqli_send_long_data|mysqli_send_query|mysqli_server_end|mysqli_server_init|mysqli_set_opt|mysqli_sqlstate|mysqli_ssl_set|mysqli_stat|mysqli_stmt_init|mysqli_stmt_affected_rows|mysqli_stmt_bind_param|mysqli_stmt_bind_result|mysqli_stmt_close|mysqli_stmt_data_seek|mysqli_stmt_errno|mysqli_stmt_error|mysqli_stmt_execute|mysqli_stmt_fetch|mysqli_stmt_free_result|mysqli_stmt_num_rows|mysqli_stmt_param_count|mysqli_stmt_prepare|mysqli_stmt_result_metadata|mysqli_stmt_send_long_data|mysqli_stmt_sqlstate|mysqli_stmt_store_result|mysqli_store_result|mysqli_thread_id|mysqli_thread_safe|mysqli_use_result|mysqli_warning_count|natcasesort|natsort|ncurses_addch|ncurses_addchnstr|ncurses_addchstr|ncurses_addnstr|ncurses_addstr|ncurses_assume_default_colors|ncurses_attroff|ncurses_attron|ncurses_attrset|ncurses_baudrate|ncurses_beep|ncurses_bkgd|ncurses_bkgdset|ncurses_border|ncurses_bottom_panel|ncurses_can_change_color|ncurses_cbreak|ncurses_clear|ncurses_clrtobot|ncurses_clrtoeol|ncurses_color_content|ncurses_color_set|ncurses_curs_set|ncurses_def_prog_mode|ncurses_def_shell_mode|ncurses_define_key|ncurses_del_panel|ncurses_delay_output|ncurses_delch|ncurses_deleteln|ncurses_delwin|ncurses_doupdate|ncurses_echo|ncurses_echochar|ncurses_end|ncurses_erase|ncurses_erasechar|ncurses_filter|ncurses_flash|ncurses_flushinp|ncurses_getch|ncurses_getmaxyx|ncurses_getmouse|ncurses_getyx|ncurses_halfdelay|ncurses_has_colors|ncurses_has_ic|ncurses_has_il|ncurses_has_key|ncurses_hide_panel|ncurses_hline|ncurses_inch|ncurses_init|ncurses_init_color|ncurses_init_pair|ncurses_insch|ncurses_insdelln|ncurses_insertln|ncurses_insstr|ncurses_instr|ncurses_isendwin|ncurses_keyok|ncurses_keypad|ncurses_killchar|ncurses_longname|ncurses_meta|ncurses_mouse_trafo|ncurses_mouseinterval|ncurses_mousemask|ncurses_move|ncurses_move_panel|ncurses_mvaddch|ncurses_mvaddchnstr|ncurses_mvaddchstr|ncurses_mvaddnstr|ncurses_mvaddstr|ncurses_mvcur|ncurses_mvdelch|ncurses_mvgetch|ncurses_mvhline|ncurses_mvinch|ncurses_mvvline|ncurses_mvwaddstr|ncurses_napms|ncurses_new_panel|ncurses_newpad|ncurses_newwin|ncurses_nl|ncurses_nocbreak|ncurses_noecho|ncurses_nonl|ncurses_noqiflush|ncurses_noraw|ncurses_pair_content|ncurses_panel_above|ncurses_panel_below|ncurses_panel_window|ncurses_pnoutrefresh|ncurses_prefresh|ncurses_putp|ncurses_qiflush|ncurses_raw|ncurses_refresh|ncurses_replace_panel|ncurses_reset_prog_mode|ncurses_reset_shell_mode|ncurses_resetty|ncurses_savetty|ncurses_scr_dump|ncurses_scr_init|ncurses_scr_restore|ncurses_scr_set|ncurses_scrl|ncurses_show_panel|ncurses_slk_attr|ncurses_slk_attroff|ncurses_slk_attron|ncurses_slk_attrset|ncurses_slk_clear|ncurses_slk_color|ncurses_slk_init|ncurses_slk_noutrefresh|ncurses_slk_refresh|ncurses_slk_restore|ncurses_slk_set|ncurses_slk_touch|ncurses_standend|ncurses_standout|ncurses_start_color|ncurses_termattrs|ncurses_termname|ncurses_timeout|ncurses_top_panel|ncurses_typeahead|ncurses_ungetch|ncurses_ungetmouse|ncurses_update_panels|ncurses_use_default_colors|ncurses_use_env|ncurses_use_extended_names|ncurses_vidattr|ncurses_vline|ncurses_waddch|ncurses_waddstr|ncurses_wattroff|ncurses_wattron|ncurses_wattrset|ncurses_wborder|ncurses_wclear|ncurses_wcolor_set|ncurses_werase|ncurses_wgetch|ncurses_whline|ncurses_wmouse_trafo|ncurses_wmove|ncurses_wnoutrefresh|ncurses_wrefresh|ncurses_wstandend|ncurses_wstandout|ncurses_wvline|next|ngettext|nl2br|nl_langinfo|notes_body|notes_copy_db|notes_create_db|notes_create_note|notes_drop_db|notes_find_note|notes_header_info|notes_list_msgs|notes_mark_read|notes_mark_unread|notes_nav_create|notes_search|notes_unread|notes_version|nsapi_request_headers|nsapi_response_headers|nsapi_virtual|number_format|ob_clean|ob_end_clean|ob_end_flush|ob_flush|ob_get_clean|ob_get_contents|ob_get_flush|ob_get_length|ob_get_level|ob_get_status|ob_gzhandler|ob_iconv_handler|ob_implicit_flush|ob_list_handlers|ob_start|ob_tidyhandler|oci_bind_by_name|oci_cancel|oci_close|oci_commit|oci_connect|oci_define_by_name|oci_error|oci_execute|oci_fetch|oci_fetch_all|oci_fetch_array|oci_fetch_assoc|oci_fetch_object|oci_fetch_row|oci_field_is_null|oci_field_name|oci_field_precision|oci_field_scale|oci_field_size|oci_field_type|oci_field_type_raw|oci_free_statement|oci_internal_debug|oci_lob_copy|oci_lob_is_equal|oci_new_collection|oci_new_connect|oci_new_cursor|oci_new_descriptor|oci_num_fields|oci_num_rows|oci_parse|oci_password_change|oci_pconnect|oci_result|oci_rollback|oci_server_version|oci_set_prefetch|oci_statement_type|ocibindbyname|ocicancel|ocicloselob|ocicollappend|ocicollassign|ocicollassignelem|ocicollgetelem|ocicollmax|ocicollsize|ocicolltrim|ocicolumnisnull|ocicolumnname|ocicolumnprecision|ocicolumnscale|ocicolumnsize|ocicolumntype|ocicolumntyperaw|ocicommit|ocidefinebyname|ocierror|ociexecute|ocifetch|ocifetchinto|ocifetchstatement|ocifreecollection|ocifreecursor|ocifreedesc|ocifreestatement|ociinternaldebug|ociloadlob|ocilogoff|ocilogon|ocinewcollection|ocinewcursor|ocinewdescriptor|ocinlogon|ocinumcols|ociparse|ociplogon|ociresult|ocirollback|ocirowcount|ocisavelob|ocisavelobfile|ociserverversion|ocisetprefetch|ocistatementtype|ociwritelobtofile|ociwritetemporarylob|octdec|odbc_autocommit|odbc_binmode|odbc_close|odbc_close_all|odbc_columnprivileges|odbc_columns|odbc_commit|odbc_connect|odbc_cursor|odbc_data_source|odbc_do|odbc_error|odbc_errormsg|odbc_exec|odbc_execute|odbc_fetch_array|odbc_fetch_into|odbc_fetch_object|odbc_fetch_row|odbc_field_len|odbc_field_name|odbc_field_num|odbc_field_precision|odbc_field_scale|odbc_field_type|odbc_foreignkeys|odbc_free_result|odbc_gettypeinfo|odbc_longreadlen|odbc_next_result|odbc_num_fields|odbc_num_rows|odbc_pconnect|odbc_prepare|odbc_primarykeys|odbc_procedurecolumns|odbc_procedures|odbc_result|odbc_result_all|odbc_rollback|odbc_setoption|odbc_specialcolumns|odbc_statistics|odbc_tableprivileges|odbc_tables|opendir|openlog|openssl_csr_export|openssl_csr_export_to_file|openssl_csr_new|openssl_csr_sign|openssl_error_string|openssl_free_key|openssl_get_privatekey|openssl_get_publickey|openssl_open|openssl_pkcs7_decrypt|openssl_pkcs7_encrypt|openssl_pkcs7_sign|openssl_pkcs7_verify|openssl_pkey_export|openssl_pkey_export_to_file|openssl_pkey_get_private|openssl_pkey_get_public|openssl_pkey_new|openssl_private_decrypt|openssl_private_encrypt|openssl_public_decrypt|openssl_public_encrypt|openssl_seal|openssl_sign|openssl_verify|openssl_x509_check_private_key|openssl_x509_checkpurpose|openssl_x509_export|openssl_x509_export_to_file|openssl_x509_free|openssl_x509_parse|openssl_x509_read|ora_bind|ora_close|ora_columnname|ora_columnsize|ora_columntype|ora_commit|ora_commitoff|ora_commiton|ora_do|ora_error|ora_errorcode|ora_exec|ora_fetch|ora_fetch_into|ora_getcolumn|ora_logoff|ora_logon|ora_numcols|ora_numrows|ora_open|ora_parse|ora_plogon|ora_rollback|ord|output_add_rewrite_var|output_reset_rewrite_vars|overload|ovrimos_close|ovrimos_commit|ovrimos_connect|ovrimos_cursor|ovrimos_exec|ovrimos_execute|ovrimos_fetch_into|ovrimos_fetch_row|ovrimos_field_len|ovrimos_field_name|ovrimos_field_num|ovrimos_field_type|ovrimos_free_result|ovrimos_longreadlen|ovrimos_num_fields|ovrimos_num_rows|ovrimos_prepare|ovrimos_result|ovrimos_result_all|ovrimos_rollback|pack|parse_ini_file|parse_str|parse_url|passthru|pathinfo|pclose|pcntl_alarm|pcntl_exec|pcntl_fork|pcntl_getpriority|pcntl_setpriority|pcntl_signal|pcntl_wait|pcntl_waitpid|pcntl_wexitstatus|pcntl_wifexited|pcntl_wifsignaled|pcntl_wifstopped|pcntl_wstopsig|pcntl_wtermsig|pdf_add_annotation|pdf_add_bookmark|pdf_add_launchlink|pdf_add_locallink|pdf_add_note|pdf_add_outline|pdf_add_pdflink|pdf_add_thumbnail|pdf_add_weblink|pdf_arc|pdf_arcn|pdf_attach_file|pdf_begin_page|pdf_begin_pattern|pdf_begin_template|pdf_circle|pdf_clip|pdf_close|pdf_close_image|pdf_close_pdi|pdf_close_pdi_page|pdf_closepath|pdf_closepath_fill_stroke|pdf_closepath_stroke|pdf_concat|pdf_continue_text|pdf_curveto|pdf_delete|pdf_end_page|pdf_end_pattern|pdf_end_template|pdf_endpath|pdf_fill|pdf_fill_stroke|pdf_findfont|pdf_get_buffer|pdf_get_font|pdf_get_fontname|pdf_get_fontsize|pdf_get_image_height|pdf_get_image_width|pdf_get_majorversion|pdf_get_minorversion|pdf_get_parameter|pdf_get_pdi_parameter|pdf_get_pdi_value|pdf_get_value|pdf_initgraphics|pdf_lineto|pdf_makespotcolor|pdf_moveto|pdf_new|pdf_open|pdf_open_ccitt|pdf_open_file|pdf_open_gif|pdf_open_image|pdf_open_image_file|pdf_open_jpeg|pdf_open_memory_image|pdf_open_pdi|pdf_open_pdi_page|pdf_open_png|pdf_open_tiff|pdf_place_image|pdf_place_pdi_page|pdf_rect|pdf_restore|pdf_rotate|pdf_save|pdf_scale|pdf_set_border_color|pdf_set_border_dash|pdf_set_border_style|pdf_set_char_spacing|pdf_set_duration|pdf_set_font|pdf_set_horiz_scaling|pdf_set_info|pdf_set_info_author|pdf_set_info_creator|pdf_set_info_keywords|pdf_set_info_subject|pdf_set_info_title|pdf_set_leading|pdf_set_parameter|pdf_set_text_matrix|pdf_set_text_pos|pdf_set_text_rendering|pdf_set_text_rise|pdf_set_value|pdf_set_word_spacing|pdf_setcolor|pdf_setdash|pdf_setflat|pdf_setfont|pdf_setgray|pdf_setgray_fill|pdf_setgray_stroke|pdf_setlinecap|pdf_setlinejoin|pdf_setlinewidth|pdf_setmatrix|pdf_setmiterlimit|pdf_setpolydash|pdf_setrgbcolor|pdf_setrgbcolor_fill|pdf_setrgbcolor_stroke|pdf_show|pdf_show_boxed|pdf_show_xy|pdf_skew|pdf_stringwidth|pdf_stroke|pdf_translate|pfpro_cleanup|pfpro_init|pfpro_process|pfpro_process_raw|pfpro_version|pfsockopen|pg_affected_rows|pg_cancel_query|pg_client_encoding|pg_close|pg_connect|pg_connection_busy|pg_connection_reset|pg_connection_status|pg_convert|pg_copy_from|pg_copy_to|pg_dbname|pg_delete|pg_end_copy|pg_escape_bytea|pg_escape_string|pg_fetch_all|pg_fetch_array|pg_fetch_assoc|pg_fetch_object|pg_fetch_result|pg_fetch_row|pg_field_is_null|pg_field_name|pg_field_num|pg_field_prtlen|pg_field_size|pg_field_type|pg_free_result|pg_get_notify|pg_get_pid|pg_get_result|pg_host|pg_insert|pg_last_error|pg_last_notice|pg_last_oid|pg_lo_close|pg_lo_create|pg_lo_export|pg_lo_import|pg_lo_open|pg_lo_read|pg_lo_read_all|pg_lo_seek|pg_lo_tell|pg_lo_unlink|pg_lo_write|pg_meta_data|pg_num_fields|pg_num_rows|pg_options|pg_pconnect|pg_ping|pg_port|pg_put_line|pg_query|pg_result_error|pg_result_seek|pg_result_status|pg_select|pg_send_query|pg_set_client_encoding|pg_trace|pg_tty|pg_unescape_bytea|pg_untrace|pg_update|php_ini_scanned_files|php_logo_guid|php_sapi_name|php_uname|phpcredits|phpinfo|phpversion|pi|png2wbmp|popen|pos|posix_ctermid|posix_get_last_error|posix_getcwd|posix_getegid|posix_geteuid|posix_getgid|posix_getgrgid|posix_getgrnam|posix_getgroups|posix_getlogin|posix_getpgid|posix_getpgrp|posix_getpid|posix_getppid|posix_getpwnam|posix_getpwuid|posix_getrlimit|posix_getsid|posix_getuid|posix_isatty|posix_kill|posix_mkfifo|posix_setegid|posix_seteuid|posix_setgid|posix_setpgid|posix_setsid|posix_setuid|posix_strerror|posix_times|posix_ttyname|posix_uname|pow|preg_grep|preg_match|preg_match_all|preg_quote|preg_replace|preg_replace_callback|preg_split|prev|print|print_r|printer_abort|printer_close|printer_create_brush|printer_create_dc|printer_create_font|printer_create_pen|printer_delete_brush|printer_delete_dc|printer_delete_font|printer_delete_pen|printer_draw_bmp|printer_draw_chord|printer_draw_elipse|printer_draw_line|printer_draw_pie|printer_draw_rectangle|printer_draw_roundrect|printer_draw_text|printer_end_doc|printer_end_page|printer_get_option|printer_list|printer_logical_fontheight|printer_open|printer_select_brush|printer_select_font|printer_select_pen|printer_set_option|printer_start_doc|printer_start_page|printer_write|printf|proc_close|proc_get_status|proc_nice|proc_open|proc_terminate|pspell_add_to_personal|pspell_add_to_session|pspell_check|pspell_clear_session|pspell_config_create|pspell_config_ignore|pspell_config_mode|pspell_config_personal|pspell_config_repl|pspell_config_runtogether|pspell_config_save_repl|pspell_new|pspell_new_config|pspell_new_personal|pspell_save_wordlist|pspell_store_replacement|pspell_suggest|putenv|qdom_error|qdom_tree|quoted_printable_decode|quotemeta|rad2deg|rand|range|rawurldecode|rawurlencode|read_exif_data|readdir|readfile|readgzfile|readline|readline_add_history|readline_clear_history|readline_completion_function|readline_info|readline_list_history|readline_read_history|readline_write_history|readlink|realpath|recode|recode_file|recode_string|register_shutdown_function|register_tick_function|rename|reset|restore_error_handler|restore_include_path|rewind|rewinddir|rmdir|round|rsort|rtrim|scandir|sem_acquire|sem_get|sem_release|sem_remove|serialize|sesam_affected_rows|sesam_commit|sesam_connect|sesam_diagnostic|sesam_disconnect|sesam_errormsg|sesam_execimm|sesam_fetch_array|sesam_fetch_result|sesam_fetch_row|sesam_field_array|sesam_field_name|sesam_free_result|sesam_num_fields|sesam_query|sesam_rollback|sesam_seek_row|sesam_settransaction|session_cache_expire|session_cache_limiter|session_commit|session_decode|session_destroy|session_encode|session_get_cookie_params|session_id|session_is_registered|session_module_name|session_name|session_regenerate_id|session_register|session_save_path|session_set_cookie_params|session_set_save_handler|session_start|session_unregister|session_unset|session_write_close|set_error_handler|set_file_buffer|set_include_path|set_magic_quotes_runtime|set_time_limit|setcookie|setlocale|setrawcookie|settype|sha1|sha1_file|shell_exec|shm_attach|shm_detach|shm_get_var|shm_put_var|shm_remove|shm_remove_var|shmop_close|shmop_delete|shmop_open|shmop_read|shmop_size|shmop_write|show_source|shuffle|similar_text|simplexml_import_dom|simplexml_load_file|simplexml_load_string|sin|sinh|sizeof|sleep|snmp_get_quick_print|snmp_set_quick_print|snmpget|snmprealwalk|snmpset|snmpwalk|snmpwalkoid|socket_accept|socket_bind|socket_clear_error|socket_close|socket_connect|socket_create|socket_create_listen|socket_create_pair|socket_get_option|socket_get_status|socket_getpeername|socket_getsockname|socket_iovec_add|socket_iovec_alloc|socket_iovec_delete|socket_iovec_fetch|socket_iovec_free|socket_iovec_set|socket_last_error|socket_listen|socket_read|socket_readv|socket_recv|socket_recvfrom|socket_recvmsg|socket_select|socket_send|socket_sendmsg|socket_sendto|socket_set_block|socket_set_blocking|socket_set_nonblock|socket_set_option|socket_set_timeout|socket_shutdown|socket_strerror|socket_write|socket_writev|sort|soundex|split|spliti|sprintf|sql_regcase|sqlite_array_query|sqlite_busy_timeout|sqlite_changes|sqlite_close|sqlite_column|sqlite_create_aggregate|sqlite_create_function|sqlite_current|sqlite_error_string|sqlite_escape_string|sqlite_fetch_array|sqlite_fetch_single|sqlite_fetch_string|sqlite_field_name|sqlite_has_more|sqlite_last_error|sqlite_last_insert_rowid|sqlite_libencoding|sqlite_libversion|sqlite_next|sqlite_num_fields|sqlite_num_rows|sqlite_open|sqlite_popen|sqlite_query|sqlite_rewind|sqlite_seek|sqlite_udf_decode_binary|sqlite_udf_encode_binary|sqlite_unbuffered_query|sqrt|srand|sscanf|stat|str_ireplace|str_pad|str_repeat|str_replace|str_rot13|str_shuffle|str_split|str_word_count|strcasecmp|strchr|strcmp|strcoll|strcspn|stream_context_create|stream_context_get_options|stream_context_set_option|stream_context_set_params|stream_copy_to_stream|stream_filter_append|stream_filter_prepend|stream_filter_register|stream_get_contents|stream_get_filters|stream_get_line|stream_get_meta_data|stream_get_transports|stream_get_wrappers|stream_register_wrapper|stream_select|stream_set_blocking|stream_set_timeout|stream_set_write_buffer|stream_socket_accept|stream_socket_client|stream_socket_get_name|stream_socket_recvfrom|stream_socket_sendto|stream_socket_server|stream_wrapper_register|strftime|strip_tags|stripcslashes|stripos|stripslashes|stristr|strlen|strnatcasecmp|strnatcmp|strncasecmp|strncmp|strpos|strrchr|strrev|strripos|strrpos|strspn|strstr|strtok|strtolower|strtotime|strtoupper|strtr|strval|substr|substr_compare|substr_count|substr_replace|swf_actiongeturl|swf_actiongotoframe|swf_actiongotolabel|swf_actionnextframe|swf_actionplay|swf_actionprevframe|swf_actionsettarget|swf_actionstop|swf_actiontogglequality|swf_actionwaitforframe|swf_addbuttonrecord|swf_addcolor|swf_closefile|swf_definebitmap|swf_definefont|swf_defineline|swf_definepoly|swf_definerect|swf_definetext|swf_endbutton|swf_enddoaction|swf_endshape|swf_endsymbol|swf_fontsize|swf_fontslant|swf_fonttracking|swf_getbitmapinfo|swf_getfontinfo|swf_getframe|swf_labelframe|swf_lookat|swf_modifyobject|swf_mulcolor|swf_nextid|swf_oncondition|swf_openfile|swf_ortho|swf_ortho2|swf_perspective|swf_placeobject|swf_polarview|swf_popmatrix|swf_posround|swf_pushmatrix|swf_removeobject|swf_rotate|swf_scale|swf_setfont|swf_setframe|swf_shapearc|swf_shapecurveto|swf_shapecurveto3|swf_shapefillbitmapclip|swf_shapefillbitmaptile|swf_shapefilloff|swf_shapefillsolid|swf_shapelinesolid|swf_shapelineto|swf_shapemoveto|swf_showframe|swf_startbutton|swf_startdoaction|swf_startshape|swf_startsymbol|swf_textwidth|swf_translate|swf_viewport|swfaction|swfbitmap|swfbutton|swfbutton_keypress|swfdisplayitem|swffill|swffont|swfgradient|swfmorph|swfmovie|swfshape|swfsprite|swftext|swftextfield|sybase_affected_rows|sybase_close|sybase_connect|sybase_data_seek|sybase_deadlock_retry_count|sybase_fetch_array|sybase_fetch_assoc|sybase_fetch_field|sybase_fetch_object|sybase_fetch_row|sybase_field_seek|sybase_free_result|sybase_get_last_message|sybase_min_client_severity|sybase_min_error_severity|sybase_min_message_severity|sybase_min_server_severity|sybase_num_fields|sybase_num_rows|sybase_pconnect|sybase_query|sybase_result|sybase_select_db|sybase_set_message_handler|sybase_unbuffered_query|symlink|syslog|system|tan|tanh|tcpwrap_check|tempnam|textdomain|tidy_access_count|tidy_clean_repair|tidy_config_count|tidy_diagnose|tidy_error_count|tidy_get_body|tidy_get_config|tidy_get_error_buffer|tidy_get_head|tidy_get_html|tidy_get_html_ver|tidy_get_output|tidy_get_release|tidy_get_root|tidy_get_status|tidy_getopt|tidy_is_xhtml|tidy_is_xml|tidy_load_config|tidy_parse_file|tidy_parse_string|tidy_repair_file|tidy_repair_string|tidy_reset_config|tidy_save_config|tidy_set_encoding|tidy_setopt|tidy_warning_count|time|tmpfile|token_get_all|token_name|touch|trigger_error|trim|uasort|ucfirst|ucwords|udm_add_search_limit|udm_alloc_agent|udm_alloc_agent_array|udm_api_version|udm_cat_list|udm_cat_path|udm_check_charset|udm_check_stored|udm_clear_search_limits|udm_close_stored|udm_crc32|udm_errno|udm_error|udm_find|udm_free_agent|udm_free_ispell_data|udm_free_res|udm_get_doc_count|udm_get_res_field|udm_get_res_param|udm_hash32|udm_load_ispell_data|udm_open_stored|udm_set_agent_param|uksort|umask|uniqid|unixtojd|unlink|unpack|unregister_tick_function|unserialize|unset|urldecode|urlencode|user_error|usleep|usort|utf8_decode|utf8_encode|var_dump|var_export|variant|version_compare|virtual|vpopmail_add_alias_domain|vpopmail_add_alias_domain_ex|vpopmail_add_domain|vpopmail_add_domain_ex|vpopmail_add_user|vpopmail_alias_add|vpopmail_alias_del|vpopmail_alias_del_domain|vpopmail_alias_get|vpopmail_alias_get_all|vpopmail_auth_user|vpopmail_del_domain|vpopmail_del_domain_ex|vpopmail_del_user|vpopmail_error|vpopmail_passwd|vpopmail_set_user_quota|vprintf|vsprintf|w32api_deftype|w32api_init_dtype|w32api_invoke_function|w32api_register_function|w32api_set_call_method|wddx_add_vars|wddx_deserialize|wddx_packet_end|wddx_packet_start|wddx_serialize_value|wddx_serialize_vars|wordwrap|xdiff_file_diff|xdiff_file_diff_binary|xdiff_file_merge3|xdiff_file_patch|xdiff_file_patch_binary|xdiff_string_diff|xdiff_string_diff_binary|xdiff_string_merge3|xdiff_string_patch|xdiff_string_patch_binary|xml_error_string|xml_get_current_byte_index|xml_get_current_column_number|xml_get_current_line_number|xml_get_error_code|xml_parse|xml_parse_into_struct|xml_parser_create|xml_parser_create_ns|xml_parser_free|xml_parser_get_option|xml_parser_set_option|xml_set_character_data_handler|xml_set_default_handler|xml_set_element_handler|xml_set_end_namespace_decl_handler|xml_set_external_entity_ref_handler|xml_set_notation_decl_handler|xml_set_object|xml_set_processing_instruction_handler|xml_set_start_namespace_decl_handler|xml_set_unparsed_entity_decl_handler|xmlrpc_decode|xmlrpc_decode_request|xmlrpc_encode|xmlrpc_encode_request|xmlrpc_get_type|xmlrpc_parse_method_descriptions|xmlrpc_server_add_introspection_data|xmlrpc_server_call_method|xmlrpc_server_create|xmlrpc_server_destroy|xmlrpc_server_register_introspection_callback|xmlrpc_server_register_method|xmlrpc_set_type|xpath_eval|xpath_eval_expression|xpath_new_context|xptr_eval|xptr_new_context|xsl_xsltprocessor_get_parameter|xsl_xsltprocessor_has_exslt_support|xsl_xsltprocessor_import_stylesheet|xsl_xsltprocessor_register_php_functions|xsl_xsltprocessor_remove_parameter|xsl_xsltprocessor_set_parameter|xsl_xsltprocessor_transform_to_doc|xsl_xsltprocessor_transform_to_uri|xsl_xsltprocessor_transform_to_xml|xslt_create|xslt_errno|xslt_error|xslt_free|xslt_process|xslt_set_base|xslt_set_encoding|xslt_set_error_handler|xslt_set_log|xslt_set_sax_handler|xslt_set_sax_handlers|xslt_set_scheme_handler|xslt_set_scheme_handlers|yaz_addinfo|yaz_ccl_conf|yaz_ccl_parse|yaz_close|yaz_connect|yaz_database|yaz_element|yaz_errno|yaz_error|yaz_es_result|yaz_get_option|yaz_hits|yaz_itemorder|yaz_present|yaz_range|yaz_record|yaz_scan|yaz_scan_result|yaz_schema|yaz_search|yaz_set_option|yaz_sort|yaz_syntax|yaz_wait|yp_all|yp_cat|yp_err_string|yp_errno|yp_first|yp_get_default_domain|yp_master|yp_match|yp_next|yp_order|zend_logo_guid|zend_version|zip_close|zip_entry_close|zip_entry_compressedsize|zip_entry_compressionmethod|zip_entry_filesize|zip_entry_name|zip_entry_open|zip_entry_read|zip_open|zip_read|zlib_get_coding_type".split("|"));
@@ -6583,15 +6715,15 @@ define("ace/mode/php_highlight_rules", ["require", "exports", "module", "pilot/o
     this.$rules["doc-start"][0].next = "start"
   };
   oop$$22.inherits(PhpHighlightRules, TextHighlightRules$$8);
-  exports$$67.PhpHighlightRules = PhpHighlightRules
+  exports$$68.PhpHighlightRules = PhpHighlightRules
 });
-define("ace/mode/php", ["require", "exports", "module", "pilot/oop", "./text", "../tokenizer", "./php_highlight_rules", "./matching_brace_outdent", "../range"], function(require$$69, exports$$68) {
-  var oop$$23 = require$$69("pilot/oop");
-  var TextMode$$6 = require$$69("./text").Mode;
-  var Tokenizer$$7 = require$$69("../tokenizer").Tokenizer;
-  var PhpHighlightRules$$1 = require$$69("./php_highlight_rules").PhpHighlightRules;
-  var MatchingBraceOutdent$$4 = require$$69("./matching_brace_outdent").MatchingBraceOutdent;
-  var Range$$9 = require$$69("../range").Range;
+define("ace/mode/php", ["require", "exports", "module", "pilot/oop", "./text", "../tokenizer", "./php_highlight_rules", "./matching_brace_outdent", "../range"], function(require$$70, exports$$69) {
+  var oop$$23 = require$$70("pilot/oop");
+  var TextMode$$6 = require$$70("./text").Mode;
+  var Tokenizer$$7 = require$$70("../tokenizer").Tokenizer;
+  var PhpHighlightRules$$1 = require$$70("./php_highlight_rules").PhpHighlightRules;
+  var MatchingBraceOutdent$$4 = require$$70("./matching_brace_outdent").MatchingBraceOutdent;
+  var Range$$9 = require$$70("../range").Range;
   var Mode$$6 = function() {
     this.$tokenizer = new Tokenizer$$7((new PhpHighlightRules$$1).getRules());
     this.$outdent = new MatchingBraceOutdent$$4
@@ -6601,19 +6733,19 @@ define("ace/mode/php", ["require", "exports", "module", "pilot/oop", "./text", "
     this.toggleCommentLines = function(state$$26, doc$$28, startRow$$7, endRow$$6) {
       var outdent$$3 = true;
       var re$$9 = /^(\s*)#/;
-      var i$$52 = startRow$$7;
-      for(;i$$52 <= endRow$$6;i$$52++) {
-        if(!re$$9.test(doc$$28.getLine(i$$52))) {
+      var i$$51 = startRow$$7;
+      for(;i$$51 <= endRow$$6;i$$51++) {
+        if(!re$$9.test(doc$$28.getLine(i$$51))) {
           outdent$$3 = false;
           break
         }
       }if(outdent$$3) {
         var deleteRange$$3 = new Range$$9(0, 0, 0, 0);
-        i$$52 = startRow$$7;
-        for(;i$$52 <= endRow$$6;i$$52++) {
-          var line$$36 = doc$$28.getLine(i$$52).replace(re$$9, "$1");
-          deleteRange$$3.start.row = i$$52;
-          deleteRange$$3.end.row = i$$52;
+        i$$51 = startRow$$7;
+        for(;i$$51 <= endRow$$6;i$$51++) {
+          var line$$36 = doc$$28.getLine(i$$51).replace(re$$9, "$1");
+          deleteRange$$3.start.row = i$$51;
+          deleteRange$$3.end.row = i$$51;
           deleteRange$$3.end.column = line$$36.length + 2;
           doc$$28.replace(deleteRange$$3, line$$36)
         }return-2
@@ -6641,9 +6773,9 @@ define("ace/mode/php", ["require", "exports", "module", "pilot/oop", "./text", "
       return this.$outdent.autoOutdent(doc$$29, row$$62)
     }
   }).call(Mode$$6.prototype);
-  exports$$68.Mode = Mode$$6
+  exports$$69.Mode = Mode$$6
 });
-define("ace/undomanager", ["require", "exports", "module"], function(require$$70, exports$$69) {
+define("ace/undomanager", ["require", "exports", "module"], function(require$$71, exports$$70) {
   var UndoManager = function() {
     this.$undoStack = [];
     this.$redoStack = []
@@ -6669,50 +6801,50 @@ define("ace/undomanager", ["require", "exports", "module"], function(require$$70
       }
     }
   }).call(UndoManager.prototype);
-  exports$$69.UndoManager = UndoManager
+  exports$$70.UndoManager = UndoManager
 });
-define("demo/startup", ["require", "exports", "module", "pilot/event", "ace/editor", "ace/virtual_renderer", "ace/theme/textmate", "ace/document", "ace/mode/javascript", "ace/mode/css", "ace/mode/html", "ace/mode/xml", "ace/mode/python", "ace/mode/php", "ace/mode/text", "ace/undomanager"], function(require$$71, exports$$70) {
-  exports$$70.launch = function(env$$62) {
+define("demo/startup", ["require", "exports", "module", "pilot/event", "ace/editor", "ace/virtual_renderer", "ace/theme/textmate", "ace/document", "ace/mode/javascript", "ace/mode/css", "ace/mode/html", "ace/mode/xml", "ace/mode/python", "ace/mode/php", "ace/mode/text", "ace/undomanager"], function(require$$72, exports$$71) {
+  exports$$71.launch = function(env$$65) {
     function setMode() {
-      env$$62.editor.getDocument().setMode(modes[modeEl.value] || modes.text)
+      env$$65.editor.getDocument().setMode(modes[modeEl.value] || modes.text)
     }
     function onDocChange() {
       var doc$$30 = docs$$1[docEl.value];
-      env$$62.editor.setDocument(doc$$30);
+      env$$65.editor.setDocument(doc$$30);
       var mode$$5 = doc$$30.getMode();
       modeEl.value = mode$$5 instanceof JavaScriptMode$$1 ? "javascript" : mode$$5 instanceof CssMode$$1 ? "css" : mode$$5 instanceof HtmlMode ? "html" : mode$$5 instanceof XmlMode ? "xml" : mode$$5 instanceof PythonMode ? "python" : mode$$5 instanceof PhpMode ? "php" : "text";
-      env$$62.editor.focus()
+      env$$65.editor.focus()
     }
     function setTheme() {
-      env$$62.editor.setTheme(themeEl.value)
+      env$$65.editor.setTheme(themeEl.value)
     }
     function setSelectionStyle() {
-      selectEl.checked ? env$$62.editor.setSelectionStyle("line") : env$$62.editor.setSelectionStyle("text")
+      selectEl.checked ? env$$65.editor.setSelectionStyle("line") : env$$65.editor.setSelectionStyle("text")
     }
     function setHighlightActiveLine() {
-      env$$62.editor.setHighlightActiveLine(!!activeEl.checked)
+      env$$65.editor.setHighlightActiveLine(!!activeEl.checked)
     }
     function setShowInvisibles() {
-      env$$62.editor.setShowInvisibles(!!showHiddenEl.checked)
+      env$$65.editor.setShowInvisibles(!!showHiddenEl.checked)
     }
     function onResize() {
       container$$2.style.width = document.documentElement.clientWidth - 4 + "px";
       container$$2.style.height = document.documentElement.clientHeight - 55 - 4 - 23 + "px";
-      env$$62.editor.resize()
+      env$$65.editor.resize()
     }
-    var event$$9 = require$$71("pilot/event");
-    var Editor$$1 = require$$71("ace/editor").Editor;
-    var Renderer = require$$71("ace/virtual_renderer").VirtualRenderer;
-    var theme$$5 = require$$71("ace/theme/textmate");
-    var Document$$2 = require$$71("ace/document").Document;
-    var JavaScriptMode$$1 = require$$71("ace/mode/javascript").Mode;
-    var CssMode$$1 = require$$71("ace/mode/css").Mode;
-    var HtmlMode = require$$71("ace/mode/html").Mode;
-    var XmlMode = require$$71("ace/mode/xml").Mode;
-    var PythonMode = require$$71("ace/mode/python").Mode;
-    var PhpMode = require$$71("ace/mode/php").Mode;
-    var TextMode$$7 = require$$71("ace/mode/text").Mode;
-    var UndoManager$$1 = require$$71("ace/undomanager").UndoManager;
+    var event$$9 = require$$72("pilot/event");
+    var Editor$$1 = require$$72("ace/editor").Editor;
+    var Renderer = require$$72("ace/virtual_renderer").VirtualRenderer;
+    var theme$$5 = require$$72("ace/theme/textmate");
+    var Document$$2 = require$$72("ace/document").Document;
+    var JavaScriptMode$$1 = require$$72("ace/mode/javascript").Mode;
+    var CssMode$$1 = require$$72("ace/mode/css").Mode;
+    var HtmlMode = require$$72("ace/mode/html").Mode;
+    var XmlMode = require$$72("ace/mode/xml").Mode;
+    var PythonMode = require$$72("ace/mode/python").Mode;
+    var PhpMode = require$$72("ace/mode/php").Mode;
+    var TextMode$$7 = require$$72("ace/mode/text").Mode;
+    var UndoManager$$1 = require$$72("ace/undomanager").UndoManager;
     var docs$$1 = {};
     docs$$1.js = new Document$$2(document.getElementById("jstext").innerHTML);
     docs$$1.js.setMode(new JavaScriptMode$$1);
@@ -6730,7 +6862,7 @@ define("demo/startup", ["require", "exports", "module", "pilot/event", "ace/edit
     docs$$1.php.setMode(new PhpMode);
     docs$$1.php.setUndoManager(new UndoManager$$1);
     var container$$2 = document.getElementById("editor");
-    env$$62.editor = new Editor$$1(new Renderer(container$$2, theme$$5));
+    env$$65.editor = new Editor$$1(new Renderer(container$$2, theme$$5));
     var modes = {text:new TextMode$$7, xml:new XmlMode, html:new HtmlMode, css:new CssMode$$1, javascript:new JavaScriptMode$$1, python:new PythonMode, php:new PhpMode};
     var modeEl = document.getElementById("mode");
     modeEl.onchange = setMode;
@@ -6742,36 +6874,36 @@ define("demo/startup", ["require", "exports", "module", "pilot/event", "ace/edit
     themeEl.onchange = setTheme;
     setTheme();
     var selectEl = document.getElementById("select_style");
-    selectEl.onchange = setSelectionStyle;
+    selectEl.onclick = setSelectionStyle;
     setSelectionStyle();
     var activeEl = document.getElementById("highlight_active");
-    activeEl.onchange = setHighlightActiveLine;
+    activeEl.onclick = setHighlightActiveLine;
     setHighlightActiveLine();
     var showHiddenEl = document.getElementById("show_hidden");
-    showHiddenEl.onchange = setShowInvisibles;
+    showHiddenEl.onclick = setShowInvisibles;
     setShowInvisibles();
     window.jump = function() {
       var jump = document.getElementById("jump");
-      var cursor$$15 = env$$62.editor.getCursorPosition();
-      var pos$$7 = env$$62.editor.renderer.textToScreenCoordinates(cursor$$15.row, cursor$$15.column);
+      var cursor$$15 = env$$65.editor.getCursorPosition();
+      var pos$$7 = env$$65.editor.renderer.textToScreenCoordinates(cursor$$15.row, cursor$$15.column);
       jump.style.left = pos$$7.pageX + "px";
       jump.style.top = pos$$7.pageY + "px";
       jump.style.display = "block"
     };
     window.onresize = onResize;
     onResize();
-    event$$9.addListener(container$$2, "dragover", function(e$$39) {
-      return event$$9.preventDefault(e$$39)
+    event$$9.addListener(container$$2, "dragover", function(e$$42) {
+      return event$$9.preventDefault(e$$42)
     });
-    event$$9.addListener(container$$2, "drop", function(e$$40) {
+    event$$9.addListener(container$$2, "drop", function(e$$43) {
       try {
-        var file$$1 = e$$40.dataTransfer.files[0]
-      }catch(e$$41) {
+        var file$$1 = e$$43.dataTransfer.files[0]
+      }catch(e$$44) {
         return event$$9.stopEvent()
       }if(window.FileReader) {
         var reader = new FileReader;
         reader.onload = function() {
-          env$$62.editor.getSelection().selectAll();
+          env$$65.editor.getSelection().selectAll();
           var mode$$6 = "text";
           if(/^.*\.js$/i.test(file$$1.name)) {
             mode$$6 = "javascript"
@@ -6795,22 +6927,89 @@ define("demo/startup", ["require", "exports", "module", "pilot/event", "ace/edit
                 }
               }
             }
-          }env$$62.editor.onTextInput(reader.result);
+          }env$$65.editor.onTextInput(reader.result);
           modeEl.value = mode$$6;
-          env$$62.editor.getDocument().setMode(modes[mode$$6])
+          env$$65.editor.getDocument().setMode(modes[mode$$6])
         };
         reader.readAsText(file$$1)
-      }return event$$9.preventDefault(e$$40)
+      }return event$$9.preventDefault(e$$43)
     })
   }
+});
+define("ace/theme/clouds", ["require", "exports", "module", "pilot/dom"], function(require$$73, exports$$72) {
+  var dom$$9 = require$$73("pilot/dom");
+  var cssText$$2 = ".ace-clouds .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-clouds .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-clouds .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-clouds .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-clouds .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-clouds .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-clouds .ace_scroller {  background-color: #FFFFFF;}.ace-clouds .ace_text-layer {  cursor: text;  color: #000000;}.ace-clouds .ace_cursor {  border-left: 2px solid #000000;}.ace-clouds .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #000000;} .ace-clouds .ace_marker-layer .ace_selection {  background: #BDD5FC;}.ace-clouds .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-clouds .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid #BFBFBF;}.ace-clouds .ace_marker-layer .ace_active_line {  background: #FFFBD1;}       .ace-clouds .ace_invisible {  color: #BFBFBF;}.ace-clouds .ace_keyword {  color:#AF956F;}.ace-clouds .ace_keyword.ace_operator {  color:#484848;}.ace-clouds .ace_constant {  }.ace-clouds .ace_constant.ace_language {  color:#39946A;}.ace-clouds .ace_constant.ace_library {  }.ace-clouds .ace_constant.ace_numeric {  color:#46A609;}.ace-clouds .ace_invalid {  background-color:#FF002A;}.ace-clouds .ace_invalid.ace_illegal {  }.ace-clouds .ace_invalid.ace_deprecated {  }.ace-clouds .ace_support {  }.ace-clouds .ace_support.ace_function {  color:#C52727;}.ace-clouds .ace_function.ace_buildin {  }.ace-clouds .ace_string {  color:#5D90CD;}.ace-clouds .ace_string.ace_regexp {  }.ace-clouds .ace_comment {  color:#BCC8BA;}.ace-clouds .ace_comment.ace_doc {  }.ace-clouds .ace_comment.ace_doc.ace_tag {  }.ace-clouds .ace_variable {  }.ace-clouds .ace_variable.ace_language {  }.ace-clouds .ace_xml_pe {  }";
+  dom$$9.importCssString(cssText$$2);
+  exports$$72.cssClass = "ace-clouds"
+});
+define("ace/theme/clouds_midnight", ["require", "exports", "module", "pilot/dom"], function(require$$74, exports$$73) {
+  var dom$$10 = require$$74("pilot/dom");
+  var cssText$$3 = ".ace-clouds-midnight .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-clouds-midnight .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-clouds-midnight .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-clouds-midnight .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-clouds-midnight .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-clouds-midnight .ace_print_margin {  width: 1px;  background: #e8e8e8;}.ace-clouds-midnight .ace_scroller {  background-color: #191919;}.ace-clouds-midnight .ace_text-layer {  cursor: text;  color: #929292;}.ace-clouds-midnight .ace_cursor {  border-left: 2px solid #7DA5DC;}.ace-clouds-midnight .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #7DA5DC;} .ace-clouds-midnight .ace_marker-layer .ace_selection {  background: #000000;}.ace-clouds-midnight .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-clouds-midnight .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid #BFBFBF;}.ace-clouds-midnight .ace_marker-layer .ace_active_line {  background: rgba(215, 215, 215, 0.031);}       .ace-clouds-midnight .ace_invisible {  color: #BFBFBF;}.ace-clouds-midnight .ace_keyword {  color:#927C5D;}.ace-clouds-midnight .ace_keyword.ace_operator {  color:#4B4B4B;}.ace-clouds-midnight .ace_constant {  }.ace-clouds-midnight .ace_constant.ace_language {  color:#39946A;}.ace-clouds-midnight .ace_constant.ace_library {  }.ace-clouds-midnight .ace_constant.ace_numeric {  color:#46A609;}.ace-clouds-midnight .ace_invalid {  color:#FFFFFF;background-color:#E92E2E;}.ace-clouds-midnight .ace_invalid.ace_illegal {  }.ace-clouds-midnight .ace_invalid.ace_deprecated {  }.ace-clouds-midnight .ace_support {  }.ace-clouds-midnight .ace_support.ace_function {  color:#E92E2E;}.ace-clouds-midnight .ace_function.ace_buildin {  }.ace-clouds-midnight .ace_string {  color:#5D90CD;}.ace-clouds-midnight .ace_string.ace_regexp {  }.ace-clouds-midnight .ace_comment {  color:#3C403B;}.ace-clouds-midnight .ace_comment.ace_doc {  }.ace-clouds-midnight .ace_comment.ace_doc.ace_tag {  }.ace-clouds-midnight .ace_variable {  }.ace-clouds-midnight .ace_variable.ace_language {  }.ace-clouds-midnight .ace_xml_pe {  }";
+  dom$$10.importCssString(cssText$$3);
+  exports$$73.cssClass = "ace-clouds-midnight"
+});
+define("ace/theme/cobalt", ["require", "exports", "module", "pilot/dom"], function(require$$75, exports$$74) {
+  var dom$$11 = require$$75("pilot/dom");
+  var cssText$$4 = ".ace-cobalt .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-cobalt .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-cobalt .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-cobalt .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-cobalt .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-cobalt .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-cobalt .ace_scroller {  background-color: #002240;}.ace-cobalt .ace_text-layer {  cursor: text;  color: #FFFFFF;}.ace-cobalt .ace_cursor {  border-left: 2px solid #FFFFFF;}.ace-cobalt .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #FFFFFF;} .ace-cobalt .ace_marker-layer .ace_selection {  background: rgba(179, 101, 57, 0.75);}.ace-cobalt .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-cobalt .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(255, 255, 255, 0.15);}.ace-cobalt .ace_marker-layer .ace_active_line {  background: rgba(0, 0, 0, 0.35);}       .ace-cobalt .ace_invisible {  color: rgba(255, 255, 255, 0.15);}.ace-cobalt .ace_keyword {  color:#FF9D00;}.ace-cobalt .ace_keyword.ace_operator {  }.ace-cobalt .ace_constant {  color:#FF628C;}.ace-cobalt .ace_constant.ace_language {  }.ace-cobalt .ace_constant.ace_library {  }.ace-cobalt .ace_constant.ace_numeric {  }.ace-cobalt .ace_invalid {  color:#F8F8F8;background-color:#800F00;}.ace-cobalt .ace_invalid.ace_illegal {  }.ace-cobalt .ace_invalid.ace_deprecated {  }.ace-cobalt .ace_support {  color:#80FFBB;}.ace-cobalt .ace_support.ace_function {  color:#FFB054;}.ace-cobalt .ace_function.ace_buildin {  }.ace-cobalt .ace_string {  }.ace-cobalt .ace_string.ace_regexp {  color:#80FFC2;}.ace-cobalt .ace_comment {  font-style:italic;color:#0088FF;}.ace-cobalt .ace_comment.ace_doc {  }.ace-cobalt .ace_comment.ace_doc.ace_tag {  }.ace-cobalt .ace_variable {  color:#CCCCCC;}.ace-cobalt .ace_variable.ace_language {  color:#FF80E1;}.ace-cobalt .ace_xml_pe {  }";
+  dom$$11.importCssString(cssText$$4);
+  exports$$74.cssClass = "ace-cobalt"
+});
+define("ace/theme/dawn", ["require", "exports", "module", "pilot/dom"], function(require$$76, exports$$75) {
+  var dom$$12 = require$$76("pilot/dom");
+  var cssText$$5 = ".ace-dawn .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-dawn .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-dawn .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-dawn .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-dawn .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-dawn .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-dawn .ace_scroller {  background-color: #F9F9F9;}.ace-dawn .ace_text-layer {  cursor: text;  color: #080808;}.ace-dawn .ace_cursor {  border-left: 2px solid #000000;}.ace-dawn .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #000000;} .ace-dawn .ace_marker-layer .ace_selection {  background: rgba(39, 95, 255, 0.30);}.ace-dawn .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-dawn .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(75, 75, 126, 0.50);}.ace-dawn .ace_marker-layer .ace_active_line {  background: rgba(36, 99, 180, 0.12);}       .ace-dawn .ace_invisible {  color: rgba(75, 75, 126, 0.50);}.ace-dawn .ace_keyword {  color:#794938;}.ace-dawn .ace_keyword.ace_operator {  }.ace-dawn .ace_constant {  color:#811F24;}.ace-dawn .ace_constant.ace_language {  }.ace-dawn .ace_constant.ace_library {  }.ace-dawn .ace_constant.ace_numeric {  }.ace-dawn .ace_invalid {  }.ace-dawn .ace_invalid.ace_illegal {  text-decoration:underline;font-style:italic;color:#F8F8F8;background-color:#B52A1D;}.ace-dawn .ace_invalid.ace_deprecated {  text-decoration:underline;font-style:italic;color:#B52A1D;}.ace-dawn .ace_support {  color:#691C97;}.ace-dawn .ace_support.ace_function {  color:#693A17;}.ace-dawn .ace_function.ace_buildin {  }.ace-dawn .ace_string {  color:#0B6125;}.ace-dawn .ace_string.ace_regexp {  color:#CF5628;}.ace-dawn .ace_comment {  font-style:italic;color:#5A525F;}.ace-dawn .ace_comment.ace_doc {  }.ace-dawn .ace_comment.ace_doc.ace_tag {  }.ace-dawn .ace_variable {  color:#234A97;}.ace-dawn .ace_variable.ace_language {  }.ace-dawn .ace_xml_pe {  }";
+  dom$$12.importCssString(cssText$$5);
+  exports$$75.cssClass = "ace-dawn"
+});
+define("ace/theme/eclipse", ["require", "exports", "module", "pilot/dom", "text!ace/theme/eclipse.css!.ace-eclipse .ace_editor {\n  border: 2px solid rgb(159, 159, 159);\n}\n\n.ace-eclipse .ace_editor.ace_focus {\n  border: 2px solid #327fbd;\n}\n\n.ace-eclipse .ace_gutter {\n  width: 40px;\n  background: rgb(227, 227, 227);\n  border-right: 1px solid rgb(159, 159, 159);\t \n  color: rgb(136, 136, 136);\n}\n\n.ace-eclipse .ace_gutter-layer {\n  right: 10px;\n  text-align: right;\n}\n\n.ace-eclipse .ace_text-layer {\n  cursor: text;\n}\n\n.ace-eclipse .ace_cursor {\n  border-left: 1px solid black;\n}\n\n.ace-eclipse .ace_line .ace_keyword, .ace-eclipse .ace_line .ace_variable {\n  color: rgb(127, 0, 85);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-eclipse .ace_line .ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-eclipse .ace_line .ace_string {\n  color: rgb(42, 0, 255);\n}\n\n.ace-eclipse .ace_line .ace_comment {\n  color: rgb(63, 127, 95);\n}\n\n.ace-eclipse .ace_line .ace_comment.ace_doc {\n  color: rgb(63, 95, 191);\n}\n\n.ace-eclipse .ace_line .ace_comment.ace_doc.ace_tag {\n  color: rgb(127, 159, 191);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_numeric {\n}\n\n.ace-eclipse .ace_line .ace_tag {\n\tcolor: rgb(63, 127, 127);\n}\n\n.ace-eclipse .ace_line .ace_xml_pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-eclipse .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n\n.ace-eclipse .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-eclipse .ace_marker-layer .ace_active_line {\n  background: rgb(232, 242, 254);\n}"], 
+function(require$$77, exports$$76) {
+  var dom$$13 = require$$77("pilot/dom");
+  var cssText$$6 = require$$77("text!ace/theme/eclipse.css!.ace-eclipse .ace_editor {\n  border: 2px solid rgb(159, 159, 159);\n}\n\n.ace-eclipse .ace_editor.ace_focus {\n  border: 2px solid #327fbd;\n}\n\n.ace-eclipse .ace_gutter {\n  width: 40px;\n  background: rgb(227, 227, 227);\n  border-right: 1px solid rgb(159, 159, 159);\t \n  color: rgb(136, 136, 136);\n}\n\n.ace-eclipse .ace_gutter-layer {\n  right: 10px;\n  text-align: right;\n}\n\n.ace-eclipse .ace_text-layer {\n  cursor: text;\n}\n\n.ace-eclipse .ace_cursor {\n  border-left: 1px solid black;\n}\n\n.ace-eclipse .ace_line .ace_keyword, .ace-eclipse .ace_line .ace_variable {\n  color: rgb(127, 0, 85);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-eclipse .ace_line .ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-eclipse .ace_line .ace_string {\n  color: rgb(42, 0, 255);\n}\n\n.ace-eclipse .ace_line .ace_comment {\n  color: rgb(63, 127, 95);\n}\n\n.ace-eclipse .ace_line .ace_comment.ace_doc {\n  color: rgb(63, 95, 191);\n}\n\n.ace-eclipse .ace_line .ace_comment.ace_doc.ace_tag {\n  color: rgb(127, 159, 191);\n}\n\n.ace-eclipse .ace_line .ace_constant.ace_numeric {\n}\n\n.ace-eclipse .ace_line .ace_tag {\n\tcolor: rgb(63, 127, 127);\n}\n\n.ace-eclipse .ace_line .ace_xml_pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-eclipse .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n\n.ace-eclipse .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-eclipse .ace_marker-layer .ace_active_line {\n  background: rgb(232, 242, 254);\n}");
+  dom$$13.importCssString(cssText$$6);
+  exports$$76.cssClass = "ace-eclipse"
+});
+define("ace/theme/idle_fingers", ["require", "exports", "module", "pilot/dom"], function(require$$78, exports$$77) {
+  var dom$$14 = require$$78("pilot/dom");
+  var cssText$$7 = ".ace-idle-fingers .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-idle-fingers .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-idle-fingers .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-idle-fingers .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-idle-fingers .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-idle-fingers .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-idle-fingers .ace_scroller {  background-color: #323232;}.ace-idle-fingers .ace_text-layer {  cursor: text;  color: #FFFFFF;}.ace-idle-fingers .ace_cursor {  border-left: 2px solid #91FF00;}.ace-idle-fingers .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #91FF00;} .ace-idle-fingers .ace_marker-layer .ace_selection {  background: rgba(90, 100, 126, 0.88);}.ace-idle-fingers .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-idle-fingers .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid #404040;}.ace-idle-fingers .ace_marker-layer .ace_active_line {  background: #353637;}       .ace-idle-fingers .ace_invisible {  color: #404040;}.ace-idle-fingers .ace_keyword {  color:#CC7833;}.ace-idle-fingers .ace_keyword.ace_operator {  }.ace-idle-fingers .ace_constant {  color:#6C99BB;}.ace-idle-fingers .ace_constant.ace_language {  }.ace-idle-fingers .ace_constant.ace_library {  }.ace-idle-fingers .ace_constant.ace_numeric {  }.ace-idle-fingers .ace_invalid {  color:#FFFFFF;background-color:#FF0000;}.ace-idle-fingers .ace_invalid.ace_illegal {  }.ace-idle-fingers .ace_invalid.ace_deprecated {  }.ace-idle-fingers .ace_support {  color:#bc9458;}.ace-idle-fingers .ace_support.ace_function {  color:#B83426;}.ace-idle-fingers .ace_function.ace_buildin {  }.ace-idle-fingers .ace_string {  color:#A5C261;}.ace-idle-fingers .ace_string.ace_regexp {  color:#CCCC33;}.ace-idle-fingers .ace_comment {  font-style:italic;  color:#BC9458;}.ace-idle-fingers .ace_comment.ace_doc {  }.ace-idle-fingers .ace_comment.ace_doc.ace_tag {  }.ace-idle-fingers .ace_variable {  color:#b7dff8;}.ace-idle-fingers .ace_variable.ace_language {  color:#b7dff8;}.ace-idle-fingers .ace_xml_pe {  }";
+  dom$$14.importCssString(cssText$$7);
+  exports$$77.cssClass = "ace-idle-fingers"
+});
+define("ace/theme/kr_theme", ["require", "exports", "module", "pilot/dom"], function(require$$79, exports$$78) {
+  var dom$$15 = require$$79("pilot/dom");
+  var cssText$$8 = ".ace-kr-theme .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-kr-theme .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-kr-theme .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-kr-theme .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-kr-theme .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-kr-theme .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-kr-theme .ace_scroller {  background-color: #0B0A09;}.ace-kr-theme .ace_text-layer {  cursor: text;  color: #FCFFE0;}.ace-kr-theme .ace_cursor {  border-left: 2px solid #FF9900;}.ace-kr-theme .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #FF9900;} .ace-kr-theme .ace_marker-layer .ace_selection {  background: rgba(170, 0, 255, 0.45);}.ace-kr-theme .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-kr-theme .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(255, 177, 111, 0.32);}.ace-kr-theme .ace_marker-layer .ace_active_line {  background: #38403D;}       .ace-kr-theme .ace_invisible {  color: rgba(255, 177, 111, 0.32);}.ace-kr-theme .ace_keyword {  color:#949C8B;}.ace-kr-theme .ace_keyword.ace_operator {  }.ace-kr-theme .ace_constant {  color:rgba(210, 117, 24, 0.76);}.ace-kr-theme .ace_constant.ace_language {  }.ace-kr-theme .ace_constant.ace_library {  }.ace-kr-theme .ace_constant.ace_numeric {  }.ace-kr-theme .ace_invalid {  color:#F8F8F8;background-color:#A41300;}.ace-kr-theme .ace_invalid.ace_illegal {  }.ace-kr-theme .ace_invalid.ace_deprecated {  }.ace-kr-theme .ace_support {  color:#9FC28A;}.ace-kr-theme .ace_support.ace_function {  color:#85873A;}.ace-kr-theme .ace_function.ace_buildin {  }.ace-kr-theme .ace_string {  }.ace-kr-theme .ace_string.ace_regexp {  color:rgba(125, 255, 192, 0.65);}.ace-kr-theme .ace_comment {  font-style:italic;color:#706D5B;}.ace-kr-theme .ace_comment.ace_doc {  }.ace-kr-theme .ace_comment.ace_doc.ace_tag {  }.ace-kr-theme .ace_variable {  color:#D1A796;}.ace-kr-theme .ace_variable.ace_language {  color:#FF80E1;}.ace-kr-theme .ace_xml_pe {  }";
+  dom$$15.importCssString(cssText$$8);
+  exports$$78.cssClass = "ace-kr-theme"
+});
+define("ace/theme/mono_industrial", ["require", "exports", "module", "pilot/dom"], function(require$$80, exports$$79) {
+  var dom$$16 = require$$80("pilot/dom");
+  var cssText$$9 = ".ace-mono-industrial .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-mono-industrial .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-mono-industrial .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-mono-industrial .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-mono-industrial .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-mono-industrial .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-mono-industrial .ace_scroller {  background-color: #222C28;}.ace-mono-industrial .ace_text-layer {  cursor: text;  color: #FFFFFF;}.ace-mono-industrial .ace_cursor {  border-left: 2px solid #FFFFFF;}.ace-mono-industrial .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #FFFFFF;} .ace-mono-industrial .ace_marker-layer .ace_selection {  background: rgba(145, 153, 148, 0.40);}.ace-mono-industrial .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-mono-industrial .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(102, 108, 104, 0.50);}.ace-mono-industrial .ace_marker-layer .ace_active_line {  background: rgba(12, 13, 12, 0.25);}       .ace-mono-industrial .ace_invisible {  color: rgba(102, 108, 104, 0.50);}.ace-mono-industrial .ace_keyword {  color:#A39E64;}.ace-mono-industrial .ace_keyword.ace_operator {  color:#A8B3AB;}.ace-mono-industrial .ace_constant {  color:#E98800;}.ace-mono-industrial .ace_constant.ace_language {  }.ace-mono-industrial .ace_constant.ace_library {  }.ace-mono-industrial .ace_constant.ace_numeric {  color:#E98800;}.ace-mono-industrial .ace_invalid {  color:#FFFFFF;background-color:rgba(153, 0, 0, 0.68);}.ace-mono-industrial .ace_invalid.ace_illegal {  }.ace-mono-industrial .ace_invalid.ace_deprecated {  }.ace-mono-industrial .ace_support {  }.ace-mono-industrial .ace_support.ace_function {  color:#588E60;}.ace-mono-industrial .ace_function.ace_buildin {  }.ace-mono-industrial .ace_string {  }.ace-mono-industrial .ace_string.ace_regexp {  }.ace-mono-industrial .ace_comment {  color:#666C68;background-color:#151C19;}.ace-mono-industrial .ace_comment.ace_doc {  }.ace-mono-industrial .ace_comment.ace_doc.ace_tag {  }.ace-mono-industrial .ace_variable {  }.ace-mono-industrial .ace_variable.ace_language {  color:#648BD2;}.ace-mono-industrial .ace_xml_pe {  }";
+  dom$$16.importCssString(cssText$$9);
+  exports$$79.cssClass = "ace-mono-industrial"
+});
+define("ace/theme/monokai", ["require", "exports", "module", "pilot/dom"], function(require$$81, exports$$80) {
+  var dom$$17 = require$$81("pilot/dom");
+  var cssText$$10 = ".ace-monokai .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-monokai .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-monokai .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-monokai .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-monokai .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-monokai .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-monokai .ace_scroller {  background-color: #272822;}.ace-monokai .ace_text-layer {  cursor: text;  color: #F8F8F2;}.ace-monokai .ace_cursor {  border-left: 2px solid #F8F8F0;}.ace-monokai .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #F8F8F0;} .ace-monokai .ace_marker-layer .ace_selection {  background: #49483E;}.ace-monokai .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-monokai .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid #49483E;}.ace-monokai .ace_marker-layer .ace_active_line {  background: #49483E;}       .ace-monokai .ace_invisible {  color: #49483E;}.ace-monokai .ace_keyword {  color:#F92672;}.ace-monokai .ace_keyword.ace_operator {  }.ace-monokai .ace_constant {  }.ace-monokai .ace_constant.ace_language {  color:#AE81FF;}.ace-monokai .ace_constant.ace_library {  }.ace-monokai .ace_constant.ace_numeric {  color:#AE81FF;}.ace-monokai .ace_invalid {  color:#F8F8F0;background-color:#F92672;}.ace-monokai .ace_invalid.ace_illegal {  }.ace-monokai .ace_invalid.ace_deprecated {  color:#F8F8F0;background-color:#AE81FF;}.ace-monokai .ace_support {  }.ace-monokai .ace_support.ace_function {  color:#66D9EF;}.ace-monokai .ace_function.ace_buildin {  }.ace-monokai .ace_string {  color:#E6DB74;}.ace-monokai .ace_string.ace_regexp {  }.ace-monokai .ace_comment {  color:#75715E;}.ace-monokai .ace_comment.ace_doc {  }.ace-monokai .ace_comment.ace_doc.ace_tag {  }.ace-monokai .ace_variable {  }.ace-monokai .ace_variable.ace_language {  }.ace-monokai .ace_xml_pe {  }";
+  dom$$17.importCssString(cssText$$10);
+  exports$$80.cssClass = "ace-monokai"
+});
+define("ace/theme/pastel_on_dark", ["require", "exports", "module", "pilot/dom"], function(require$$82, exports$$81) {
+  var dom$$18 = require$$82("pilot/dom");
+  var cssText$$11 = ".ace-pastel-on-dark .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-pastel-on-dark .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-pastel-on-dark .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-pastel-on-dark .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-pastel-on-dark .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-pastel-on-dark .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-pastel-on-dark .ace_scroller {  background-color: #2c2828;}.ace-pastel-on-dark .ace_text-layer {  cursor: text;  color: #8f938f;}.ace-pastel-on-dark .ace_cursor {  border-left: 2px solid #A7A7A7;}.ace-pastel-on-dark .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #A7A7A7;} .ace-pastel-on-dark .ace_marker-layer .ace_selection {  background: rgba(221, 240, 255, 0.20);}.ace-pastel-on-dark .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-pastel-on-dark .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(255, 255, 255, 0.25);}.ace-pastel-on-dark .ace_marker-layer .ace_active_line {  background: rgba(255, 255, 255, 0.031);}       .ace-pastel-on-dark .ace_invisible {  color: rgba(255, 255, 255, 0.25);}.ace-pastel-on-dark .ace_keyword {  color:#757ad8;}.ace-pastel-on-dark .ace_keyword.ace_operator {  color:#797878;}.ace-pastel-on-dark .ace_constant {  color:#4fb7c5;}.ace-pastel-on-dark .ace_constant.ace_language {  }.ace-pastel-on-dark .ace_constant.ace_library {  }.ace-pastel-on-dark .ace_constant.ace_numeric {  }.ace-pastel-on-dark .ace_invalid {  }.ace-pastel-on-dark .ace_invalid.ace_illegal {  color:#F8F8F8;background-color:rgba(86, 45, 86, 0.75);}.ace-pastel-on-dark .ace_invalid.ace_deprecated {  text-decoration:underline;font-style:italic;color:#D2A8A1;}.ace-pastel-on-dark .ace_support {  color:#9a9a9a;}.ace-pastel-on-dark .ace_support.ace_function {  color:#aeb2f8;}.ace-pastel-on-dark .ace_function.ace_buildin {  }.ace-pastel-on-dark .ace_string {  color:#66a968;}.ace-pastel-on-dark .ace_string.ace_regexp {  color:#E9C062;}.ace-pastel-on-dark .ace_comment {  color:#656865;}.ace-pastel-on-dark .ace_comment.ace_doc {  color:A6C6FF;}.ace-pastel-on-dark .ace_comment.ace_doc.ace_tag {  color:A6C6FF;}.ace-pastel-on-dark .ace_variable {  color:#bebf55;}.ace-pastel-on-dark .ace_variable.ace_language {  color:#bebf55;}.ace-pastel-on-dark .ace_xml_pe {  color:#494949;}";
+  dom$$18.importCssString(cssText$$11);
+  exports$$81.cssClass = "ace-pastel-on-dark"
+});
+define("ace/theme/twilight", ["require", "exports", "module", "pilot/dom"], function(require$$83, exports$$82) {
+  var dom$$19 = require$$83("pilot/dom");
+  var cssText$$12 = ".ace-twilight .ace_editor {  border: 2px solid rgb(159, 159, 159);}.ace-twilight .ace_editor.ace_focus {  border: 2px solid #327fbd;}.ace-twilight .ace_gutter {  width: 50px;  background: #e8e8e8;  color: #333;  overflow : hidden;}.ace-twilight .ace_gutter-layer {  width: 100%;  text-align: right;}.ace-twilight .ace_gutter-layer .ace_gutter-cell {  padding-right: 6px;}.ace-twilight .ace_editor .ace_printMargin {  width: 1px;  background: #e8e8e8;}.ace-twilight .ace_scroller {  background-color: #141414;}.ace-twilight .ace_text-layer {  cursor: text;  color: #F8F8F8;}.ace-twilight .ace_cursor {  border-left: 2px solid #A7A7A7;}.ace-twilight .ace_cursor.ace_overwrite {  border-left: 0px;  border-bottom: 1px solid #A7A7A7;} .ace-twilight .ace_marker-layer .ace_selection {  background: rgba(221, 240, 255, 0.20);}.ace-twilight .ace_marker-layer .ace_step {  background: rgb(198, 219, 174);}.ace-twilight .ace_marker-layer .ace_bracket {  margin: -1px 0 0 -1px;  border: 1px solid rgba(255, 255, 255, 0.25);}.ace-twilight .ace_marker-layer .ace_active_line {  background: rgba(255, 255, 255, 0.031);}       .ace-twilight .ace_invisible {  color: rgba(255, 255, 255, 0.25);}.ace-twilight .ace_keyword {  color:#CDA869;}.ace-twilight .ace_keyword.ace_operator {  }.ace-twilight .ace_constant {  color:#CF6A4C;}.ace-twilight .ace_constant.ace_language {  }.ace-twilight .ace_constant.ace_library {  }.ace-twilight .ace_constant.ace_numeric {  }.ace-twilight .ace_invalid {  }.ace-twilight .ace_invalid.ace_illegal {  color:#F8F8F8;background-color:rgba(86, 45, 86, 0.75);}.ace-twilight .ace_invalid.ace_deprecated {  text-decoration:underline;font-style:italic;color:#D2A8A1;}.ace-twilight .ace_support {  color:#9B859D;}.ace-twilight .ace_support.ace_function {  color:#DAD085;}.ace-twilight .ace_function.ace_buildin {  }.ace-twilight .ace_string {  color:#8F9D6A;}.ace-twilight .ace_string.ace_regexp {  color:#E9C062;}.ace-twilight .ace_comment {  font-style:italic;color:#5F5A60;}.ace-twilight .ace_comment.ace_doc {  }.ace-twilight .ace_comment.ace_doc.ace_tag {  }.ace-twilight .ace_variable {  color:#7587A6;}.ace-twilight .ace_variable.ace_language {  }.ace-twilight .ace_xml_pe {  color:#494949;}";
+  dom$$19.importCssString(cssText$$12);
+  exports$$82.cssClass = "ace-twilight"
 });
 var config = {paths:{demo:"../demo", ace:"../lib/ace", cockpit:"../support/cockpit/lib/cockpit", pilot:"../support/cockpit/support/pilot/lib/pilot"}};
 require(config, ["pilot/fixoldbrowsers", "pilot/plugin_manager", "pilot/settings", "pilot/environment", "demo/startup"], function() {
   var catalog$$2 = require("pilot/plugin_manager").catalog;
   catalog$$2.registerPlugins(["pilot/index", "cockpit/index"]).then(function() {
-    var env$$63 = require("pilot/environment").create();
-    catalog$$2.startupPlugins({env:env$$63}).then(function() {
-      require("demo/startup").launch(env$$63)
+    var env$$66 = require("pilot/environment").create();
+    catalog$$2.startupPlugins({env:env$$66}).then(function() {
+      require("demo/startup").launch(env$$66)
     })
   })
 });

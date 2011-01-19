@@ -22,12 +22,13 @@ define(function(l, o) {
       this.end = this.start = 0
     }this.predictions = b.predictions
   }
-  function h(b, a, c, d, e) {
+  function h(b, a, c, d, e, f) {
     this.emitter = b;
     this.setText(a);
     this.start = c;
     this.end = d;
-    this.priorSpace = e
+    this.prefix = e;
+    this.suffix = f
   }
   function q(b, a) {
     this.param = b;
@@ -76,7 +77,7 @@ define(function(l, o) {
   h.prototype = {merge:function(b) {
     if(b.emitter != this.emitter) {
       throw new Error("Can't merge Arguments from different EventEmitters");
-    }return new h(this.emitter, this.text + b.priorSpace + b.text, this.start, b.end, this.priorSpace)
+    }return new h(this.emitter, this.text + this.suffix + b.prefix + b.text, this.start, b.end, this.prefix, b.suffix)
   }, setText:function(b) {
     if(b == null) {
       throw new Error("Illegal text for Argument: " + b);
@@ -84,7 +85,7 @@ define(function(l, o) {
     this.text = b;
     this.emitter._dispatchEvent("argumentChange", a)
   }, toString:function() {
-    return this.priorSpace + this.text
+    return this.prefix + this.text + this.suffix
   }};
   h.merge = function(b, a, c) {
     a = a === undefined ? 0 : a;
@@ -99,13 +100,15 @@ define(function(l, o) {
   q.prototype = {param:undefined, conversion:undefined, value:undefined, arg:undefined, value:undefined, setValue:function(b) {
     if(this.value !== b) {
       if(b === undefined) {
-        b = this.param.defaultValue;
+        this.value = this.param.defaultValue;
+        this.conversion = this.param.getDefault ? this.param.getDefault() : this.param.type.getDefault();
         this.arg = undefined
-      }this.value = b;
-      b = b == null ? "" : this.param.type.stringify(b);
-      this.arg && this.arg.setText(b);
-      this.conversion = undefined;
-      this.requisition._assignmentChanged(this)
+      }else {
+        this.value = b;
+        this.conversion = undefined;
+        b = b == null ? "" : this.param.type.stringify(b);
+        this.arg && this.arg.setText(b)
+      }this.requisition._assignmentChanged(this)
     }
   }, arg:undefined, setArgument:function(b) {
     if(this.arg !== b) {
@@ -143,6 +146,16 @@ define(function(l, o) {
     }return new j(a, b, c, d, e)
   }, complete:function() {
     this.conversion && this.conversion.predictions && this.conversion.predictions.length > 0 && this.setValue(this.conversion.predictions[0])
+  }, isPositionCaptured:function(b) {
+    if(!this.arg) {
+      return false
+    }if(this.arg.start === -1) {
+      return false
+    }if(b > this.arg.end) {
+      return false
+    }if(b === this.arg.end) {
+      return this.conversion.status !== k.VALID || this.conversion.predictions.length !== 0
+    }return true
   }, decrement:function() {
     var b = this.param.type.decrement(this.value);
     b != null && this.setValue(b)
@@ -153,7 +166,7 @@ define(function(l, o) {
     return this.arg ? this.arg.toString() : ""
   }};
   o.Assignment = q;
-  var s = {name:"command", type:"command", description:"The command to execute", getCustomHint:function(b, a) {
+  var s = {name:"__command", type:"command", description:"The command to execute", getCustomHint:function(b, a) {
     var c = [];
     c.push("<strong><tt> &gt; ");
     c.push(b.name);
@@ -179,7 +192,7 @@ define(function(l, o) {
     }return new j(k.VALID, c.join(""), a)
   }};
   p.prototype = {commandAssignment:undefined, assignmentCount:undefined, _assignments:undefined, _hints:undefined, _assignmentChanged:function(b) {
-    if(b.param.name === "command") {
+    if(b.param.name === "__command") {
       this._assignments = {};
       b.value && b.value.params.forEach(function(a) {
         this._assignments[a.name] = new q(a, this)
@@ -196,26 +209,31 @@ define(function(l, o) {
       return this._assignments[b]
     }, this)
   }, _updateHints:function() {
-    this._hints.push(this.commandAssignment.getHint());
-    Object.keys(this._assignments).map(function(b) {
-      b = this._assignments[b];
-      b.arg && this._hints.push(b.getHint())
+    this.getAssignments(true).forEach(function(b) {
+      this._hints.push(b.getHint())
     }, this);
     j.sort(this._hints)
   }, getWorstHint:function() {
     return this._hints[0]
-  }, getArgs:function() {
+  }, getArgsObject:function() {
     var b = {};
-    Object.keys(this._assignments).forEach(function(a) {
-      b[a] = this.getAssignment(a).value
+    this.getAssignments().forEach(function(a) {
+      b[a.param.name] = a.value
     }, this);
     return b
+  }, getAssignments:function(b) {
+    var a = [];
+    b === true && a.push(this.commandAssignment);
+    Object.keys(this._assignments).forEach(function(c) {
+      a.push(this.getAssignment(c))
+    }, this);
+    return a
   }, setDefaultValues:function() {
-    Object.keys(this._assignments).forEach(function(b) {
-      this._assignments[b].setValue(undefined)
+    this.getAssignments().forEach(function(b) {
+      b.setValue(undefined)
     }, this)
   }, exec:function() {
-    t.exec(this.commandAssignment.value, this.env, this.getArgs(), this.toCanonicalString())
+    t.exec(this.commandAssignment.value, this.env, this.getArgsObject(), this.toCanonicalString())
   }, toCanonicalString:function() {
     var b = [];
     b.push(this.commandAssignment.value.name);
@@ -255,11 +273,9 @@ define(function(l, o) {
       return a
     };
     i.prototype.toString = function() {
-      var a = Object.keys(this._assignments).map(function(c) {
-        return this._assignments[c].toString()
-      }, this);
-      a.unshift(this.commandAssignment.toString());
-      return a.join("")
+      return this.getAssignments(true).map(function(a) {
+        return a.toString()
+      }, this).join("")
     };
     var b = i.prototype._updateHints;
     i.prototype._updateHints = function() {
@@ -277,46 +293,49 @@ define(function(l, o) {
       return this._hints
     };
     i.prototype.getAssignmentAt = function(a) {
-      var c = this.commandAssignment.arg;
-      if(c && a <= c.end) {
-        return this.commandAssignment
-      }c = Object.keys(this._assignments);
-      for(var d = 0;d < c.length;d++) {
-        var e = this._assignments[c[d]];
-        if(e.arg && a <= e.arg.end) {
+      for(var c = this.getAssignments(true), d = 0;d < c.length;d++) {
+        var e = c[d];
+        if(!e.arg) {
+          return e
+        }if(e.isPositionCaptured(a)) {
           return e
         }
-      }throw new Error("position (" + a + ") is off end of requisition (" + this.toString() + ")");
+      }return e
     };
     i.prototype._tokenize = function(a) {
       function c(x) {
         return x.replace(/\uF000/g, " ").replace(/\uF001/g, "'").replace(/\uF002/g, '"')
       }
       if(a == null || a.length === 0) {
-        return[new h(this, "", 0, 0, "")]
+        return[new h(this, "", 0, 0, "", "")]
       }var d = 1;
       a = a.replace(/\\\\/g, "\\").replace(/\\b/g, "\u0008").replace(/\\f/g, "\u000c").replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t").replace(/\\v/g, "\u000b").replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\ /g, "\uf000").replace(/\\'/g, "\uf001").replace(/\\"/g, "\uf002");
       for(var e = 0, f = 0, g = "", m = [];;) {
         if(e >= a.length) {
           if(d !== 1) {
             d = c(a.substring(f, e));
-            m.push(new h(this, d, f, e, g))
+            m.push(new h(this, d, f, e, g, ""))
           }else {
             if(e !== f) {
-              g = a.substring(f, e);
-              m.push(new h(this, "", e, e, g))
+              a = a.substring(f, e);
+              if(f = m[m.length - 1]) {
+                f.suffix += a
+              }else {
+                f = new h(this, "", e, e, a, "");
+                m.push(f)
+              }
             }
           }break
         }var n = a[e];
         switch(d) {
           case 1:
             if(n === "'") {
-              g = a.substring(f, e);
+              g = a.substring(f, e + 1);
               d = 3;
               f = e + 1
             }else {
               if(n === '"') {
-                g = a.substring(f, e);
+                g = a.substring(f, e + 1);
                 d = 4;
                 f = e + 1
               }else {
@@ -330,7 +349,7 @@ define(function(l, o) {
           case 2:
             if(n === " ") {
               d = c(a.substring(f, e));
-              m.push(new h(this, d, f, e, g));
+              m.push(new h(this, d, f, e, g, ""));
               d = 1;
               f = e;
               g = ""
@@ -338,7 +357,7 @@ define(function(l, o) {
           case 3:
             if(n === "'") {
               d = c(a.substring(f, e));
-              m.push(new h(this, d, f, e, g));
+              m.push(new h(this, d, f - 1, e + 1, g, n));
               d = 1;
               f = e + 1;
               g = ""
@@ -346,7 +365,7 @@ define(function(l, o) {
           case 4:
             if(n === '"') {
               d = c(a.substring(f, e));
-              m.push(new h(this, d, f, e, g));
+              m.push(new h(this, d, f - 1, e + 1, g, n));
               d = 1;
               f = e + 1;
               g = ""

@@ -70,5 +70,27 @@ define(function(f, c) {
   };
   c.getParentWindow = function(a) {
     return a.defaultView || a.parentWindow
+  };
+  c.getSelectionStart = function(a) {
+    var b;
+    try {
+      b = a.selectionStart || 0
+    }catch(d) {
+      b = 0
+    }return b
+  };
+  c.setSelectionStart = function(a, b) {
+    return a.selectionStart = b
+  };
+  c.getSelectionEnd = function(a) {
+    var b;
+    try {
+      b = a.selectionEnd || 0
+    }catch(d) {
+      b = 0
+    }return b
+  };
+  c.setSelectionEnd = function(a, b) {
+    return a.selectionEnd = b
   }
 });

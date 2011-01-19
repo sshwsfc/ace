@@ -40,7 +40,19 @@
                 "pilot/environment", 
                 "pilot/index",
                 "cockpit/index",
-                "demo/startup"
+                "demo/startup",
+                "ace/theme/clouds",
+                "ace/theme/clouds_midnight",
+                "ace/theme/cobalt",
+                "ace/theme/dawn",
+                "ace/theme/eclipse",
+                "ace/theme/idle_fingers",
+                "ace/theme/kr_theme",
+                "ace/theme/mono_industrial",
+                "ace/theme/monokai",
+                "ace/theme/pastel_on_dark",
+                "ace/theme/textmate",
+                "ace/theme/twilight"
             ]
         },
         /*{

@@ -5,63 +5,64 @@ define(function(f, e) {
     this.name = b;
     this.status = this.INSTALLED
   };
-  e.Plugin.prototype = {NEW:0, INSTALLED:1, REGISTERED:2, STARTED:3, UNREGISTERED:4, SHUTDOWN:5, install:function(b, d) {
+  e.Plugin.prototype = {NEW:0, INSTALLED:1, REGISTERED:2, STARTED:3, UNREGISTERED:4, SHUTDOWN:5, install:function(b, c) {
     var a = new g;
     if(this.status > this.NEW) {
       a.resolve(this);
       return a
-    }f([this.name], function(c) {
-      c.install && c.install(b, d);
+    }f([this.name], function(d) {
+      d.install && d.install(b, c);
       this.status = this.INSTALLED;
       a.resolve(this)
     }.bind(this));
     return a
-  }, register:function(b, d) {
+  }, register:function(b, c) {
     var a = new g;
     if(this.status != this.INSTALLED) {
       a.resolve(this);
       return a
-    }f([this.name], function(c) {
-      c.register && c.register(b, d);
+    }f([this.name], function(d) {
+      d.register && d.register(b, c);
       this.status = this.REGISTERED;
       a.resolve(this)
     }.bind(this));
     return a
-  }, startup:function(b, d) {
+  }, startup:function(b, c) {
+    c = c || e.REASONS.APP_STARTUP;
     var a = new g;
     if(this.status != this.REGISTERED) {
       a.resolve(this);
       return a
-    }f([this.name], function(c) {
-      c.startup && c.startup(b, d);
+    }f([this.name], function(d) {
+      d.startup && d.startup(b, c);
       this.status = this.STARTED;
       a.resolve(this)
     }.bind(this));
     return a
-  }, shutdown:function(b, d) {
+  }, shutdown:function(b, c) {
     if(this.status == this.STARTED) {
       pluginModule = f(this.name);
-      pluginModule.shutdown && pluginModule.shutdown(b, d)
+      pluginModule.shutdown && pluginModule.shutdown(b, c)
     }
   }};
   e.PluginCatalog = function() {
     this.plugins = {}
   };
-  e.PluginCatalog.prototype = {registerPlugins:function(b, d, a) {
-    var c = [];
+  e.PluginCatalog.prototype = {registerPlugins:function(b, c, a) {
+    var d = [];
     b.forEach(function(i) {
       var h = this.plugins[i];
       if(h === undefined) {
         h = new e.Plugin(i);
         this.plugins[i] = h;
-        c.push(h.register(d, a))
+        d.push(h.register(c, a))
       }
     }.bind(this));
-    return g.group(c)
-  }, startupPlugins:function(b, d) {
+    return g.group(d)
+  }, startupPlugins:function(b, c) {
     var a = [];
-    for(var c in this.plugins) {
-      a.push(this.plugins[c].startup(b, d))
+    for(var d in this.plugins) {
+      a.push(this.plugins[d].startup(b, c))
     }return g.group(a)
   }};
   e.catalog = new e.PluginCatalog
