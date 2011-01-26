@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Editor</title>
+    <meta name="author" content="Fabian Jakobs">
+</head>
+<body>
+  <div id="msg"></div>
+  <script src="demo/require.js" type="text/javascript" charset="utf-8"></script>
+  <script>
+var config = {
+    paths: { 
+        demo: "../demo",
+        ace: "../lib/ace",
+        cockpit: "../support/cockpit/lib/cockpit",
+        pilot: "../support/pilot/lib/pilot"
+    }
+};
+
+var deps = [ "pilot/fixoldbrowsers", "pilot/plugin_manager", "pilot/settings",
+             "pilot/environment", "demo/test", 'ace/syntax/source.python' ];
+
+require(config);
+require(deps, function() {
+    var catalog = require("pilot/plugin_manager").catalog;
+    catalog.registerPlugins([ "pilot/index", "cockpit/index" ]).then(function() {
+        var env = require("pilot/environment").create();
+        catalog.startupPlugins({ env: env }).then(function() {
+        	require("demo/test").launch(env);
+        });
+    });
+});
+  </script>
+</body>
+</html>
