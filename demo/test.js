@@ -6,6 +6,9 @@ var text = require('text!demo/test.py');
 
 exports.launch = function(env) {
 	
+	var m = /\b(?:(import)|(from))\b/g.exec('import xx from sss');
+	m.index;
+	
 	var python_syntax = new SyntaxNode(require("ace/syntax/" + 'source.python').hash);
 	
 	var processor = new Processer();
