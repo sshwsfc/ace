@@ -1,10 +1,16 @@
 define(function(require, exports, module) {
 
-exports.launch = function(env) {
+var SyntaxNode = require("ace/tm/syntax").SyntaxNode;
+var Processer = require("ace/tm/processor").Processer;
+var text = require('text!demo/test.py');
 
-	var SyntaxNode = require("ace/tm/syntax").SyntaxNode;
+exports.launch = function(env) {
+	
 	var python_syntax = new SyntaxNode(require("ace/syntax/" + 'source.python').hash);
-	console.log(python_syntax);
+	
+	var processor = new Processer();
+	python_syntax.parse(text.split('\n'), processor);
+	console.log(processor.$tags);
 };
 
 });
