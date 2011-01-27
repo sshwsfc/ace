@@ -1,0 +1,150 @@
+.aceamy .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.aceamy .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.aceamy .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.aceamy .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.aceamy .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.aceamy .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.aceamy .ace_scroller {
+  background-color: #200020;
+}
+
+.aceamy .ace_text-layer {
+  cursor: text;
+  color: #D0D0FF;
+}
+
+.aceamy .ace_cursor {
+  border-left: 2px solid #7070FF;
+}
+
+.aceamy .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #7070FF;
+}
+ 
+.aceamy .ace_marker-layer .ace_selection {
+  background: rgba(128, 0, 0, 0.50);
+}
+
+.aceamy .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.aceamy .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.aceamy .ace_marker-layer .ace_active_line {
+  background: rgba(128, 0, 0, 0.25);
+}
+
+       
+.aceamy .ace_invisible {
+  color: #BFBFBF;
+}
+
+.aceamy .ace_keyword {
+  color:#A080FF;
+}
+
+.aceamy .ace_keyword.ace_operator {
+  color:#A0A0FF;
+}
+
+.aceamy .ace_constant {
+  
+}
+
+.aceamy .ace_constant.ace_language {
+  
+}
+
+.aceamy .ace_constant.ace_library {
+  
+}
+
+.aceamy .ace_constant.ace_numeric {
+  color:#7090B0;
+}
+
+.aceamy .ace_invalid {
+  
+}
+
+.aceamy .ace_invalid.ace_illegal {
+  color:#400080;
+background-color:#FFFF00;
+}
+
+.aceamy .ace_invalid.ace_deprecated {
+  color:#200020;
+background-color:#CC66FF;
+}
+
+.aceamy .ace_support {
+  
+}
+
+.aceamy .ace_support.ace_function {
+  
+}
+
+.aceamy .ace_function.ace_buildin {
+  
+}
+
+.aceamy .ace_string {
+  color:#999999;
+}
+
+.aceamy .ace_string.ace_regexp {
+  
+}
+
+.aceamy .ace_comment {
+  
+}
+
+.aceamy .ace_comment.ace_doc {
+  
+}
+
+.aceamy .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.aceamy .ace_variable {
+  
+}
+
+.aceamy .ace_variable.ace_language {
+  color:#008080;
+}
+
+.aceamy .ace_xml_pe {
+  
+}

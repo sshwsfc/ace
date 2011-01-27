@@ -11,9 +11,11 @@ exports.launch = function(env) {
 	
 	var python_syntax = new SyntaxNode(require("ace/syntax/" + 'source.python').hash);
 	
-	var processor = new Processer();
+	var processor = new Processer(text);
+		console.log(Date());
 	python_syntax.parse(text.split('\n'), processor);
-	console.log(processor.$tags);
+		console.log(Date());
+	document.getElementById('ace_text-layer').innerHTML = (processor.getValue());
 };
 
 });

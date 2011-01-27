@@ -1,0 +1,149 @@
+.acezenburnesque .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.acezenburnesque .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.acezenburnesque .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.acezenburnesque .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.acezenburnesque .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.acezenburnesque .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.acezenburnesque .ace_scroller {
+  background-color: #404040;
+}
+
+.acezenburnesque .ace_text-layer {
+  cursor: text;
+  color: #DEDEDE;
+}
+
+.acezenburnesque .ace_cursor {
+  border-left: 2px solid #FFFF66;
+}
+
+.acezenburnesque .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFF66;
+}
+ 
+.acezenburnesque .ace_marker-layer .ace_selection {
+  background: #A0A0C0;
+}
+
+.acezenburnesque .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.acezenburnesque .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #A8A8A8;
+}
+
+.acezenburnesque .ace_marker-layer .ace_active_line {
+  background: rgba(160, 128, 64, 0.15);
+}
+
+       
+.acezenburnesque .ace_invisible {
+  color: #A8A8A8;
+}
+
+.acezenburnesque .ace_keyword {
+  color:#FFFFA0;
+}
+
+.acezenburnesque .ace_keyword.ace_operator {
+  color:#FFFFA0;
+}
+
+.acezenburnesque .ace_constant {
+  
+}
+
+.acezenburnesque .ace_constant.ace_language {
+  
+}
+
+.acezenburnesque .ace_constant.ace_library {
+  
+}
+
+.acezenburnesque .ace_constant.ace_numeric {
+  color:#22C0FF;
+}
+
+.acezenburnesque .ace_invalid {
+  
+}
+
+.acezenburnesque .ace_invalid.ace_illegal {
+  
+}
+
+.acezenburnesque .ace_invalid.ace_deprecated {
+  
+}
+
+.acezenburnesque .ace_support {
+  
+}
+
+.acezenburnesque .ace_support.ace_function {
+  
+}
+
+.acezenburnesque .ace_function.ace_buildin {
+  
+}
+
+.acezenburnesque .ace_string {
+  color:#FF2020;
+}
+
+.acezenburnesque .ace_string.ace_regexp {
+  
+}
+
+.acezenburnesque .ace_comment {
+  font-style:italic;
+color:#709070;
+}
+
+.acezenburnesque .ace_comment.ace_doc {
+  
+}
+
+.acezenburnesque .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.acezenburnesque .ace_variable {
+  
+}
+
+.acezenburnesque .ace_variable.ace_language {
+  
+}
+
+.acezenburnesque .ace_xml_pe {
+  
+}

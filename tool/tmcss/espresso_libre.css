@@ -1,0 +1,150 @@
+.aceespresso_libre .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.aceespresso_libre .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.aceespresso_libre .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.aceespresso_libre .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.aceespresso_libre .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.aceespresso_libre .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.aceespresso_libre .ace_scroller {
+  background-color: #2A211C;
+}
+
+.aceespresso_libre .ace_text-layer {
+  cursor: text;
+  color: #BDAE9D;
+}
+
+.aceespresso_libre .ace_cursor {
+  border-left: 2px solid #889AFF;
+}
+
+.aceespresso_libre .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #889AFF;
+}
+ 
+.aceespresso_libre .ace_marker-layer .ace_selection {
+  background: #C3DCFF;
+}
+
+.aceespresso_libre .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.aceespresso_libre .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.aceespresso_libre .ace_marker-layer .ace_active_line {
+  background: #3A312C;
+}
+
+       
+.aceespresso_libre .ace_invisible {
+  color: #BFBFBF;
+}
+
+.aceespresso_libre .ace_keyword {
+  color:#43A8ED;
+}
+
+.aceespresso_libre .ace_keyword.ace_operator {
+  
+}
+
+.aceespresso_libre .ace_constant {
+  color:#C5656B;
+}
+
+.aceespresso_libre .ace_constant.ace_language {
+  color:#585CF6;
+}
+
+.aceespresso_libre .ace_constant.ace_library {
+  
+}
+
+.aceespresso_libre .ace_constant.ace_numeric {
+  color:#44AA43;
+}
+
+.aceespresso_libre .ace_invalid {
+  color:#FFFFFF;
+background-color:#990000;
+}
+
+.aceespresso_libre .ace_invalid.ace_illegal {
+  
+}
+
+.aceespresso_libre .ace_invalid.ace_deprecated {
+  
+}
+
+.aceespresso_libre .ace_support {
+  
+}
+
+.aceespresso_libre .ace_support.ace_function {
+  color:#7290D9;
+}
+
+.aceespresso_libre .ace_function.ace_buildin {
+  
+}
+
+.aceespresso_libre .ace_string {
+  color:#049B0A;
+}
+
+.aceespresso_libre .ace_string.ace_regexp {
+  
+}
+
+.aceespresso_libre .ace_comment {
+  font-style:italic;
+color:#0066FF;
+}
+
+.aceespresso_libre .ace_comment.ace_doc {
+  
+}
+
+.aceespresso_libre .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.aceespresso_libre .ace_variable {
+  
+}
+
+.aceespresso_libre .ace_variable.ace_language {
+  color:#318495;
+}
+
+.aceespresso_libre .ace_xml_pe {
+  
+}

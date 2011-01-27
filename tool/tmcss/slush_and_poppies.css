@@ -1,0 +1,148 @@
+.aceslush_and_poppies .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.aceslush_and_poppies .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.aceslush_and_poppies .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.aceslush_and_poppies .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.aceslush_and_poppies .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.aceslush_and_poppies .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.aceslush_and_poppies .ace_scroller {
+  background-color: #F1F1F1;
+}
+
+.aceslush_and_poppies .ace_text-layer {
+  cursor: text;
+  color: #000000;
+}
+
+.aceslush_and_poppies .ace_cursor {
+  border-left: 2px solid #000000;
+}
+
+.aceslush_and_poppies .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #000000;
+}
+ 
+.aceslush_and_poppies .ace_marker-layer .ace_selection {
+  background: #B0B0FF;
+}
+
+.aceslush_and_poppies .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.aceslush_and_poppies .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.aceslush_and_poppies .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+       
+.aceslush_and_poppies .ace_invisible {
+  color: #BFBFBF;
+}
+
+.aceslush_and_poppies .ace_keyword {
+  color:#2060A0;
+}
+
+.aceslush_and_poppies .ace_keyword.ace_operator {
+  color:#2060A0;
+}
+
+.aceslush_and_poppies .ace_constant {
+  
+}
+
+.aceslush_and_poppies .ace_constant.ace_language {
+  
+}
+
+.aceslush_and_poppies .ace_constant.ace_library {
+  
+}
+
+.aceslush_and_poppies .ace_constant.ace_numeric {
+  color:#0080A0;
+}
+
+.aceslush_and_poppies .ace_invalid {
+  
+}
+
+.aceslush_and_poppies .ace_invalid.ace_illegal {
+  
+}
+
+.aceslush_and_poppies .ace_invalid.ace_deprecated {
+  
+}
+
+.aceslush_and_poppies .ace_support {
+  
+}
+
+.aceslush_and_poppies .ace_support.ace_function {
+  
+}
+
+.aceslush_and_poppies .ace_function.ace_buildin {
+  
+}
+
+.aceslush_and_poppies .ace_string {
+  color:#C03030;
+}
+
+.aceslush_and_poppies .ace_string.ace_regexp {
+  
+}
+
+.aceslush_and_poppies .ace_comment {
+  color:#406040;
+}
+
+.aceslush_and_poppies .ace_comment.ace_doc {
+  
+}
+
+.aceslush_and_poppies .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.aceslush_and_poppies .ace_variable {
+  
+}
+
+.aceslush_and_poppies .ace_variable.ace_language {
+  
+}
+
+.aceslush_and_poppies .ace_xml_pe {
+  
+}

@@ -1,4 +1,4 @@
-var xml = require("../support/node-o3-xml/lib/o3-xml");
+var xml = require("../../cloud9/support/ace/support/node-o3-xml/lib/o3-xml");
 var fs = require("fs");
 
 function plistToJson(el) {
@@ -111,9 +111,10 @@ function extractStyles(theme) {
         var scopes = element.scope.split(/\s*[|,]\s*/g);
         for (var j=0; j<scopes.length; j++) {
             var scope = scopes[j];
-            if (supportedScopes[scope]) {
-                colors[supportedScopes[scope]] = parseStyles(element.settings);
-            }
+//            if (supportedScopes[scope]) {
+//                colors[supportedScopes[scope]] = parseStyles(element.settings);
+//            }
+			colors[scope] = parseStyles(element.settings);
         }
     }
     
@@ -161,11 +162,12 @@ function fillTemplate(template, replacements) {
 function createTheme(name, styles, cssTemplate, jsTemplate) {
     styles.cssClass = "ace" + hyphenate(name);
     var css = fillTemplate(cssTemplate, styles);
-    return fillTemplate(jsTemplate, {
-        name: name,
-        css: '"' + css.replace(/\\/, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\\n") + '"',
-        cssClass: "ace" + hyphenate(name)
-    });
+    return css;
+//    return fillTemplate(jsTemplate, {
+//        name: name,
+//        css: '"' + css.replace(/\\/, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\\n") + '"',
+//        cssClass: "ace" + hyphenate(name)
+//    });
 };
 
 function hyphenate(str) {
@@ -173,24 +175,27 @@ function hyphenate(str) {
 }
 
 var cssTemplate = fs.readFileSync(__dirname + "/Theme.tmpl.css", "utf8");
-var jsTemplate = fs.readFileSync(__dirname + "/Theme.tmpl.js", "utf8");
+var jsTemplate = fs.readFileSync(__dirname + "/theme.tmpl.js", "utf8");
 
-var themes = {
-    "dawn": "Dawn",
-    "idle_fingers": "idleFingers",
-    "twilight": "Twilight",
-    "monokai": "Monokai",
-    "cobalt": "Cobalt",
-    "mono_industrial": "monoindustrial",
-    "clouds": "Clouds",
-    "clouds_midnight": "Clouds Midnight",
-    "kr_theme": "krTheme"
-}
+var path = __dirname + "/tmthemes/";
+fs.readdir(path, function(err,files){
+	if(err){
+    	console.log(e);
+    	return;
+	}
+	for(var i=0;i<files.length;i++){
+		if(!(/\.tmTheme/.test(files[i]))) continue;
+		console.log('Star parse ' + files[i]);
+		try{
+			var tmTheme = fs.readFileSync(path + files[i], "utf8");
+			var styles = extractStyles(parseTheme(tmTheme));
+			var name = files[i].replace('.tmTheme', '').replace(/\s/g, '_').toLowerCase();
+			fs.writeFileSync(__dirname + "/tmcss/" + name + ".css", createTheme(name, styles, cssTemplate, jsTemplate));
+			console.log('Finish parse ' + files[i]);
+		}catch(e){
+    		console.log(e);
+		}
+	}
+})
 
-for (var name in themes) {
-    console.log("Converting " + name);
-    var tmTheme = fs.readFileSync(__dirname + "/tmthemes/" + themes[name] + ".tmTheme", "utf8");
 
-    var styles = extractStyles(parseTheme(tmTheme));
-    fs.writeFileSync(__dirname + "/../src/ace/theme/" + name + ".js", createTheme(name, styles, cssTemplate, jsTemplate));
-}

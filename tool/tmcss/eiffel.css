@@ -1,0 +1,153 @@
+.aceeiffel .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.aceeiffel .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.aceeiffel .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.aceeiffel .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.aceeiffel .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.aceeiffel .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.aceeiffel .ace_scroller {
+  background-color: #FFFFFF;
+}
+
+.aceeiffel .ace_text-layer {
+  cursor: text;
+  color: #000000;
+}
+
+.aceeiffel .ace_cursor {
+  border-left: 2px solid #000000;
+}
+
+.aceeiffel .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #000000;
+}
+ 
+.aceeiffel .ace_marker-layer .ace_selection {
+  background: #C3DCFF;
+}
+
+.aceeiffel .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.aceeiffel .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.aceeiffel .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.071);
+}
+
+       
+.aceeiffel .ace_invisible {
+  color: #BFBFBF;
+}
+
+.aceeiffel .ace_keyword {
+  color:#0100B6;
+}
+
+.aceeiffel .ace_keyword.ace_operator {
+  
+}
+
+.aceeiffel .ace_constant {
+  font-style:italic;
+color:#C5060B;
+}
+
+.aceeiffel .ace_constant.ace_language {
+  font-style:italic;
+color:#585CF6;
+}
+
+.aceeiffel .ace_constant.ace_library {
+  
+}
+
+.aceeiffel .ace_constant.ace_numeric {
+  font-style:italic;
+color:#CD0000;
+}
+
+.aceeiffel .ace_invalid {
+  color:#FFFFFF;
+background-color:#990000;
+}
+
+.aceeiffel .ace_invalid.ace_illegal {
+  
+}
+
+.aceeiffel .ace_invalid.ace_deprecated {
+  
+}
+
+.aceeiffel .ace_support {
+  
+}
+
+.aceeiffel .ace_support.ace_function {
+  color:#3C4C72;
+}
+
+.aceeiffel .ace_function.ace_buildin {
+  
+}
+
+.aceeiffel .ace_string {
+  color:#D80800;
+}
+
+.aceeiffel .ace_string.ace_regexp {
+  
+}
+
+.aceeiffel .ace_comment {
+  color:#00B418;
+}
+
+.aceeiffel .ace_comment.ace_doc {
+  
+}
+
+.aceeiffel .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.aceeiffel .ace_variable {
+  font-style:italic;
+color:#0206FF;
+}
+
+.aceeiffel .ace_variable.ace_language {
+  
+}
+
+.aceeiffel .ace_xml_pe {
+  
+}

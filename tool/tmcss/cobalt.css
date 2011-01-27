@@ -1,0 +1,150 @@
+.acecobalt .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.acecobalt .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.acecobalt .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.acecobalt .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.acecobalt .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.acecobalt .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.acecobalt .ace_scroller {
+  background-color: #002240;
+}
+
+.acecobalt .ace_text-layer {
+  cursor: text;
+  color: #FFFFFF;
+}
+
+.acecobalt .ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+
+.acecobalt .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+ 
+.acecobalt .ace_marker-layer .ace_selection {
+  background: rgba(179, 101, 57, 0.75);
+}
+
+.acecobalt .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.acecobalt .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.acecobalt .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+       
+.acecobalt .ace_invisible {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.acecobalt .ace_keyword {
+  color:#FF9D00;
+}
+
+.acecobalt .ace_keyword.ace_operator {
+  
+}
+
+.acecobalt .ace_constant {
+  color:#FF628C;
+}
+
+.acecobalt .ace_constant.ace_language {
+  
+}
+
+.acecobalt .ace_constant.ace_library {
+  
+}
+
+.acecobalt .ace_constant.ace_numeric {
+  
+}
+
+.acecobalt .ace_invalid {
+  color:#F8F8F8;
+background-color:#800F00;
+}
+
+.acecobalt .ace_invalid.ace_illegal {
+  
+}
+
+.acecobalt .ace_invalid.ace_deprecated {
+  
+}
+
+.acecobalt .ace_support {
+  color:#80FFBB;
+}
+
+.acecobalt .ace_support.ace_function {
+  color:#FFB054;
+}
+
+.acecobalt .ace_function.ace_buildin {
+  
+}
+
+.acecobalt .ace_string {
+  
+}
+
+.acecobalt .ace_string.ace_regexp {
+  color:#80FFC2;
+}
+
+.acecobalt .ace_comment {
+  font-style:italic;
+color:#0088FF;
+}
+
+.acecobalt .ace_comment.ace_doc {
+  
+}
+
+.acecobalt .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.acecobalt .ace_variable {
+  color:#CCCCCC;
+}
+
+.acecobalt .ace_variable.ace_language {
+  color:#FF80E1;
+}
+
+.acecobalt .ace_xml_pe {
+  
+}

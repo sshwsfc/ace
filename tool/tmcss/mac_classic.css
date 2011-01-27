@@ -1,0 +1,150 @@
+.acemac_classic .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.acemac_classic .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.acemac_classic .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.acemac_classic .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.acemac_classic .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.acemac_classic .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.acemac_classic .ace_scroller {
+  background-color: #FFFFFF;
+}
+
+.acemac_classic .ace_text-layer {
+  cursor: text;
+  color: #000000;
+}
+
+.acemac_classic .ace_cursor {
+  border-left: 2px solid #000000;
+}
+
+.acemac_classic .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #000000;
+}
+ 
+.acemac_classic .ace_marker-layer .ace_selection {
+  background: rgba(77, 151, 255, 0.33);
+}
+
+.acemac_classic .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.acemac_classic .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.acemac_classic .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.071);
+}
+
+       
+.acemac_classic .ace_invisible {
+  color: #BFBFBF;
+}
+
+.acemac_classic .ace_keyword {
+  color:#0000FF;
+}
+
+.acemac_classic .ace_keyword.ace_operator {
+  
+}
+
+.acemac_classic .ace_constant {
+  color:#C5060B;
+}
+
+.acemac_classic .ace_constant.ace_language {
+  color:#585CF6;
+}
+
+.acemac_classic .ace_constant.ace_library {
+  
+}
+
+.acemac_classic .ace_constant.ace_numeric {
+  color:#0000CD;
+}
+
+.acemac_classic .ace_invalid {
+  color:#FFFFFF;
+background-color:#990000;
+}
+
+.acemac_classic .ace_invalid.ace_illegal {
+  
+}
+
+.acemac_classic .ace_invalid.ace_deprecated {
+  
+}
+
+.acemac_classic .ace_support {
+  
+}
+
+.acemac_classic .ace_support.ace_function {
+  color:#3C4C72;
+}
+
+.acemac_classic .ace_function.ace_buildin {
+  
+}
+
+.acemac_classic .ace_string {
+  color:#036A07;
+}
+
+.acemac_classic .ace_string.ace_regexp {
+  
+}
+
+.acemac_classic .ace_comment {
+  font-style:italic;
+color:#0066FF;
+}
+
+.acemac_classic .ace_comment.ace_doc {
+  
+}
+
+.acemac_classic .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.acemac_classic .ace_variable {
+  
+}
+
+.acemac_classic .ace_variable.ace_language {
+  color:#318495;
+}
+
+.acemac_classic .ace_xml_pe {
+  
+}

@@ -6,9 +6,22 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Editor</title>
     <meta name="author" content="Fabian Jakobs">
+    <link rel="stylesheet" href="tool/tmcss/twilight.css"/>
+    <style>
+    body{
+    	margin: 0px;
+    	padding: 0px;
+		  font-family: "Menlo", "Monaco", "Courier New", monospace;
+		  font-size: 13px;  
+    }
+    .ace_scroller{
+    	padding: 20px;
+    }
+    </style>
 </head>
-<body>
-  <div id="msg"></div>
+<body class="acetwilight">
+	<div class="ace_scroller"><div id="ace_text-layer" class="ace_text-layer"></div></div>
+  <script src="xregexp-min.js" type="text/javascript" charset="utf-8"></script>
   <script src="demo/require.js" type="text/javascript" charset="utf-8"></script>
   <script>
 var config = {

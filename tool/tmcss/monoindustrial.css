@@ -1,0 +1,150 @@
+.acemonoindustrial .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.acemonoindustrial .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.acemonoindustrial .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.acemonoindustrial .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.acemonoindustrial .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.acemonoindustrial .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.acemonoindustrial .ace_scroller {
+  background-color: #222C28;
+}
+
+.acemonoindustrial .ace_text-layer {
+  cursor: text;
+  color: #FFFFFF;
+}
+
+.acemonoindustrial .ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+
+.acemonoindustrial .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+ 
+.acemonoindustrial .ace_marker-layer .ace_selection {
+  background: rgba(145, 153, 148, 0.40);
+}
+
+.acemonoindustrial .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.acemonoindustrial .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid rgba(102, 108, 104, 0.50);
+}
+
+.acemonoindustrial .ace_marker-layer .ace_active_line {
+  background: rgba(12, 13, 12, 0.25);
+}
+
+       
+.acemonoindustrial .ace_invisible {
+  color: rgba(102, 108, 104, 0.50);
+}
+
+.acemonoindustrial .ace_keyword {
+  color:#A39E64;
+}
+
+.acemonoindustrial .ace_keyword.ace_operator {
+  color:#A8B3AB;
+}
+
+.acemonoindustrial .ace_constant {
+  color:#E98800;
+}
+
+.acemonoindustrial .ace_constant.ace_language {
+  
+}
+
+.acemonoindustrial .ace_constant.ace_library {
+  
+}
+
+.acemonoindustrial .ace_constant.ace_numeric {
+  color:#E98800;
+}
+
+.acemonoindustrial .ace_invalid {
+  color:#FFFFFF;
+background-color:rgba(153, 0, 0, 0.68);
+}
+
+.acemonoindustrial .ace_invalid.ace_illegal {
+  
+}
+
+.acemonoindustrial .ace_invalid.ace_deprecated {
+  
+}
+
+.acemonoindustrial .ace_support {
+  
+}
+
+.acemonoindustrial .ace_support.ace_function {
+  color:#588E60;
+}
+
+.acemonoindustrial .ace_function.ace_buildin {
+  
+}
+
+.acemonoindustrial .ace_string {
+  
+}
+
+.acemonoindustrial .ace_string.ace_regexp {
+  
+}
+
+.acemonoindustrial .ace_comment {
+  color:#666C68;
+background-color:#151C19;
+}
+
+.acemonoindustrial .ace_comment.ace_doc {
+  
+}
+
+.acemonoindustrial .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.acemonoindustrial .ace_variable {
+  
+}
+
+.acemonoindustrial .ace_variable.ace_language {
+  color:#648BD2;
+}
+
+.acemonoindustrial .ace_xml_pe {
+  
+}

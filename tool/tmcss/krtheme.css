@@ -1,0 +1,150 @@
+.acekrtheme .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.acekrtheme .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.acekrtheme .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.acekrtheme .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.acekrtheme .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.acekrtheme .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.acekrtheme .ace_scroller {
+  background-color: #0B0A09;
+}
+
+.acekrtheme .ace_text-layer {
+  cursor: text;
+  color: #FCFFE0;
+}
+
+.acekrtheme .ace_cursor {
+  border-left: 2px solid #FF9900;
+}
+
+.acekrtheme .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FF9900;
+}
+ 
+.acekrtheme .ace_marker-layer .ace_selection {
+  background: rgba(170, 0, 255, 0.45);
+}
+
+.acekrtheme .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.acekrtheme .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid rgba(255, 177, 111, 0.32);
+}
+
+.acekrtheme .ace_marker-layer .ace_active_line {
+  background: #38403D;
+}
+
+       
+.acekrtheme .ace_invisible {
+  color: rgba(255, 177, 111, 0.32);
+}
+
+.acekrtheme .ace_keyword {
+  color:#949C8B;
+}
+
+.acekrtheme .ace_keyword.ace_operator {
+  
+}
+
+.acekrtheme .ace_constant {
+  color:rgba(210, 117, 24, 0.76);
+}
+
+.acekrtheme .ace_constant.ace_language {
+  
+}
+
+.acekrtheme .ace_constant.ace_library {
+  
+}
+
+.acekrtheme .ace_constant.ace_numeric {
+  
+}
+
+.acekrtheme .ace_invalid {
+  color:#F8F8F8;
+background-color:#A41300;
+}
+
+.acekrtheme .ace_invalid.ace_illegal {
+  
+}
+
+.acekrtheme .ace_invalid.ace_deprecated {
+  
+}
+
+.acekrtheme .ace_support {
+  color:#9FC28A;
+}
+
+.acekrtheme .ace_support.ace_function {
+  color:#85873A;
+}
+
+.acekrtheme .ace_function.ace_buildin {
+  
+}
+
+.acekrtheme .ace_string {
+  
+}
+
+.acekrtheme .ace_string.ace_regexp {
+  color:rgba(125, 255, 192, 0.65);
+}
+
+.acekrtheme .ace_comment {
+  font-style:italic;
+color:#706D5B;
+}
+
+.acekrtheme .ace_comment.ace_doc {
+  
+}
+
+.acekrtheme .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.acekrtheme .ace_variable {
+  color:#D1A796;
+}
+
+.acekrtheme .ace_variable.ace_language {
+  color:#FF80E1;
+}
+
+.acekrtheme .ace_xml_pe {
+  
+}
