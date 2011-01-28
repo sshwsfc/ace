@@ -1,28 +1,29 @@
 var xml = require("../../cloud9/support/ace/support/node-o3-xml/lib/o3-xml");
 var fs = require("fs");
+var util = require('util');
 
 function plistToJson(el) {
     if (el.tagName != "plist")
-        throw new Error("not a plist!");
+    throw new Error("not a plist!");
 
     return $plistParse(el.selectSingleNode("dict"));
 };
 
-function $plistParse(el) {            
+function $plistParse(el) {
     if (el.tagName == "dict") {
         var dict = {};
         var key;
         var childNodes = el.childNodes;
-        for (var i=0, l=childNodes.length; i<l; i++) {
+        for (var i = 0, l = childNodes.length; i < l; i++) {
             var child = childNodes[i];
-            if (child.nodeType !== 1) 
-                continue;
-                
+            if (child.nodeType !== 1)
+            continue;
+
             if (child.tagName == "key") {
                 key = child.nodeValue;
             } else {
                 if (!key)
-                    throw new Error("missing key");
+                throw new Error("missing key");
                 dict[key] = $plistParse(child);
                 key = null;
             }
@@ -31,12 +32,12 @@ function $plistParse(el) {
     }
     else if (el.tagName == "array") {
         var arr = [];
-                var childNodes = el.childNodes;
-        for (var i=0, l=childNodes.length; i<l; i++) {
+        var childNodes = el.childNodes;
+        for (var i = 0, l = childNodes.length; i < l; i++) {
             var child = childNodes[i];
-            if (child.nodeType !== 1) 
-                continue;
-                
+            if (child.nodeType !== 1)
+            continue;
+
             arr.push($plistParse(child));
         }
         return arr;
@@ -51,44 +52,46 @@ function $plistParse(el) {
 function parseTheme(themeXml) {
     try {
         return plistToJson(xml.parseFromString(themeXml).documentElement);
-    } catch(e) { return }
+    } catch(e) {
+        return
+    }
 }
- 
+
 var supportedScopes = {
-   "keyword": "keyword",
-   "keyword.operator": "keyword.operator",
-   
-   "constant": "constant",
-   "constant.language": "constant.language",
-   "constant.library": "constant.library",
-   "constant.numeric": "constant.numeric",
-   
-   "support": "support",
-   "support.function": "support.function",
+    "keyword": "keyword",
+    "keyword.operator": "keyword.operator",
 
-   "function": "function",
-   "function.buildin": "function.buildin",
-   
-   "invalid": "invalid",
-   "invalid.illegal": "invalid.illegal",
-   "invalid.deprecated": "invalid.deprecated",
-   
-   "string": "string",
-   "string.regexp": "string.regexp",
-   
-   "comment": "comment",
-   "comment.documentation": "comment.doc",
-   "comment.documentation.tag": "comment.doc.tag",
+    "constant": "constant",
+    "constant.language": "constant.language",
+    "constant.library": "constant.library",
+    "constant.numeric": "constant.numeric",
 
-   "variable": "variable",
-   "variable.language": "variable.language",
-   
-   "meta.tag.sgml.doctype": "xml_pe"
+    "support": "support",
+    "support.function": "support.function",
+
+    "function": "function",
+    "function.buildin": "function.buildin",
+
+    "invalid": "invalid",
+    "invalid.illegal": "invalid.illegal",
+    "invalid.deprecated": "invalid.deprecated",
+
+    "string": "string",
+    "string.regexp": "string.regexp",
+
+    "comment": "comment",
+    "comment.documentation": "comment.doc",
+    "comment.documentation.tag": "comment.doc.tag",
+
+    "variable": "variable",
+    "variable.language": "variable.language",
+
+    "meta.tag.sgml.doctype": "xml_pe"
 };
 
-function extractStyles(theme) {   
+function extractStyles(theme) {
     var globalSettings = theme.settings[0].settings;
-    
+
     var colors = {
         "printMargin": "#e8e8e8",
         "background": parseColor(globalSettings.background),
@@ -100,30 +103,35 @@ function extractStyles(theme) {
         "bracket": parseColor(globalSettings.invisibles),
         "active_line": parseColor(globalSettings.lineHighlight),
         "cursor": parseColor(globalSettings.caret),
-        
+
         "invisible": "color: " + parseColor(globalSettings.invisibles) + ";"
     }
-    
-    for (var i=1; i<theme.settings.length; i++) {
+
+    var styles = {};
+
+    for (var i = 1; i < theme.settings.length; i++) {
         var element = theme.settings[i];
         if (!element.scope)
-            continue;
+        continue;
         var scopes = element.scope.split(/\s*[|,]\s*/g);
-        for (var j=0; j<scopes.length; j++) {
+        for (var j = 0; j < scopes.length; j++) {
             var scope = scopes[j];
-//            if (supportedScopes[scope]) {
-//                colors[supportedScopes[scope]] = parseStyles(element.settings);
-//            }
-			colors[scope] = parseStyles(element.settings);
+            if (supportedScopes[scope]) {
+                colors[supportedScopes[scope]] = parseStyles(element.settings);
+            } else {
+                styles[scope] = parseStyles(element.settings);
+            }
         }
     }
-    
+
+    colors['styles'] = styles;
+
     return colors;
 };
 
 function parseColor(color) {
     if (color.length == 7)
-        return color;
+    return color;
     else {
         var rgba = color.match(/^#(..)(..)(..)(..)$/).slice(1).map(function(c) {
             return parseInt(c, 16);
@@ -142,32 +150,54 @@ function parseStyles(styles) {
     if (fontStyle.indexOf("italic") !== -1) {
         css.push("font-style:italic;");
     }
-    
+
     if (styles.foreground) {
         css.push("color:" + parseColor(styles.foreground) + ";");
     }
     if (styles.background) {
         css.push("background-color:" + parseColor(styles.background) + ";");
     }
-    
+
     return css.join("\n");
 }
 
 function fillTemplate(template, replacements) {
-    return template.replace(/%(.+?)%/g, function(str, m) {
+    return template.replace(/%(.+?)%/g,
+    function(str, m) {
         return replacements[m] || "";
-    }); 
+    });
 }
 
 function createTheme(name, styles, cssTemplate, jsTemplate) {
-    styles.cssClass = "ace" + hyphenate(name);
+    styles.cssClass = "ace-" + hyphenate(name);
+	
+	var other_styles = styles.styles;
+	var stylesBuilder = [];
+	for(var key in other_styles){
+		var lineBuilder = ["."+styles.cssClass];
+		// 'text.html.ruby source': 'background-color:rgba(177, 179, 186, 0.13);'
+		// styles.cssClass .ace_text.ace_html.ace_ruby .ace_source : {background-color:rgba(177, 179, 186, 0.13);}
+		var ss = key.split(/\s/g);
+		for (var i=0; i < ss.length; i++) {
+			var selectors = ss[i].split('.');
+			for (var j=0; j < selectors.length; j++) {
+				selectors[j] = '.ace_' + selectors[j];
+			};
+			lineBuilder.push(selectors.join(''));			
+		};
+		lineBuilder.push("{"+ other_styles[key].replace(/\s/g, '') +"}");
+		
+		stylesBuilder.push(lineBuilder.join(' '));
+	}
+	styles.other_styles_string = stylesBuilder.join('\r\n');
+
     var css = fillTemplate(cssTemplate, styles);
     return css;
-//    return fillTemplate(jsTemplate, {
-//        name: name,
-//        css: '"' + css.replace(/\\/, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\\n") + '"',
-//        cssClass: "ace" + hyphenate(name)
-//    });
+    //    return fillTemplate(jsTemplate, {
+    //        name: name,
+    //        css: '"' + css.replace(/\\/, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\\n") + '"',
+    //        cssClass: "ace" + hyphenate(name)
+    //    });
 };
 
 function hyphenate(str) {
@@ -178,24 +208,26 @@ var cssTemplate = fs.readFileSync(__dirname + "/Theme.tmpl.css", "utf8");
 var jsTemplate = fs.readFileSync(__dirname + "/theme.tmpl.js", "utf8");
 
 var path = __dirname + "/tmthemes/";
-fs.readdir(path, function(err,files){
-	if(err){
-    	console.log(e);
-    	return;
-	}
-	for(var i=0;i<files.length;i++){
-		if(!(/\.tmTheme/.test(files[i]))) continue;
-		console.log('Star parse ' + files[i]);
-		try{
-			var tmTheme = fs.readFileSync(path + files[i], "utf8");
-			var styles = extractStyles(parseTheme(tmTheme));
-			var name = files[i].replace('.tmTheme', '').replace(/\s/g, '_').toLowerCase();
-			fs.writeFileSync(__dirname + "/tmcss/" + name + ".css", createTheme(name, styles, cssTemplate, jsTemplate));
-			console.log('Finish parse ' + files[i]);
-		}catch(e){
-    		console.log(e);
-		}
-	}
+fs.readdir(path,
+function(err, files) {
+    if (err) {
+        console.log(e);
+        return;
+    }
+    for (var i = 0; i < files.length; i++) {
+        if (! (/\.tmTheme/.test(files[i]))) continue;
+        console.log('Star parse ' + files[i]);
+        try {
+            var tmTheme = fs.readFileSync(path + files[i], "utf8");
+            var styles = extractStyles(parseTheme(tmTheme));
+
+            var name = files[i].replace('.tmTheme', '').replace(/\s/g, '_').toLowerCase();
+            fs.writeFileSync(__dirname + "/tmcss/" + name + ".css", createTheme(name, styles, cssTemplate, jsTemplate));
+            console.log('Finish parse ' + files[i]);
+        } catch(e) {
+            console.log(e);
+        }
+    }
 })
 
 

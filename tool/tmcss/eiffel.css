@@ -1,153 +1,187 @@
-.aceeiffel .ace_editor {
+.ace-eiffel .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceeiffel .ace_editor.ace_focus {
+.ace-eiffel .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceeiffel .ace_gutter {
+.ace-eiffel .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceeiffel .ace_gutter-layer {
+.ace-eiffel .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceeiffel .ace_gutter-layer .ace_gutter-cell {
+.ace-eiffel .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceeiffel .ace_print_margin {
+.ace-eiffel .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceeiffel .ace_scroller {
+.ace-eiffel .ace_scroller {
   background-color: #FFFFFF;
 }
 
-.aceeiffel .ace_text-layer {
+.ace-eiffel .ace_text-layer {
   cursor: text;
   color: #000000;
 }
 
-.aceeiffel .ace_cursor {
+.ace-eiffel .ace_cursor {
   border-left: 2px solid #000000;
 }
 
-.aceeiffel .ace_cursor.ace_overwrite {
+.ace-eiffel .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
  
-.aceeiffel .ace_marker-layer .ace_selection {
+.ace-eiffel .ace_marker-layer .ace_selection {
   background: #C3DCFF;
 }
 
-.aceeiffel .ace_marker-layer .ace_step {
+.ace-eiffel .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceeiffel .ace_marker-layer .ace_bracket {
+.ace-eiffel .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.aceeiffel .ace_marker-layer .ace_active_line {
+.ace-eiffel .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.071);
 }
 
        
-.aceeiffel .ace_invisible {
+.ace-eiffel .ace_invisible {
   color: #BFBFBF;
 }
 
-.aceeiffel .ace_keyword {
+.ace-eiffel .ace_keyword {
   color:#0100B6;
 }
 
-.aceeiffel .ace_keyword.ace_operator {
+.ace-eiffel .ace_keyword.ace_operator {
   
 }
 
-.aceeiffel .ace_constant {
+.ace-eiffel .ace_constant {
   font-style:italic;
 color:#C5060B;
 }
 
-.aceeiffel .ace_constant.ace_language {
+.ace-eiffel .ace_constant.ace_language {
   font-style:italic;
 color:#585CF6;
 }
 
-.aceeiffel .ace_constant.ace_library {
+.ace-eiffel .ace_constant.ace_library {
   
 }
 
-.aceeiffel .ace_constant.ace_numeric {
+.ace-eiffel .ace_constant.ace_numeric {
   font-style:italic;
 color:#CD0000;
 }
 
-.aceeiffel .ace_invalid {
+.ace-eiffel .ace_invalid {
   color:#FFFFFF;
 background-color:#990000;
 }
 
-.aceeiffel .ace_invalid.ace_illegal {
+.ace-eiffel .ace_invalid.ace_illegal {
   
 }
 
-.aceeiffel .ace_invalid.ace_deprecated {
+.ace-eiffel .ace_invalid.ace_deprecated {
   
 }
 
-.aceeiffel .ace_support {
+.ace-eiffel .ace_support {
   
 }
 
-.aceeiffel .ace_support.ace_function {
+.ace-eiffel .ace_support.ace_function {
   color:#3C4C72;
 }
 
-.aceeiffel .ace_function.ace_buildin {
+.ace-eiffel .ace_function.ace_buildin {
   
 }
 
-.aceeiffel .ace_string {
+.ace-eiffel .ace_string {
   color:#D80800;
 }
 
-.aceeiffel .ace_string.ace_regexp {
+.ace-eiffel .ace_string.ace_regexp {
   
 }
 
-.aceeiffel .ace_comment {
+.ace-eiffel .ace_comment {
   color:#00B418;
 }
 
-.aceeiffel .ace_comment.ace_doc {
+.ace-eiffel .ace_comment.ace_doc {
   
 }
 
-.aceeiffel .ace_comment.ace_doc.ace_tag {
+.ace-eiffel .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceeiffel .ace_variable {
+.ace-eiffel .ace_variable {
   font-style:italic;
 color:#0206FF;
 }
 
-.aceeiffel .ace_variable.ace_language {
+.ace-eiffel .ace_variable.ace_language {
   
 }
 
-.aceeiffel .ace_xml_pe {
+.ace-eiffel .ace_xml_pe {
   
 }
+
+.ace-eiffel .ace_constant.ace_character.ace_escape {color:#26B31A;}
+.ace-eiffel .ace_string .ace_source {color:#26B31A;}
+.ace-eiffel .ace_meta.ace_preprocessor {color:#1A921C;}
+.ace-eiffel .ace_keyword.ace_control.ace_import {color:#0C450D;}
+.ace-eiffel .ace_entity.ace_name.ace_function {color:#0000A2;}
+.ace-eiffel .ace_keyword.ace_other.ace_name-of-parameter.ace_objc {color:#0000A2;}
+.ace-eiffel .ace_entity.ace_name.ace_type {font-style:italic;}
+.ace-eiffel .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-eiffel .ace_variable.ace_parameter {font-style:italic;}
+.ace-eiffel .ace_storage.ace_type.ace_method {color:#70727E;}
+.ace-eiffel .ace_meta.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-eiffel .ace_declaration.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-eiffel .ace_support.ace_class {color:#6D79DE;}
+.ace-eiffel .ace_support.ace_type {color:#6D79DE;}
+.ace-eiffel .ace_support.ace_constant {color:#06960E;}
+.ace-eiffel .ace_support.ace_variable {color:#21439C;}
+.ace-eiffel .ace_keyword.ace_operator.ace_js {color:#687687;}
+.ace-eiffel .ace_invalid.ace_deprecated.ace_trailing-whitespace {background-color:#FFD0D0;}
+.ace-eiffel .ace_text .ace_source {background-color:rgba(66,127,245,0.19);}
+.ace-eiffel .ace_string.ace_unquoted {background-color:rgba(66,127,245,0.19);}
+.ace-eiffel .ace_meta.ace_xml-processing {color:#68685B;}
+.ace-eiffel .ace_declaration.ace_xml-processing {color:#68685B;}
+.ace-eiffel .ace_meta.ace_doctype {color:#888888;}
+.ace-eiffel .ace_declaration.ace_doctype {color:#888888;}
+.ace-eiffel .ace_meta.ace_doctype.ace_DTD {font-style:italic;}
+.ace-eiffel .ace_declaration.ace_doctype.ace_DTD {font-style:italic;}
+.ace-eiffel .ace_meta.ace_tag {color:#1C02FF;}
+.ace-eiffel .ace_declaration.ace_tag {color:#1C02FF;}
+.ace-eiffel .ace_entity.ace_name.ace_tag {}
+.ace-eiffel .ace_entity.ace_other.ace_attribute-name {font-style:italic;}
+.ace-eiffel .ace_markup.ace_heading {color:#0C07FF;}
+.ace-eiffel .ace_markup.ace_quote {font-style:italic;color:#000000;}
+.ace-eiffel .ace_markup.ace_list {color:#B90690;}

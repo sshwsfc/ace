@@ -1,148 +1,164 @@
-.aceall_hallows_eve .ace_editor {
+.ace-all_hallows_eve .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceall_hallows_eve .ace_editor.ace_focus {
+.ace-all_hallows_eve .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceall_hallows_eve .ace_gutter {
+.ace-all_hallows_eve .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceall_hallows_eve .ace_gutter-layer {
+.ace-all_hallows_eve .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceall_hallows_eve .ace_gutter-layer .ace_gutter-cell {
+.ace-all_hallows_eve .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceall_hallows_eve .ace_print_margin {
+.ace-all_hallows_eve .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceall_hallows_eve .ace_scroller {
+.ace-all_hallows_eve .ace_scroller {
   background-color: #000000;
 }
 
-.aceall_hallows_eve .ace_text-layer {
+.ace-all_hallows_eve .ace_text-layer {
   cursor: text;
   color: #FFFFFF;
 }
 
-.aceall_hallows_eve .ace_cursor {
+.ace-all_hallows_eve .ace_cursor {
   border-left: 2px solid #FFFFFF;
 }
 
-.aceall_hallows_eve .ace_cursor.ace_overwrite {
+.ace-all_hallows_eve .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
  
-.aceall_hallows_eve .ace_marker-layer .ace_selection {
+.ace-all_hallows_eve .ace_marker-layer .ace_selection {
   background: rgba(115, 89, 126, 0.88);
 }
 
-.aceall_hallows_eve .ace_marker-layer .ace_step {
+.ace-all_hallows_eve .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceall_hallows_eve .ace_marker-layer .ace_bracket {
+.ace-all_hallows_eve .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #404040;
 }
 
-.aceall_hallows_eve .ace_marker-layer .ace_active_line {
+.ace-all_hallows_eve .ace_marker-layer .ace_active_line {
   background: #333300;
 }
 
        
-.aceall_hallows_eve .ace_invisible {
+.ace-all_hallows_eve .ace_invisible {
   color: #404040;
 }
 
-.aceall_hallows_eve .ace_keyword {
+.ace-all_hallows_eve .ace_keyword {
   color:#CC7833;
 }
 
-.aceall_hallows_eve .ace_keyword.ace_operator {
+.ace-all_hallows_eve .ace_keyword.ace_operator {
   
 }
 
-.aceall_hallows_eve .ace_constant {
+.ace-all_hallows_eve .ace_constant {
   color:#3387CC;
 }
 
-.aceall_hallows_eve .ace_constant.ace_language {
+.ace-all_hallows_eve .ace_constant.ace_language {
   
 }
 
-.aceall_hallows_eve .ace_constant.ace_library {
+.ace-all_hallows_eve .ace_constant.ace_library {
   
 }
 
-.aceall_hallows_eve .ace_constant.ace_numeric {
+.ace-all_hallows_eve .ace_constant.ace_numeric {
   
 }
 
-.aceall_hallows_eve .ace_invalid {
+.ace-all_hallows_eve .ace_invalid {
   
 }
 
-.aceall_hallows_eve .ace_invalid.ace_illegal {
+.ace-all_hallows_eve .ace_invalid.ace_illegal {
   
 }
 
-.aceall_hallows_eve .ace_invalid.ace_deprecated {
+.ace-all_hallows_eve .ace_invalid.ace_deprecated {
   
 }
 
-.aceall_hallows_eve .ace_support {
+.ace-all_hallows_eve .ace_support {
   
 }
 
-.aceall_hallows_eve .ace_support.ace_function {
+.ace-all_hallows_eve .ace_support.ace_function {
   color:#C83730;
 }
 
-.aceall_hallows_eve .ace_function.ace_buildin {
+.ace-all_hallows_eve .ace_function.ace_buildin {
   
 }
 
-.aceall_hallows_eve .ace_string {
+.ace-all_hallows_eve .ace_string {
   color:#66CC33;
 }
 
-.aceall_hallows_eve .ace_string.ace_regexp {
+.ace-all_hallows_eve .ace_string.ace_regexp {
   color:#CCCC33;
 }
 
-.aceall_hallows_eve .ace_comment {
+.ace-all_hallows_eve .ace_comment {
   color:#9933CC;
 }
 
-.aceall_hallows_eve .ace_comment.ace_doc {
+.ace-all_hallows_eve .ace_comment.ace_doc {
   
 }
 
-.aceall_hallows_eve .ace_comment.ace_doc.ace_tag {
+.ace-all_hallows_eve .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceall_hallows_eve .ace_variable {
+.ace-all_hallows_eve .ace_variable {
   
 }
 
-.aceall_hallows_eve .ace_variable.ace_language {
+.ace-all_hallows_eve .ace_variable.ace_language {
   
 }
 
-.aceall_hallows_eve .ace_xml_pe {
+.ace-all_hallows_eve .ace_xml_pe {
   
 }
+
+.ace-all_hallows_eve .ace_text {color:#FFFFFF;background-color:#434242;}
+.ace-all_hallows_eve .ace_source {color:#FFFFFF;background-color:#000000;}
+.ace-all_hallows_eve .ace_meta.ace_preprocessor.ace_c {color:#D0D0FF;}
+.ace-all_hallows_eve .ace_keyword.ace_control.ace_import {}
+.ace-all_hallows_eve .ace_entity.ace_name.ace_function {}
+.ace-all_hallows_eve .ace_variable.ace_parameter {font-style:italic;}
+.ace-all_hallows_eve .ace_source .ace_comment.ace_block {color:#FFFFFF;background-color:#9B9B9B;}
+.ace-all_hallows_eve .ace_string .ace_constant.ace_character.ace_escape {color:#AAAAAA;}
+.ace-all_hallows_eve .ace_string.ace_interpolated {color:#000000;background-color:#CCCC33;}
+.ace-all_hallows_eve .ace_string.ace_literal {color:#CCCC33;}
+.ace-all_hallows_eve .ace_string.ace_interpolated .ace_constant.ace_character.ace_escape {color:#555555;}
+.ace-all_hallows_eve .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-all_hallows_eve .ace_entity.ace_other.ace_inherited-class {text-decoration:underline;font-style:italic;}
+.ace-all_hallows_eve .ace_entity.ace_name.ace_tag {text-decoration:underline;}
+.ace-all_hallows_eve .ace_entity.ace_other.ace_attribute-name {}

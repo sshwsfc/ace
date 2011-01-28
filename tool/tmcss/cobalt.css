@@ -1,150 +1,198 @@
-.acecobalt .ace_editor {
+.ace-cobalt .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.acecobalt .ace_editor.ace_focus {
+.ace-cobalt .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.acecobalt .ace_gutter {
+.ace-cobalt .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.acecobalt .ace_gutter-layer {
+.ace-cobalt .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.acecobalt .ace_gutter-layer .ace_gutter-cell {
+.ace-cobalt .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.acecobalt .ace_print_margin {
+.ace-cobalt .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.acecobalt .ace_scroller {
+.ace-cobalt .ace_scroller {
   background-color: #002240;
 }
 
-.acecobalt .ace_text-layer {
+.ace-cobalt .ace_text-layer {
   cursor: text;
   color: #FFFFFF;
 }
 
-.acecobalt .ace_cursor {
+.ace-cobalt .ace_cursor {
   border-left: 2px solid #FFFFFF;
 }
 
-.acecobalt .ace_cursor.ace_overwrite {
+.ace-cobalt .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #FFFFFF;
 }
  
-.acecobalt .ace_marker-layer .ace_selection {
+.ace-cobalt .ace_marker-layer .ace_selection {
   background: rgba(179, 101, 57, 0.75);
 }
 
-.acecobalt .ace_marker-layer .ace_step {
+.ace-cobalt .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.acecobalt .ace_marker-layer .ace_bracket {
+.ace-cobalt .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.acecobalt .ace_marker-layer .ace_active_line {
+.ace-cobalt .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.35);
 }
 
        
-.acecobalt .ace_invisible {
+.ace-cobalt .ace_invisible {
   color: rgba(255, 255, 255, 0.15);
 }
 
-.acecobalt .ace_keyword {
+.ace-cobalt .ace_keyword {
   color:#FF9D00;
 }
 
-.acecobalt .ace_keyword.ace_operator {
+.ace-cobalt .ace_keyword.ace_operator {
   
 }
 
-.acecobalt .ace_constant {
+.ace-cobalt .ace_constant {
   color:#FF628C;
 }
 
-.acecobalt .ace_constant.ace_language {
+.ace-cobalt .ace_constant.ace_language {
   
 }
 
-.acecobalt .ace_constant.ace_library {
+.ace-cobalt .ace_constant.ace_library {
   
 }
 
-.acecobalt .ace_constant.ace_numeric {
+.ace-cobalt .ace_constant.ace_numeric {
   
 }
 
-.acecobalt .ace_invalid {
+.ace-cobalt .ace_invalid {
   color:#F8F8F8;
 background-color:#800F00;
 }
 
-.acecobalt .ace_invalid.ace_illegal {
+.ace-cobalt .ace_invalid.ace_illegal {
   
 }
 
-.acecobalt .ace_invalid.ace_deprecated {
+.ace-cobalt .ace_invalid.ace_deprecated {
   
 }
 
-.acecobalt .ace_support {
+.ace-cobalt .ace_support {
   color:#80FFBB;
 }
 
-.acecobalt .ace_support.ace_function {
+.ace-cobalt .ace_support.ace_function {
   color:#FFB054;
 }
 
-.acecobalt .ace_function.ace_buildin {
+.ace-cobalt .ace_function.ace_buildin {
   
 }
 
-.acecobalt .ace_string {
+.ace-cobalt .ace_string {
   
 }
 
-.acecobalt .ace_string.ace_regexp {
+.ace-cobalt .ace_string.ace_regexp {
   color:#80FFC2;
 }
 
-.acecobalt .ace_comment {
+.ace-cobalt .ace_comment {
   font-style:italic;
 color:#0088FF;
 }
 
-.acecobalt .ace_comment.ace_doc {
+.ace-cobalt .ace_comment.ace_doc {
   
 }
 
-.acecobalt .ace_comment.ace_doc.ace_tag {
+.ace-cobalt .ace_comment.ace_doc.ace_tag {
   
 }
 
-.acecobalt .ace_variable {
+.ace-cobalt .ace_variable {
   color:#CCCCCC;
 }
 
-.acecobalt .ace_variable.ace_language {
+.ace-cobalt .ace_variable.ace_language {
   color:#FF80E1;
 }
 
-.acecobalt .ace_xml_pe {
+.ace-cobalt .ace_xml_pe {
   
 }
+
+.ace-cobalt .ace_punctuation .ace_- .ace_(punctuation.ace_definition.ace_string {color:#E1EFFF;}
+.ace-cobalt .ace_punctuation.ace_definition.ace_comment) {color:#E1EFFF;}
+.ace-cobalt .ace_entity {color:#FFDD00;}
+.ace-cobalt .ace_storage {color:#FFEE80;}
+.ace-cobalt .ace_string .ace_-string.ace_unquoted.ace_old-plist .ace_-string.ace_unquoted.ace_heredoc {color:#3AD900;}
+.ace-cobalt .ace_string.ace_unquoted.ace_heredoc .ace_string {color:#3AD900;}
+.ace-cobalt .ace_meta.ace_function-call {color:#FFEE80;}
+.ace-cobalt .ace_text .ace_source {color:#FFFFFF;background-color:#223545;}
+.ace-cobalt .ace_string.ace_unquoted.ace_heredoc {color:#FFFFFF;background-color:#223545;}
+.ace-cobalt .ace_source .ace_source {color:#FFFFFF;background-color:#223545;}
+.ace-cobalt .ace_entity.ace_other.ace_inherited-class {font-style:italic;color:#80FCFF;}
+.ace-cobalt .ace_string.ace_quoted .ace_source {color:#9EFF80;}
+.ace-cobalt .ace_string .ace_constant {color:#80FF82;}
+.ace-cobalt .ace_string .ace_variable {color:#EDEF7D;}
+.ace-cobalt .ace_support.ace_constant {color:#EB939A;}
+.ace-cobalt .ace_support.ace_type.ace_exception {color:#FF1E00;}
+.ace-cobalt .ace_meta.ace_preprocessor.ace_c {color:#8996A8;}
+.ace-cobalt .ace_meta.ace_preprocessor.ace_c .ace_keyword {color:#AFC4DB;}
+.ace-cobalt .ace_meta.ace_sgml.ace_html .ace_meta.ace_doctype {color:#73817D;}
+.ace-cobalt .ace_meta.ace_sgml.ace_html .ace_meta.ace_doctype .ace_entity {color:#73817D;}
+.ace-cobalt .ace_meta.ace_sgml.ace_html .ace_meta.ace_doctype .ace_string {color:#73817D;}
+.ace-cobalt .ace_meta.ace_xml-processing {color:#73817D;}
+.ace-cobalt .ace_meta.ace_xml-processing .ace_entity {color:#73817D;}
+.ace-cobalt .ace_meta.ace_xml-processing .ace_string {color:#73817D;}
+.ace-cobalt .ace_meta.ace_tag {color:#9EFFFF;}
+.ace-cobalt .ace_meta.ace_tag .ace_entity {color:#9EFFFF;}
+.ace-cobalt .ace_meta.ace_selector.ace_css .ace_entity.ace_name.ace_tag {color:#9EFFFF;}
+.ace-cobalt .ace_meta.ace_selector.ace_css .ace_entity.ace_other.ace_attribute-name.ace_id {color:#FFB454;}
+.ace-cobalt .ace_meta.ace_selector.ace_css .ace_entity.ace_other.ace_attribute-name.ace_class {color:#5FE461;}
+.ace-cobalt .ace_support.ace_type.ace_property-name.ace_css {color:#9DF39F;}
+.ace-cobalt .ace_meta.ace_property-group .ace_support.ace_constant.ace_property-value.ace_css {color:#F6F080;}
+.ace-cobalt .ace_meta.ace_property-value .ace_support.ace_constant.ace_property-value.ace_css {color:#F6F080;}
+.ace-cobalt .ace_meta.ace_preprocessor.ace_at-rule .ace_keyword.ace_control.ace_at-rule {color:#F6AA11;}
+.ace-cobalt .ace_meta.ace_property-value .ace_support.ace_constant.ace_named-color.ace_css {color:#EDF080;}
+.ace-cobalt .ace_meta.ace_property-value .ace_constant {color:#EDF080;}
+.ace-cobalt .ace_meta.ace_constructor.ace_argument.ace_css {color:#EB939A;}
+.ace-cobalt .ace_meta.ace_diff {color:#F8F8F8;background-color:#000E1A;}
+.ace-cobalt .ace_meta.ace_diff.ace_header {color:#F8F8F8;background-color:#000E1A;}
+.ace-cobalt .ace_markup.ace_deleted {color:#F8F8F8;background-color:#4C0900;}
+.ace-cobalt .ace_markup.ace_changed {color:#F8F8F8;background-color:#806F00;}
+.ace-cobalt .ace_markup.ace_inserted {color:#F8F8F8;background-color:#154F00;}
+.ace-cobalt .ace_markup.ace_raw {background-color:rgba(143,221,246,0.19);}
+.ace-cobalt .ace_markup.ace_quote {background-color:#004480;}
+.ace-cobalt .ace_markup.ace_list {background-color:#130D26;}
+.ace-cobalt .ace_markup.ace_bold {color:#C1AFFF;}
+.ace-cobalt .ace_markup.ace_italic {font-style:italic;color:#B8FFD9;}
+.ace-cobalt .ace_markup.ace_heading {color:#C8E4FD;background-color:#001221;}

@@ -1,149 +1,175 @@
-.acezenburnesque .ace_editor {
+.ace-zenburnesque .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.acezenburnesque .ace_editor.ace_focus {
+.ace-zenburnesque .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.acezenburnesque .ace_gutter {
+.ace-zenburnesque .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.acezenburnesque .ace_gutter-layer {
+.ace-zenburnesque .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.acezenburnesque .ace_gutter-layer .ace_gutter-cell {
+.ace-zenburnesque .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.acezenburnesque .ace_print_margin {
+.ace-zenburnesque .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.acezenburnesque .ace_scroller {
+.ace-zenburnesque .ace_scroller {
   background-color: #404040;
 }
 
-.acezenburnesque .ace_text-layer {
+.ace-zenburnesque .ace_text-layer {
   cursor: text;
   color: #DEDEDE;
 }
 
-.acezenburnesque .ace_cursor {
+.ace-zenburnesque .ace_cursor {
   border-left: 2px solid #FFFF66;
 }
 
-.acezenburnesque .ace_cursor.ace_overwrite {
+.ace-zenburnesque .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #FFFF66;
 }
  
-.acezenburnesque .ace_marker-layer .ace_selection {
+.ace-zenburnesque .ace_marker-layer .ace_selection {
   background: #A0A0C0;
 }
 
-.acezenburnesque .ace_marker-layer .ace_step {
+.ace-zenburnesque .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.acezenburnesque .ace_marker-layer .ace_bracket {
+.ace-zenburnesque .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #A8A8A8;
 }
 
-.acezenburnesque .ace_marker-layer .ace_active_line {
+.ace-zenburnesque .ace_marker-layer .ace_active_line {
   background: rgba(160, 128, 64, 0.15);
 }
 
        
-.acezenburnesque .ace_invisible {
+.ace-zenburnesque .ace_invisible {
   color: #A8A8A8;
 }
 
-.acezenburnesque .ace_keyword {
+.ace-zenburnesque .ace_keyword {
   color:#FFFFA0;
 }
 
-.acezenburnesque .ace_keyword.ace_operator {
+.ace-zenburnesque .ace_keyword.ace_operator {
   color:#FFFFA0;
 }
 
-.acezenburnesque .ace_constant {
+.ace-zenburnesque .ace_constant {
   
 }
 
-.acezenburnesque .ace_constant.ace_language {
+.ace-zenburnesque .ace_constant.ace_language {
   
 }
 
-.acezenburnesque .ace_constant.ace_library {
+.ace-zenburnesque .ace_constant.ace_library {
   
 }
 
-.acezenburnesque .ace_constant.ace_numeric {
+.ace-zenburnesque .ace_constant.ace_numeric {
   color:#22C0FF;
 }
 
-.acezenburnesque .ace_invalid {
+.ace-zenburnesque .ace_invalid {
   
 }
 
-.acezenburnesque .ace_invalid.ace_illegal {
+.ace-zenburnesque .ace_invalid.ace_illegal {
   
 }
 
-.acezenburnesque .ace_invalid.ace_deprecated {
+.ace-zenburnesque .ace_invalid.ace_deprecated {
   
 }
 
-.acezenburnesque .ace_support {
+.ace-zenburnesque .ace_support {
   
 }
 
-.acezenburnesque .ace_support.ace_function {
+.ace-zenburnesque .ace_support.ace_function {
   
 }
 
-.acezenburnesque .ace_function.ace_buildin {
+.ace-zenburnesque .ace_function.ace_buildin {
   
 }
 
-.acezenburnesque .ace_string {
+.ace-zenburnesque .ace_string {
   color:#FF2020;
 }
 
-.acezenburnesque .ace_string.ace_regexp {
+.ace-zenburnesque .ace_string.ace_regexp {
   
 }
 
-.acezenburnesque .ace_comment {
+.ace-zenburnesque .ace_comment {
   font-style:italic;
 color:#709070;
 }
 
-.acezenburnesque .ace_comment.ace_doc {
+.ace-zenburnesque .ace_comment.ace_doc {
   
 }
 
-.acezenburnesque .ace_comment.ace_doc.ace_tag {
+.ace-zenburnesque .ace_comment.ace_doc.ace_tag {
   
 }
 
-.acezenburnesque .ace_variable {
+.ace-zenburnesque .ace_variable {
   
 }
 
-.acezenburnesque .ace_variable.ace_language {
+.ace-zenburnesque .ace_variable.ace_language {
   
 }
 
-.acezenburnesque .ace_xml_pe {
+.ace-zenburnesque .ace_xml_pe {
   
 }
+
+.ace-zenburnesque .ace_keyword.ace_other.ace_directive {}
+.ace-zenburnesque .ace_keyword.ace_other.ace_directive.ace_line-number {text-decoration:underline;}
+.ace-zenburnesque .ace_constant.ace_character {}
+.ace-zenburnesque .ace_constant.ace_numeric.ace_floating-point {text-decoration:underline;}
+.ace-zenburnesque .ace_constant.ace_other {}
+.ace-zenburnesque .ace_variable.ace_parameter {}
+.ace-zenburnesque .ace_variable.ace_other {}
+.ace-zenburnesque .ace_entity.ace_name.ace_module {color:#FF8000;}
+.ace-zenburnesque .ace_support.ace_other.ace_module {color:#FF8000;}
+.ace-zenburnesque .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_infix.ace_floating-point {text-decoration:underline;}
+.ace-zenburnesque .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_prefix.ace_floating-point {text-decoration:underline;}
+.ace-zenburnesque .ace_storage.ace_type {color:#6080FF;}
+.ace-zenburnesque .ace_entity.ace_name.ace_class.ace_variant {color:#4080A0;}
+.ace-zenburnesque .ace_storage {}
+.ace-zenburnesque .ace_entity.ace_name.ace_type {color:#F09040;}
+.ace-zenburnesque .ace_entity.ace_other.ace_inherited-class {}
+.ace-zenburnesque .ace_entity.ace_name.ace_function {color:#FFCC66;}
+.ace-zenburnesque .ace_storage.ace_type.ace_user-defined {color:#FFE000;}
+.ace-zenburnesque .ace_entity.ace_name.ace_type.ace_class.ace_type {color:#F4A020;}
+.ace-zenburnesque .ace_entity.ace_name.ace_tag {}
+.ace-zenburnesque .ace_entity.ace_other.ace_attribute-name {}
+.ace-zenburnesque .ace_support.ace_constant {}
+.ace-zenburnesque .ace_support.ace_type {}
+.ace-zenburnesque .ace_support.ace_class {}
+.ace-zenburnesque .ace_support.ace_variable {}

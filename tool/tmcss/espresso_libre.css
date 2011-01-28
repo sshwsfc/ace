@@ -1,150 +1,179 @@
-.aceespresso_libre .ace_editor {
+.ace-espresso_libre .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceespresso_libre .ace_editor.ace_focus {
+.ace-espresso_libre .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceespresso_libre .ace_gutter {
+.ace-espresso_libre .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceespresso_libre .ace_gutter-layer {
+.ace-espresso_libre .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceespresso_libre .ace_gutter-layer .ace_gutter-cell {
+.ace-espresso_libre .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceespresso_libre .ace_print_margin {
+.ace-espresso_libre .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceespresso_libre .ace_scroller {
+.ace-espresso_libre .ace_scroller {
   background-color: #2A211C;
 }
 
-.aceespresso_libre .ace_text-layer {
+.ace-espresso_libre .ace_text-layer {
   cursor: text;
   color: #BDAE9D;
 }
 
-.aceespresso_libre .ace_cursor {
+.ace-espresso_libre .ace_cursor {
   border-left: 2px solid #889AFF;
 }
 
-.aceespresso_libre .ace_cursor.ace_overwrite {
+.ace-espresso_libre .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #889AFF;
 }
  
-.aceespresso_libre .ace_marker-layer .ace_selection {
+.ace-espresso_libre .ace_marker-layer .ace_selection {
   background: #C3DCFF;
 }
 
-.aceespresso_libre .ace_marker-layer .ace_step {
+.ace-espresso_libre .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceespresso_libre .ace_marker-layer .ace_bracket {
+.ace-espresso_libre .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.aceespresso_libre .ace_marker-layer .ace_active_line {
+.ace-espresso_libre .ace_marker-layer .ace_active_line {
   background: #3A312C;
 }
 
        
-.aceespresso_libre .ace_invisible {
+.ace-espresso_libre .ace_invisible {
   color: #BFBFBF;
 }
 
-.aceespresso_libre .ace_keyword {
+.ace-espresso_libre .ace_keyword {
   color:#43A8ED;
 }
 
-.aceespresso_libre .ace_keyword.ace_operator {
+.ace-espresso_libre .ace_keyword.ace_operator {
   
 }
 
-.aceespresso_libre .ace_constant {
+.ace-espresso_libre .ace_constant {
   color:#C5656B;
 }
 
-.aceespresso_libre .ace_constant.ace_language {
+.ace-espresso_libre .ace_constant.ace_language {
   color:#585CF6;
 }
 
-.aceespresso_libre .ace_constant.ace_library {
+.ace-espresso_libre .ace_constant.ace_library {
   
 }
 
-.aceespresso_libre .ace_constant.ace_numeric {
+.ace-espresso_libre .ace_constant.ace_numeric {
   color:#44AA43;
 }
 
-.aceespresso_libre .ace_invalid {
+.ace-espresso_libre .ace_invalid {
   color:#FFFFFF;
 background-color:#990000;
 }
 
-.aceespresso_libre .ace_invalid.ace_illegal {
+.ace-espresso_libre .ace_invalid.ace_illegal {
   
 }
 
-.aceespresso_libre .ace_invalid.ace_deprecated {
+.ace-espresso_libre .ace_invalid.ace_deprecated {
   
 }
 
-.aceespresso_libre .ace_support {
+.ace-espresso_libre .ace_support {
   
 }
 
-.aceespresso_libre .ace_support.ace_function {
+.ace-espresso_libre .ace_support.ace_function {
   color:#7290D9;
 }
 
-.aceespresso_libre .ace_function.ace_buildin {
+.ace-espresso_libre .ace_function.ace_buildin {
   
 }
 
-.aceespresso_libre .ace_string {
+.ace-espresso_libre .ace_string {
   color:#049B0A;
 }
 
-.aceespresso_libre .ace_string.ace_regexp {
+.ace-espresso_libre .ace_string.ace_regexp {
   
 }
 
-.aceespresso_libre .ace_comment {
+.ace-espresso_libre .ace_comment {
   font-style:italic;
 color:#0066FF;
 }
 
-.aceespresso_libre .ace_comment.ace_doc {
+.ace-espresso_libre .ace_comment.ace_doc {
   
 }
 
-.aceespresso_libre .ace_comment.ace_doc.ace_tag {
+.ace-espresso_libre .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceespresso_libre .ace_variable {
+.ace-espresso_libre .ace_variable {
   
 }
 
-.aceespresso_libre .ace_variable.ace_language {
+.ace-espresso_libre .ace_variable.ace_language {
   color:#318495;
 }
 
-.aceespresso_libre .ace_xml_pe {
-  
+.ace-espresso_libre .ace_xml_pe {
+  color:#888888;
 }
+
+.ace-espresso_libre .ace_storage {color:#43A8ED;}
+.ace-espresso_libre .ace_variable.ace_other {color:#318495;}
+.ace-espresso_libre .ace_constant.ace_character.ace_escape {color:#2FE420;}
+.ace-espresso_libre .ace_string .ace_source {color:#2FE420;}
+.ace-espresso_libre .ace_meta.ace_preprocessor {color:#1A921C;}
+.ace-espresso_libre .ace_keyword.ace_control.ace_import {color:#9AFF87;}
+.ace-espresso_libre .ace_entity.ace_name.ace_function {color:#FF9358;}
+.ace-espresso_libre .ace_keyword.ace_other.ace_name-of-parameter.ace_objc {color:#FF9358;}
+.ace-espresso_libre .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-espresso_libre .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-espresso_libre .ace_variable.ace_parameter {font-style:italic;}
+.ace-espresso_libre .ace_storage.ace_type.ace_method {color:#8B8E9C;}
+.ace-espresso_libre .ace_meta.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-espresso_libre .ace_declaration.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-espresso_libre .ace_support.ace_class {color:#6D79DE;}
+.ace-espresso_libre .ace_support.ace_type {color:#6D79DE;}
+.ace-espresso_libre .ace_support.ace_constant {color:#00AF0E;}
+.ace-espresso_libre .ace_support.ace_variable {color:#2F5FE0;}
+.ace-espresso_libre .ace_keyword.ace_operator.ace_js {color:#687687;}
+.ace-espresso_libre .ace_invalid.ace_deprecated.ace_trailing-whitespace {background-color:#FFD0D0;}
+.ace-espresso_libre .ace_text .ace_source {background-color:rgba(245,170,119,0.19);}
+.ace-espresso_libre .ace_string.ace_unquoted {background-color:rgba(245,170,119,0.19);}
+.ace-espresso_libre .ace_meta.ace_tag.ace_preprocessor.ace_xml {color:#8F7E65;}
+.ace-espresso_libre .ace_string.ace_quoted.ace_docinfo.ace_doctype.ace_DTD {font-style:italic;}
+.ace-espresso_libre .ace_meta.ace_tag {color:#43A8ED;}
+.ace-espresso_libre .ace_declaration.ace_tag {color:#43A8ED;}
+.ace-espresso_libre .ace_entity.ace_name.ace_tag {}
+.ace-espresso_libre .ace_entity.ace_other.ace_attribute-name {font-style:italic;}

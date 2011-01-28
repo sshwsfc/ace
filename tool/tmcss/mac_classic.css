@@ -1,150 +1,188 @@
-.acemac_classic .ace_editor {
+.ace-mac_classic .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.acemac_classic .ace_editor.ace_focus {
+.ace-mac_classic .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.acemac_classic .ace_gutter {
+.ace-mac_classic .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.acemac_classic .ace_gutter-layer {
+.ace-mac_classic .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.acemac_classic .ace_gutter-layer .ace_gutter-cell {
+.ace-mac_classic .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.acemac_classic .ace_print_margin {
+.ace-mac_classic .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.acemac_classic .ace_scroller {
+.ace-mac_classic .ace_scroller {
   background-color: #FFFFFF;
 }
 
-.acemac_classic .ace_text-layer {
+.ace-mac_classic .ace_text-layer {
   cursor: text;
   color: #000000;
 }
 
-.acemac_classic .ace_cursor {
+.ace-mac_classic .ace_cursor {
   border-left: 2px solid #000000;
 }
 
-.acemac_classic .ace_cursor.ace_overwrite {
+.ace-mac_classic .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
  
-.acemac_classic .ace_marker-layer .ace_selection {
+.ace-mac_classic .ace_marker-layer .ace_selection {
   background: rgba(77, 151, 255, 0.33);
 }
 
-.acemac_classic .ace_marker-layer .ace_step {
+.ace-mac_classic .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.acemac_classic .ace_marker-layer .ace_bracket {
+.ace-mac_classic .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.acemac_classic .ace_marker-layer .ace_active_line {
+.ace-mac_classic .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.071);
 }
 
        
-.acemac_classic .ace_invisible {
+.ace-mac_classic .ace_invisible {
   color: #BFBFBF;
 }
 
-.acemac_classic .ace_keyword {
+.ace-mac_classic .ace_keyword {
   color:#0000FF;
 }
 
-.acemac_classic .ace_keyword.ace_operator {
+.ace-mac_classic .ace_keyword.ace_operator {
   
 }
 
-.acemac_classic .ace_constant {
+.ace-mac_classic .ace_constant {
   color:#C5060B;
 }
 
-.acemac_classic .ace_constant.ace_language {
+.ace-mac_classic .ace_constant.ace_language {
   color:#585CF6;
 }
 
-.acemac_classic .ace_constant.ace_library {
+.ace-mac_classic .ace_constant.ace_library {
   
 }
 
-.acemac_classic .ace_constant.ace_numeric {
+.ace-mac_classic .ace_constant.ace_numeric {
   color:#0000CD;
 }
 
-.acemac_classic .ace_invalid {
+.ace-mac_classic .ace_invalid {
   color:#FFFFFF;
 background-color:#990000;
 }
 
-.acemac_classic .ace_invalid.ace_illegal {
+.ace-mac_classic .ace_invalid.ace_illegal {
   
 }
 
-.acemac_classic .ace_invalid.ace_deprecated {
+.ace-mac_classic .ace_invalid.ace_deprecated {
   
 }
 
-.acemac_classic .ace_support {
+.ace-mac_classic .ace_support {
   
 }
 
-.acemac_classic .ace_support.ace_function {
+.ace-mac_classic .ace_support.ace_function {
   color:#3C4C72;
 }
 
-.acemac_classic .ace_function.ace_buildin {
+.ace-mac_classic .ace_function.ace_buildin {
   
 }
 
-.acemac_classic .ace_string {
+.ace-mac_classic .ace_string {
   color:#036A07;
 }
 
-.acemac_classic .ace_string.ace_regexp {
+.ace-mac_classic .ace_string.ace_regexp {
   
 }
 
-.acemac_classic .ace_comment {
+.ace-mac_classic .ace_comment {
   font-style:italic;
 color:#0066FF;
 }
 
-.acemac_classic .ace_comment.ace_doc {
+.ace-mac_classic .ace_comment.ace_doc {
   
 }
 
-.acemac_classic .ace_comment.ace_doc.ace_tag {
+.ace-mac_classic .ace_comment.ace_doc.ace_tag {
   
 }
 
-.acemac_classic .ace_variable {
+.ace-mac_classic .ace_variable {
   
 }
 
-.acemac_classic .ace_variable.ace_language {
+.ace-mac_classic .ace_variable.ace_language {
   color:#318495;
 }
 
-.acemac_classic .ace_xml_pe {
-  
+.ace-mac_classic .ace_xml_pe {
+  color:#888888;
 }
+
+.ace-mac_classic .ace_storage {color:#0000FF;}
+.ace-mac_classic .ace_variable.ace_other {color:#318495;}
+.ace-mac_classic .ace_constant.ace_character.ace_escape {color:#26B31A;}
+.ace-mac_classic .ace_string .ace_source {color:#26B31A;}
+.ace-mac_classic .ace_meta.ace_preprocessor {color:#1A921C;}
+.ace-mac_classic .ace_keyword.ace_control.ace_import {color:#0C450D;}
+.ace-mac_classic .ace_entity.ace_name.ace_function {color:#0000A2;}
+.ace-mac_classic .ace_support.ace_function.ace_any-method {color:#0000A2;}
+.ace-mac_classic .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-mac_classic .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-mac_classic .ace_variable.ace_parameter {font-style:italic;}
+.ace-mac_classic .ace_storage.ace_type.ace_method {color:#70727E;}
+.ace-mac_classic .ace_meta.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-mac_classic .ace_declaration.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-mac_classic .ace_support.ace_class {color:#6D79DE;}
+.ace-mac_classic .ace_support.ace_type {color:#6D79DE;}
+.ace-mac_classic .ace_support.ace_constant {color:#06960E;}
+.ace-mac_classic .ace_support.ace_variable {color:#21439C;}
+.ace-mac_classic .ace_keyword.ace_operator.ace_js {color:#687687;}
+.ace-mac_classic .ace_invalid.ace_deprecated.ace_trailing-whitespace {background-color:#FFD0D0;}
+.ace-mac_classic .ace_text .ace_source {background-color:rgba(0,0,0,0.051);}
+.ace-mac_classic .ace_string.ace_unquoted {background-color:rgba(0,0,0,0.051);}
+.ace-mac_classic .ace_text .ace_source .ace_string.ace_unquoted {background-color:rgba(0,0,0,0.059);}
+.ace-mac_classic .ace_text .ace_source .ace_text .ace_source {background-color:rgba(0,0,0,0.059);}
+.ace-mac_classic .ace_meta.ace_tag.ace_preprocessor.ace_xml {color:#888888;}
+.ace-mac_classic .ace_meta.ace_tag.ace_sgml.ace_doctype .ace_entity {color:#888888;}
+.ace-mac_classic .ace_meta.ace_tag.ace_sgml.ace_doctype .ace_string {color:#888888;}
+.ace-mac_classic .ace_meta.ace_tag.ace_preprocessor.ace_xml .ace_entity {color:#888888;}
+.ace-mac_classic .ace_meta.ace_tag.ace_preprocessor.ace_xml .ace_string {color:#888888;}
+.ace-mac_classic .ace_string.ace_quoted.ace_docinfo.ace_doctype.ace_DTD {font-style:italic;}
+.ace-mac_classic .ace_meta.ace_tag {color:#1C02FF;}
+.ace-mac_classic .ace_declaration.ace_tag {color:#1C02FF;}
+.ace-mac_classic .ace_entity.ace_name.ace_tag {}
+.ace-mac_classic .ace_entity.ace_other.ace_attribute-name {font-style:italic;}
+.ace-mac_classic .ace_markup.ace_heading {color:#0C07FF;}
+.ace-mac_classic .ace_markup.ace_quote {font-style:italic;color:#000000;}
+.ace-mac_classic .ace_markup.ace_list {color:#B90690;}

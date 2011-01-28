@@ -53,6 +53,7 @@ exports.launch = function(env) {
     var PythonMode = require("ace/mode/python").Mode;
     var PhpMode = require("ace/mode/php").Mode;
     var TextMode = require("ace/mode/text").Mode;
+	var Mode = require("ace/tm/mode").Mode;
     var UndoManager = require("ace/undomanager").UndoManager;
 
     var vim = require("ace/keyboard/keybinding/vim").Vim;
@@ -104,7 +105,7 @@ exports.launch = function(env) {
     docs.html.setUndoManager(new UndoManager());
 
     docs.python = new EditSession(document.getElementById("pythontext").innerHTML);
-    docs.python.setMode(new PythonMode());
+    docs.python.setMode(new Mode('py'));
     docs.python.setUndoManager(new UndoManager());
 
     docs.php = new EditSession(document.getElementById("phptext").innerHTML);

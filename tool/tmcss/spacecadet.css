@@ -1,148 +1,164 @@
-.acespacecadet .ace_editor {
+.ace-spacecadet .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.acespacecadet .ace_editor.ace_focus {
+.ace-spacecadet .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.acespacecadet .ace_gutter {
+.ace-spacecadet .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.acespacecadet .ace_gutter-layer {
+.ace-spacecadet .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.acespacecadet .ace_gutter-layer .ace_gutter-cell {
+.ace-spacecadet .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.acespacecadet .ace_print_margin {
+.ace-spacecadet .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.acespacecadet .ace_scroller {
+.ace-spacecadet .ace_scroller {
   background-color: #0D0D0D;
 }
 
-.acespacecadet .ace_text-layer {
+.ace-spacecadet .ace_text-layer {
   cursor: text;
   color: #DDE6CF;
 }
 
-.acespacecadet .ace_cursor {
+.ace-spacecadet .ace_cursor {
   border-left: 2px solid #7F005D;
 }
 
-.acespacecadet .ace_cursor.ace_overwrite {
+.ace-spacecadet .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #7F005D;
 }
  
-.acespacecadet .ace_marker-layer .ace_selection {
+.ace-spacecadet .ace_marker-layer .ace_selection {
   background: #40002F;
 }
 
-.acespacecadet .ace_marker-layer .ace_step {
+.ace-spacecadet .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.acespacecadet .ace_marker-layer .ace_bracket {
+.ace-spacecadet .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.acespacecadet .ace_marker-layer .ace_active_line {
+.ace-spacecadet .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.071);
 }
 
        
-.acespacecadet .ace_invisible {
+.ace-spacecadet .ace_invisible {
   color: #BFBFBF;
 }
 
-.acespacecadet .ace_keyword {
+.ace-spacecadet .ace_keyword {
   
 }
 
-.acespacecadet .ace_keyword.ace_operator {
+.ace-spacecadet .ace_keyword.ace_operator {
   
 }
 
-.acespacecadet .ace_constant {
+.ace-spacecadet .ace_constant {
   color:#A8885A;
 }
 
-.acespacecadet .ace_constant.ace_language {
+.ace-spacecadet .ace_constant.ace_language {
   
 }
 
-.acespacecadet .ace_constant.ace_library {
+.ace-spacecadet .ace_constant.ace_library {
   
 }
 
-.acespacecadet .ace_constant.ace_numeric {
+.ace-spacecadet .ace_constant.ace_numeric {
   
 }
 
-.acespacecadet .ace_invalid {
+.ace-spacecadet .ace_invalid {
   background-color:#5F0047;
 }
 
-.acespacecadet .ace_invalid.ace_illegal {
+.ace-spacecadet .ace_invalid.ace_illegal {
   
 }
 
-.acespacecadet .ace_invalid.ace_deprecated {
+.ace-spacecadet .ace_invalid.ace_deprecated {
   
 }
 
-.acespacecadet .ace_support {
+.ace-spacecadet .ace_support {
   color:#8A4B66;
 }
 
-.acespacecadet .ace_support.ace_function {
+.ace-spacecadet .ace_support.ace_function {
   
 }
 
-.acespacecadet .ace_function.ace_buildin {
+.ace-spacecadet .ace_function.ace_buildin {
   
 }
 
-.acespacecadet .ace_string {
+.ace-spacecadet .ace_string {
   color:#805978;
 }
 
-.acespacecadet .ace_string.ace_regexp {
+.ace-spacecadet .ace_string.ace_regexp {
   
 }
 
-.acespacecadet .ace_comment {
+.ace-spacecadet .ace_comment {
   color:#473C45;
 }
 
-.acespacecadet .ace_comment.ace_doc {
+.ace-spacecadet .ace_comment.ace_doc {
   
 }
 
-.acespacecadet .ace_comment.ace_doc.ace_tag {
+.ace-spacecadet .ace_comment.ace_doc.ace_tag {
   
 }
 
-.acespacecadet .ace_variable {
+.ace-spacecadet .ace_variable {
   
 }
 
-.acespacecadet .ace_variable.ace_language {
+.ace-spacecadet .ace_variable.ace_language {
   
 }
 
-.acespacecadet .ace_xml_pe {
+.ace-spacecadet .ace_xml_pe {
   
 }
+
+.ace-spacecadet .ace_variable.ace_parameter {color:#596380;}
+.ace-spacecadet .ace_variable.ace_other {color:#596380;}
+.ace-spacecadet .ace_keyword .ace_- .ace_keyword.ace_operator {color:#728059;}
+.ace-spacecadet .ace_keyword.ace_operator.ace_logical {color:#728059;}
+.ace-spacecadet .ace_storage {color:#9EBF60;}
+.ace-spacecadet .ace_entity {color:#6078BF;}
+.ace-spacecadet .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-spacecadet .ace_support.ace_type.ace_exception {color:#893062;}
+.ace-spacecadet .ace_entity.ace_name.ace_tag {}
+.ace-spacecadet .ace_entity.ace_other.ace_attribute-name {}
+.ace-spacecadet .ace_support.ace_constant {}
+.ace-spacecadet .ace_support.ace_type {}
+.ace-spacecadet .ace_support.ace_class {}
+.ace-spacecadet .ace_support.ace_other.ace_variable {}
+.ace-spacecadet .ace_meta.ace_function.ace_section {background-color:#371D28;}

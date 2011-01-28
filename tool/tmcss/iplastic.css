@@ -1,150 +1,166 @@
-.aceiplastic .ace_editor {
+.ace-iplastic .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceiplastic .ace_editor.ace_focus {
+.ace-iplastic .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceiplastic .ace_gutter {
+.ace-iplastic .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceiplastic .ace_gutter-layer {
+.ace-iplastic .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceiplastic .ace_gutter-layer .ace_gutter-cell {
+.ace-iplastic .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceiplastic .ace_print_margin {
+.ace-iplastic .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceiplastic .ace_scroller {
+.ace-iplastic .ace_scroller {
   background-color: rgba(238, 238, 238, 0.92);
 }
 
-.aceiplastic .ace_text-layer {
+.ace-iplastic .ace_text-layer {
   cursor: text;
   color: #000000;
 }
 
-.aceiplastic .ace_cursor {
+.ace-iplastic .ace_cursor {
   border-left: 2px solid #000000;
 }
 
-.aceiplastic .ace_cursor.ace_overwrite {
+.ace-iplastic .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
  
-.aceiplastic .ace_marker-layer .ace_selection {
+.ace-iplastic .ace_marker-layer .ace_selection {
   background: #BAD6FD;
 }
 
-.aceiplastic .ace_marker-layer .ace_step {
+.ace-iplastic .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceiplastic .ace_marker-layer .ace_bracket {
+.ace-iplastic .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid rgba(179, 179, 179, 0.96);
 }
 
-.aceiplastic .ace_marker-layer .ace_active_line {
+.ace-iplastic .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.10);
 }
 
        
-.aceiplastic .ace_invisible {
+.ace-iplastic .ace_invisible {
   color: rgba(179, 179, 179, 0.96);
 }
 
-.aceiplastic .ace_keyword {
+.ace-iplastic .ace_keyword {
   color:#0000FF;
 }
 
-.aceiplastic .ace_keyword.ace_operator {
+.ace-iplastic .ace_keyword.ace_operator {
   
 }
 
-.aceiplastic .ace_constant {
+.ace-iplastic .ace_constant {
   color:#6782D3;
 }
 
-.aceiplastic .ace_constant.ace_language {
+.ace-iplastic .ace_constant.ace_language {
   color:#9700CC;
 }
 
-.aceiplastic .ace_constant.ace_library {
+.ace-iplastic .ace_constant.ace_library {
   
 }
 
-.aceiplastic .ace_constant.ace_numeric {
+.ace-iplastic .ace_constant.ace_numeric {
   color:#0066FF;
 }
 
-.aceiplastic .ace_invalid {
+.ace-iplastic .ace_invalid {
   color:#FF0000;
 background-color:rgba(231, 26, 17, 0.30);
 }
 
-.aceiplastic .ace_invalid.ace_illegal {
+.ace-iplastic .ace_invalid.ace_illegal {
   
 }
 
-.aceiplastic .ace_invalid.ace_deprecated {
+.ace-iplastic .ace_invalid.ace_deprecated {
   
 }
 
-.aceiplastic .ace_support {
+.ace-iplastic .ace_support {
   color:#3333FF;
 }
 
-.aceiplastic .ace_support.ace_function {
+.ace-iplastic .ace_support.ace_function {
   
 }
 
-.aceiplastic .ace_function.ace_buildin {
+.ace-iplastic .ace_function.ace_buildin {
   
 }
 
-.aceiplastic .ace_string {
+.ace-iplastic .ace_string {
   color:#009933;
 }
 
-.aceiplastic .ace_string.ace_regexp {
+.ace-iplastic .ace_string.ace_regexp {
   color:#FF0080;
 }
 
-.aceiplastic .ace_comment {
+.ace-iplastic .ace_comment {
   font-style:italic;
 color:#0066FF;
 }
 
-.aceiplastic .ace_comment.ace_doc {
+.ace-iplastic .ace_comment.ace_doc {
   
 }
 
-.aceiplastic .ace_comment.ace_doc.ace_tag {
+.ace-iplastic .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceiplastic .ace_variable {
+.ace-iplastic .ace_variable {
   
 }
 
-.aceiplastic .ace_variable.ace_language {
+.ace-iplastic .ace_variable.ace_language {
   
 }
 
-.aceiplastic .ace_xml_pe {
+.ace-iplastic .ace_xml_pe {
   
 }
+
+.ace-iplastic .ace_support.ace_class.ace_exception {color:#990000;}
+.ace-iplastic .ace_entity.ace_name.ace_function {color:#FF8000;}
+.ace-iplastic .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-iplastic .ace_variable.ace_parameter {font-style:italic;}
+.ace-iplastic .ace_invalid.ace_deprecated.ace_trailing-whitespace {background-color:rgba(231,26,17,0.0);}
+.ace-iplastic .ace_text .ace_source {color:#000000;background-color:rgba(250,250,250,0.99);}
+.ace-iplastic .ace_meta.ace_tag {color:#0033CC;}
+.ace-iplastic .ace_declaration.ace_tag {color:#0033CC;}
+.ace-iplastic .ace_support.ace_constant {color:#6782D3;}
+.ace-iplastic .ace_storage {}
+.ace-iplastic .ace_entity.ace_name.ace_section {text-decoration:underline;}
+.ace-iplastic .ace_entity.ace_name.ace_function.ace_frame {color:#000000;}
+.ace-iplastic .ace_meta.ace_tag.ace_preprocessor.ace_xml {color:#333333;}
+.ace-iplastic .ace_entity.ace_other.ace_attribute-name {font-style:italic;color:#3366CC;}
+.ace-iplastic .ace_entity.ace_name.ace_tag {}

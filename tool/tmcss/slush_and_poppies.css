@@ -1,148 +1,173 @@
-.aceslush_and_poppies .ace_editor {
+.ace-slush_and_poppies .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceslush_and_poppies .ace_editor.ace_focus {
+.ace-slush_and_poppies .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceslush_and_poppies .ace_gutter {
+.ace-slush_and_poppies .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceslush_and_poppies .ace_gutter-layer {
+.ace-slush_and_poppies .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceslush_and_poppies .ace_gutter-layer .ace_gutter-cell {
+.ace-slush_and_poppies .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceslush_and_poppies .ace_print_margin {
+.ace-slush_and_poppies .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceslush_and_poppies .ace_scroller {
+.ace-slush_and_poppies .ace_scroller {
   background-color: #F1F1F1;
 }
 
-.aceslush_and_poppies .ace_text-layer {
+.ace-slush_and_poppies .ace_text-layer {
   cursor: text;
   color: #000000;
 }
 
-.aceslush_and_poppies .ace_cursor {
+.ace-slush_and_poppies .ace_cursor {
   border-left: 2px solid #000000;
 }
 
-.aceslush_and_poppies .ace_cursor.ace_overwrite {
+.ace-slush_and_poppies .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
  
-.aceslush_and_poppies .ace_marker-layer .ace_selection {
+.ace-slush_and_poppies .ace_marker-layer .ace_selection {
   background: #B0B0FF;
 }
 
-.aceslush_and_poppies .ace_marker-layer .ace_step {
+.ace-slush_and_poppies .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceslush_and_poppies .ace_marker-layer .ace_bracket {
+.ace-slush_and_poppies .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.aceslush_and_poppies .ace_marker-layer .ace_active_line {
+.ace-slush_and_poppies .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.15);
 }
 
        
-.aceslush_and_poppies .ace_invisible {
+.ace-slush_and_poppies .ace_invisible {
   color: #BFBFBF;
 }
 
-.aceslush_and_poppies .ace_keyword {
+.ace-slush_and_poppies .ace_keyword {
   color:#2060A0;
 }
 
-.aceslush_and_poppies .ace_keyword.ace_operator {
+.ace-slush_and_poppies .ace_keyword.ace_operator {
   color:#2060A0;
 }
 
-.aceslush_and_poppies .ace_constant {
+.ace-slush_and_poppies .ace_constant {
   
 }
 
-.aceslush_and_poppies .ace_constant.ace_language {
+.ace-slush_and_poppies .ace_constant.ace_language {
   
 }
 
-.aceslush_and_poppies .ace_constant.ace_library {
+.ace-slush_and_poppies .ace_constant.ace_library {
   
 }
 
-.aceslush_and_poppies .ace_constant.ace_numeric {
+.ace-slush_and_poppies .ace_constant.ace_numeric {
   color:#0080A0;
 }
 
-.aceslush_and_poppies .ace_invalid {
+.ace-slush_and_poppies .ace_invalid {
   
 }
 
-.aceslush_and_poppies .ace_invalid.ace_illegal {
+.ace-slush_and_poppies .ace_invalid.ace_illegal {
   
 }
 
-.aceslush_and_poppies .ace_invalid.ace_deprecated {
+.ace-slush_and_poppies .ace_invalid.ace_deprecated {
   
 }
 
-.aceslush_and_poppies .ace_support {
+.ace-slush_and_poppies .ace_support {
   
 }
 
-.aceslush_and_poppies .ace_support.ace_function {
+.ace-slush_and_poppies .ace_support.ace_function {
   
 }
 
-.aceslush_and_poppies .ace_function.ace_buildin {
+.ace-slush_and_poppies .ace_function.ace_buildin {
   
 }
 
-.aceslush_and_poppies .ace_string {
+.ace-slush_and_poppies .ace_string {
   color:#C03030;
 }
 
-.aceslush_and_poppies .ace_string.ace_regexp {
+.ace-slush_and_poppies .ace_string.ace_regexp {
   
 }
 
-.aceslush_and_poppies .ace_comment {
+.ace-slush_and_poppies .ace_comment {
   color:#406040;
 }
 
-.aceslush_and_poppies .ace_comment.ace_doc {
+.ace-slush_and_poppies .ace_comment.ace_doc {
   
 }
 
-.aceslush_and_poppies .ace_comment.ace_doc.ace_tag {
+.ace-slush_and_poppies .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceslush_and_poppies .ace_variable {
+.ace-slush_and_poppies .ace_variable {
   
 }
 
-.aceslush_and_poppies .ace_variable.ace_language {
+.ace-slush_and_poppies .ace_variable.ace_language {
   
 }
 
-.aceslush_and_poppies .ace_xml_pe {
+.ace-slush_and_poppies .ace_xml_pe {
   
 }
+
+.ace-slush_and_poppies .ace_source.ace_ocaml .ace_constant.ace_numeric.ace_floating-point {text-decoration:underline;}
+.ace-slush_and_poppies .ace_constant.ace_character {}
+.ace-slush_and_poppies .ace_constant.ace_other {}
+.ace-slush_and_poppies .ace_variable.ace_parameter {}
+.ace-slush_and_poppies .ace_variable.ace_other {}
+.ace-slush_and_poppies .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_prefix.ace_floating-point {text-decoration:underline;}
+.ace-slush_and_poppies .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_infix.ace_floating-point {text-decoration:underline;}
+.ace-slush_and_poppies .ace_entity.ace_name.ace_module {color:#0080FF;}
+.ace-slush_and_poppies .ace_support.ace_other.ace_module {color:#0080FF;}
+.ace-slush_and_poppies .ace_storage.ace_type {color:#A08000;}
+.ace-slush_and_poppies .ace_storage {color:#008080;}
+.ace-slush_and_poppies .ace_entity.ace_name.ace_class.ace_variant {color:#C08060;}
+.ace-slush_and_poppies .ace_keyword.ace_other.ace_directive {}
+.ace-slush_and_poppies .ace_source.ace_ocaml .ace_keyword.ace_other.ace_directive.ace_line-number {}
+.ace-slush_and_poppies .ace_entity.ace_other.ace_inherited-class {}
+.ace-slush_and_poppies .ace_entity.ace_name.ace_function {color:#800000;}
+.ace-slush_and_poppies .ace_storage.ace_type.ace_user-defined {color:#800080;}
+.ace-slush_and_poppies .ace_entity.ace_name.ace_type.ace_class.ace_type {color:#8000C0;}
+.ace-slush_and_poppies .ace_entity.ace_name.ace_tag {}
+.ace-slush_and_poppies .ace_entity.ace_other.ace_attribute-name {}
+.ace-slush_and_poppies .ace_support.ace_constant {}
+.ace-slush_and_poppies .ace_support.ace_type {}
+.ace-slush_and_poppies .ace_support.ace_class {}
+.ace-slush_and_poppies .ace_support.ace_variable {}

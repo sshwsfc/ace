@@ -1,149 +1,178 @@
-.aceactive4d .ace_editor {
+.ace-active4d .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceactive4d .ace_editor.ace_focus {
+.ace-active4d .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceactive4d .ace_gutter {
+.ace-active4d .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceactive4d .ace_gutter-layer {
+.ace-active4d .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceactive4d .ace_gutter-layer .ace_gutter-cell {
+.ace-active4d .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceactive4d .ace_print_margin {
+.ace-active4d .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceactive4d .ace_scroller {
+.ace-active4d .ace_scroller {
   background-color: #FFFFFF;
 }
 
-.aceactive4d .ace_text-layer {
+.ace-active4d .ace_text-layer {
   cursor: text;
   color: #3B3B3B;
 }
 
-.aceactive4d .ace_cursor {
+.ace-active4d .ace_cursor {
   border-left: 2px solid #000000;
 }
 
-.aceactive4d .ace_cursor.ace_overwrite {
+.ace-active4d .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid #000000;
 }
  
-.aceactive4d .ace_marker-layer .ace_selection {
+.ace-active4d .ace_marker-layer .ace_selection {
   background: #BAD6FD;
 }
 
-.aceactive4d .ace_marker-layer .ace_step {
+.ace-active4d .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceactive4d .ace_marker-layer .ace_bracket {
+.ace-active4d .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #BFBFBF;
 }
 
-.aceactive4d .ace_marker-layer .ace_active_line {
+.ace-active4d .ace_marker-layer .ace_active_line {
   background: rgba(0, 0, 0, 0.071);
 }
 
        
-.aceactive4d .ace_invisible {
+.ace-active4d .ace_invisible {
   color: #BFBFBF;
 }
 
-.aceactive4d .ace_keyword {
+.ace-active4d .ace_keyword {
   color:#006699;
 }
 
-.aceactive4d .ace_keyword.ace_operator {
+.ace-active4d .ace_keyword.ace_operator {
   
 }
 
-.aceactive4d .ace_constant {
+.ace-active4d .ace_constant {
   
 }
 
-.aceactive4d .ace_constant.ace_language {
+.ace-active4d .ace_constant.ace_language {
   color:#A535AE;
 }
 
-.aceactive4d .ace_constant.ace_library {
+.ace-active4d .ace_constant.ace_library {
   
 }
 
-.aceactive4d .ace_constant.ace_numeric {
+.ace-active4d .ace_constant.ace_numeric {
   color:#A8017E;
 }
 
-.aceactive4d .ace_invalid {
+.ace-active4d .ace_invalid {
   color:#FFFFFF;
 background-color:#990000;
 }
 
-.aceactive4d .ace_invalid.ace_illegal {
+.ace-active4d .ace_invalid.ace_illegal {
   
 }
 
-.aceactive4d .ace_invalid.ace_deprecated {
+.ace-active4d .ace_invalid.ace_deprecated {
   
 }
 
-.aceactive4d .ace_support {
+.ace-active4d .ace_support {
   
 }
 
-.aceactive4d .ace_support.ace_function {
+.ace-active4d .ace_support.ace_function {
   color:#45AE34;
 }
 
-.aceactive4d .ace_function.ace_buildin {
+.ace-active4d .ace_function.ace_buildin {
   
 }
 
-.aceactive4d .ace_string {
+.ace-active4d .ace_string {
   color:#666666;
 }
 
-.aceactive4d .ace_string.ace_regexp {
+.ace-active4d .ace_string.ace_regexp {
   
 }
 
-.aceactive4d .ace_comment {
+.ace-active4d .ace_comment {
   
 }
 
-.aceactive4d .ace_comment.ace_doc {
+.ace-active4d .ace_comment.ace_doc {
   
 }
 
-.aceactive4d .ace_comment.ace_doc.ace_tag {
+.ace-active4d .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceactive4d .ace_variable {
+.ace-active4d .ace_variable {
   color:#0053FF;
 }
 
-.aceactive4d .ace_variable.ace_language {
+.ace-active4d .ace_variable.ace_language {
   
 }
 
-.aceactive4d .ace_xml_pe {
+.ace-active4d .ace_xml_pe {
   
 }
+
+.ace-active4d .ace_text.ace_html .ace_source.ace_active4d {background-color:rgba(226,233,255,0.37);}
+.ace-active4d .ace_text.ace_xml {color:#000000;}
+.ace-active4d .ace_comment.ace_line {color:#AF82D4;}
+.ace-active4d .ace_comment.ace_block {color:#AF82D4;}
+.ace-active4d .ace_string.ace_interpolated .ace_variable {color:#66CCFF;}
+.ace-active4d .ace_constant.ace_character {}
+.ace-active4d .ace_constant.ace_other {}
+.ace-active4d .ace_constant.ace_other.ace_date {color:#66CCFF;}
+.ace-active4d .ace_constant.ace_other.ace_time {color:#66CCFF;}
+.ace-active4d .ace_variable.ace_other.ace_local {color:#6392FF;}
+.ace-active4d .ace_variable.ace_other.ace_table-field {color:#6988AE;}
+.ace-active4d .ace_storage {color:#FF5600;}
+.ace-active4d .ace_entity.ace_name.ace_type {color:#21439C;}
+.ace-active4d .ace_entity.ace_other.ace_inherited-class {}
+.ace-active4d .ace_entity.ace_name.ace_function {color:#21439C;}
+.ace-active4d .ace_variable.ace_parameter {}
+.ace-active4d .ace_meta.ace_tag {color:#7A7A7A;}
+.ace-active4d .ace_entity.ace_name.ace_tag {color:#016CFF;}
+.ace-active4d .ace_entity.ace_other.ace_attribute-name {color:#963DFF;}
+.ace-active4d .ace_support.ace_constant {color:#B7734C;}
+.ace-active4d .ace_support.ace_type {color:#A535AE;}
+.ace-active4d .ace_support.ace_class {color:#A535AE;}
+.ace-active4d .ace_support.ace_variable {color:#A535AE;}
+.ace-active4d .ace_meta.ace_diff {color:#FFFFFF;background-color:#656565;}
+.ace-active4d .ace_meta.ace_diff.ace_range {color:#FFFFFF;background-color:#1B63FF;}
+.ace-active4d .ace_markup.ace_deleted.ace_diff {color:#000000;background-color:#FF7880;}
+.ace-active4d .ace_markup.ace_inserted.ace_diff {color:#000000;background-color:#98FF9A;}
+.ace-active4d .ace_source.ace_diff {color:#5E5E5E;}

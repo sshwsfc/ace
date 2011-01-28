@@ -1,150 +1,172 @@
-.aceblackboard .ace_editor {
+.ace-blackboard .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
 
-.aceblackboard .ace_editor.ace_focus {
+.ace-blackboard .ace_editor.ace_focus {
   border: 2px solid #327fbd;
 }
 
-.aceblackboard .ace_gutter {
+.ace-blackboard .ace_gutter {
   width: 50px;
   background: #e8e8e8;
   color: #333;
   overflow : hidden;
 }
 
-.aceblackboard .ace_gutter-layer {
+.ace-blackboard .ace_gutter-layer {
   width: 100%;
   text-align: right;
 }
 
-.aceblackboard .ace_gutter-layer .ace_gutter-cell {
+.ace-blackboard .ace_gutter-layer .ace_gutter-cell {
   padding-right: 6px;
 }
 
-.aceblackboard .ace_print_margin {
+.ace-blackboard .ace_print_margin {
   width: 1px;
   background: #e8e8e8;
 }
 
-.aceblackboard .ace_scroller {
+.ace-blackboard .ace_scroller {
   background-color: #0C1021;
 }
 
-.aceblackboard .ace_text-layer {
+.ace-blackboard .ace_text-layer {
   cursor: text;
   color: #F8F8F8;
 }
 
-.aceblackboard .ace_cursor {
+.ace-blackboard .ace_cursor {
   border-left: 2px solid rgba(255, 255, 255, 0.65);
 }
 
-.aceblackboard .ace_cursor.ace_overwrite {
+.ace-blackboard .ace_cursor.ace_overwrite {
   border-left: 0px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.65);
 }
  
-.aceblackboard .ace_marker-layer .ace_selection {
+.ace-blackboard .ace_marker-layer .ace_selection {
   background: #253B76;
 }
 
-.aceblackboard .ace_marker-layer .ace_step {
+.ace-blackboard .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
 
-.aceblackboard .ace_marker-layer .ace_bracket {
+.ace-blackboard .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-.aceblackboard .ace_marker-layer .ace_active_line {
+.ace-blackboard .ace_marker-layer .ace_active_line {
   background: rgba(255, 255, 255, 0.059);
 }
 
        
-.aceblackboard .ace_invisible {
+.ace-blackboard .ace_invisible {
   color: rgba(255, 255, 255, 0.25);
 }
 
-.aceblackboard .ace_keyword {
+.ace-blackboard .ace_keyword {
   color:#FBDE2D;
 }
 
-.aceblackboard .ace_keyword.ace_operator {
+.ace-blackboard .ace_keyword.ace_operator {
   
 }
 
-.aceblackboard .ace_constant {
+.ace-blackboard .ace_constant {
   color:#D8FA3C;
 }
 
-.aceblackboard .ace_constant.ace_language {
+.ace-blackboard .ace_constant.ace_language {
   
 }
 
-.aceblackboard .ace_constant.ace_library {
+.ace-blackboard .ace_constant.ace_library {
   
 }
 
-.aceblackboard .ace_constant.ace_numeric {
+.ace-blackboard .ace_constant.ace_numeric {
   
 }
 
-.aceblackboard .ace_invalid {
+.ace-blackboard .ace_invalid {
   
 }
 
-.aceblackboard .ace_invalid.ace_illegal {
+.ace-blackboard .ace_invalid.ace_illegal {
   color:#F8F8F8;
 background-color:#9D1E15;
 }
 
-.aceblackboard .ace_invalid.ace_deprecated {
+.ace-blackboard .ace_invalid.ace_deprecated {
   font-style:italic;
 color:#AB2A1D;
 }
 
-.aceblackboard .ace_support {
+.ace-blackboard .ace_support {
   color:#8DA6CE;
 }
 
-.aceblackboard .ace_support.ace_function {
+.ace-blackboard .ace_support.ace_function {
   
 }
 
-.aceblackboard .ace_function.ace_buildin {
+.ace-blackboard .ace_function.ace_buildin {
   
 }
 
-.aceblackboard .ace_string {
+.ace-blackboard .ace_string {
   color:#61CE3C;
 }
 
-.aceblackboard .ace_string.ace_regexp {
+.ace-blackboard .ace_string.ace_regexp {
   
 }
 
-.aceblackboard .ace_comment {
+.ace-blackboard .ace_comment {
   color:#AEAEAE;
 }
 
-.aceblackboard .ace_comment.ace_doc {
+.ace-blackboard .ace_comment.ace_doc {
   
 }
 
-.aceblackboard .ace_comment.ace_doc.ace_tag {
+.ace-blackboard .ace_comment.ace_doc.ace_tag {
   
 }
 
-.aceblackboard .ace_variable {
+.ace-blackboard .ace_variable {
   
 }
 
-.aceblackboard .ace_variable.ace_language {
+.ace-blackboard .ace_variable.ace_language {
   
 }
 
-.aceblackboard .ace_xml_pe {
+.ace-blackboard .ace_xml_pe {
   
 }
+
+.ace-blackboard .ace_entity {color:#FF6400;}
+.ace-blackboard .ace_storage {color:#FBDE2D;}
+.ace-blackboard .ace_meta.ace_verbatim {color:#61CE3C;}
+.ace-blackboard .ace_entity.ace_other.ace_inherited-class {font-style:italic;color:#FF6400;}
+.ace-blackboard .ace_string .ace_constant.ace_other.ace_placeholder {color:#FF6400;}
+.ace-blackboard .ace_meta.ace_function-call.ace_py {color:#BECDE6;}
+.ace-blackboard .ace_meta.ace_tag {color:#7F90AA;}
+.ace-blackboard .ace_meta.ace_tag .ace_entity {color:#7F90AA;}
+.ace-blackboard .ace_entity.ace_name.ace_section {color:#FFFFFF;}
+.ace-blackboard .ace_keyword.ace_type.ace_variant {color:#D5E0F3;}
+.ace-blackboard .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol {color:#F8F8F8;}
+.ace-blackboard .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_infix {color:#8DA6CE;}
+.ace-blackboard .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_prefix {color:#8DA6CE;}
+.ace-blackboard .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_infix.ace_floating-point {text-decoration:underline;}
+.ace-blackboard .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_prefix.ace_floating-point {text-decoration:underline;}
+.ace-blackboard .ace_source.ace_ocaml .ace_constant.ace_numeric.ace_floating-point {text-decoration:underline;}
+.ace-blackboard .ace_text.ace_tex.ace_latex .ace_meta.ace_function.ace_environment {background-color:rgba(255,255,255,0.031);}
+.ace-blackboard .ace_text.ace_tex.ace_latex .ace_meta.ace_function.ace_environment .ace_meta.ace_function.ace_environment {background-color:rgba(122,150,250,0.031);}
+.ace-blackboard .ace_text.ace_tex.ace_latex .ace_support.ace_function {color:#FBDE2D;}
+.ace-blackboard .ace_source.ace_plist .ace_string.ace_unquoted {color:#FFFFFF;}
+.ace-blackboard .ace_source.ace_plist .ace_keyword.ace_operator {color:#FFFFFF;}
