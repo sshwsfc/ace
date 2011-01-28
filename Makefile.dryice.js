@@ -91,11 +91,12 @@ copy({
         {
             root: aceHome + '/lib',
             include: /.*\.js$/,
-            exclude: /tests?\/|theme\/|mode\//
+            exclude: /tests?\/|theme\/|mode\/|ace\/worker\/worker\.js/
         },
         { base: aceHome + '/lib/', path: 'ace/theme/textmate.js' },
         { base: aceHome + '/lib/', path: 'ace/mode/text.js' },
         { base: aceHome + '/lib/', path: 'ace/mode/javascript.js' },
+        { base: aceHome + '/lib/', path: 'ace/mode/javascript_worker.js' },
         { base: aceHome + '/lib/', path: 'ace/mode/text_highlight_rules.js' },
         { base: aceHome + '/lib/', path: 'ace/mode/javascript_highlight_rules.js' },
         { base: aceHome + '/lib/', path: 'ace/mode/doc_comment_highlight_rules.js' },
@@ -121,18 +122,10 @@ copy({
     source: [
         'build_support/mini_require.js',
         pilot,
-        // cockpit,
         ace,
         'build_support/boot.js'
     ],
     dest: data
-});
-
-copy({
-    source: [
-        'build_support/editor.html'
-    ],
-    dest: 'build/editor.html'
 });
 
 // Create the compressed and uncompressed output files
@@ -141,14 +134,63 @@ copy({
     //filter: copy.filter.uglifyjs,
     dest: 'build/ace.js'
 });
+//copy({
+//    source: data,
+//    dest: 'build/ace-uncompressed.js'
+//});
+
 copy({
-    source: data,
-    dest: 'build/ace-uncompressed.js'
+    source: [
+        'build_support/editor.html'
+    ],
+    dest: 'build/editor.html'
 });
 
 
+// Create worker bootstrap code
+copy({
+    source: "lib/ace/worker/worker.js",
+    filter: [function(data) {
+        return data + "\nimportScripts('ace.js')";
+    }],
+    dest: 'build/worker.js'
+});
 
+var eclipseTheme = copy.createDataObject();
+copy({
+    source: [{
+        root: aceHome + '/lib',
+        include: "ace/theme/eclipse.js"
+    }],
+    filter: [ copy.filter.moduleDefines ],
+    dest: eclipseTheme
+});
+copy({
+    source: [{
+        root: aceHome + '/lib',
+        include: "ace/theme/eclipse.css"
+    }],
+    filter: [ copy.filter.addDefines ],
+    dest: eclipseTheme
+});
+copy({
+    source: eclipseTheme,
+    dest: 'build/theme/eclipse.js'
+});
 
+[
+    "clouds", "clouds_midnight", "cobalt", "dawn", "idle_fingers", "kr_theme", 
+    "mono_industrial", "monokai", "pastel_on_dark", "twilight"
+].forEach(function(theme) {
+    copy({
+        source: [{
+            root: aceHome + '/lib',
+            include: "ace/theme/" + theme + ".js"
+        }],
+        filter: [ copy.filter.moduleDefines ],
+        dest: "build/theme/" + theme + ".js"
+    });
+});
 
 function internalRequire(ignore) {
 var exports = {};
@@ -263,7 +305,7 @@ function runFilters(value, filter, reading, name) {
         return value;
     }
 
-    if (filter.onRead == reading) {
+    if ((!!filter.onRead) == reading) {
         return filter(value, name);
     }
     else {
