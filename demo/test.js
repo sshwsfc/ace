@@ -15,8 +15,7 @@ exports.launch = function(env) {
 	var lines = [];
 	var start_time = new Date();
 	for (var i=0; i < text_lines.length; i++) {
-		var processor = token.getLineTokens(text_lines[i], 'start').processor;
-		lines.push(processor.getLineToken());
+		lines.push(token.getLineTokens(text_lines[i], 'start').tokens);
 	};
 	var sb = [];
 	console.log((new Date) - start_time);
