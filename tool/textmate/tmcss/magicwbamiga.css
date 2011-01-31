@@ -1,0 +1,175 @@
+.ace-magicwbamiga .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-magicwbamiga .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-magicwbamiga .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-magicwbamiga .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-magicwbamiga .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-magicwbamiga .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-magicwbamiga .ace_scroller {
+  background-color: #969696;
+}
+
+.ace-magicwbamiga .ace_text-layer {
+  cursor: text;
+  color: #000000;
+}
+
+.ace-magicwbamiga .ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+
+.ace-magicwbamiga .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+ 
+.ace-magicwbamiga .ace_marker-layer .ace_selection {
+  background: #B1B1B1;
+}
+
+.ace-magicwbamiga .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-magicwbamiga .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #FF38FF;
+}
+
+.ace-magicwbamiga .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.071);
+}
+
+       
+.ace-magicwbamiga .ace_invisible {
+  color: #FF38FF;
+}
+
+.ace-magicwbamiga .ace_keyword {
+  
+}
+
+.ace-magicwbamiga .ace_keyword.ace_operator {
+  
+}
+
+.ace-magicwbamiga .ace_constant {
+  
+}
+
+.ace-magicwbamiga .ace_constant.ace_language {
+  color:#FFA995;
+}
+
+.ace-magicwbamiga .ace_constant.ace_library {
+  
+}
+
+.ace-magicwbamiga .ace_constant.ace_numeric {
+  color:#FFFFFF;
+}
+
+.ace-magicwbamiga .ace_invalid {
+  color:#FFFFFF;
+background-color:#797979;
+}
+
+.ace-magicwbamiga .ace_invalid.ace_illegal {
+  
+}
+
+.ace-magicwbamiga .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-magicwbamiga .ace_support {
+  
+}
+
+.ace-magicwbamiga .ace_support.ace_function {
+  color:#E5B3FF;
+}
+
+.ace-magicwbamiga .ace_function.ace_buildin {
+  
+}
+
+.ace-magicwbamiga .ace_string {
+  color:#FFFFFF;
+background-color:rgba(255, 0, 0, 0.20);
+}
+
+.ace-magicwbamiga .ace_string.ace_regexp {
+  
+}
+
+.ace-magicwbamiga .ace_comment {
+  font-style:italic;
+color:#8D2E75;
+}
+
+.ace-magicwbamiga .ace_comment.ace_doc {
+  
+}
+
+.ace-magicwbamiga .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-magicwbamiga .ace_variable {
+  
+}
+
+.ace-magicwbamiga .ace_variable.ace_language {
+  color:#FFA995;
+}
+
+.ace-magicwbamiga .ace_xml_pe {
+  
+}
+
+.ace-magicwbamiga .ace_constant.ace_character {color:#FFA995;background-color:rgba(0,0,255,0.20);}
+.ace-magicwbamiga .ace_constant.ace_other {color:#FFA995;background-color:rgba(0,0,255,0.20);}
+.ace-magicwbamiga .ace_variable.ace_other {color:#FFA995;}
+.ace-magicwbamiga .ace_storage {color:#3A68A3;}
+.ace-magicwbamiga .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-magicwbamiga .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-magicwbamiga .ace_entity.ace_name.ace_function {color:#FFA995;}
+.ace-magicwbamiga .ace_variable.ace_parameter {font-style:italic;}
+.ace-magicwbamiga .ace_entity.ace_name {color:#0000FF;}
+.ace-magicwbamiga .ace_entity.ace_other.ace_attribute-name {font-style:italic;color:#3A68A3;}
+.ace-magicwbamiga .ace_support.ace_function.ace_any-method {color:#000000;}
+.ace-magicwbamiga .ace_support.ace_function.ace_any-method .ace_- .ace_punctuation {font-style:italic;}
+.ace-magicwbamiga .ace_support.ace_constant {color:#FFFFFF;}
+.ace-magicwbamiga .ace_support.ace_type {color:#FFA995;}
+.ace-magicwbamiga .ace_support.ace_class {color:#FFA995;}
+.ace-magicwbamiga .ace_support.ace_variable {color:#3A68A3;}
+.ace-magicwbamiga .ace_string.ace_quoted.ace_other.ace_lt-gt.ace_include {font-style:italic;color:#FFA995;background-color:#969696;}
+.ace-magicwbamiga .ace_string.ace_quoted.ace_double.ace_include {color:#FFA995;background-color:#969696;}
+.ace-magicwbamiga .ace_markup.ace_list {color:#4D4E60;}
+.ace-magicwbamiga .ace_markup.ace_raw {color:#FFFFFF;background-color:#0000FF;}
+.ace-magicwbamiga .ace_markup.ace_quote {color:#00F0C9;}
+.ace-magicwbamiga .ace_markup.ace_quote .ace_markup.ace_quote {color:#4C457E;}
+.ace-magicwbamiga .ace_text.ace_html .ace_source {background-color:#8A9ECB;}

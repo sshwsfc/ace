@@ -53,7 +53,7 @@ exports.launch = function(env) {
     var PythonMode = require("ace/mode/python").Mode;
     var PhpMode = require("ace/mode/php").Mode;
     var TextMode = require("ace/mode/text").Mode;
-	var Mode = require("ace/tm/mode").Mode;
+	var TextmateMode = require("ace/textmate/mode").Mode;
     var UndoManager = require("ace/undomanager").UndoManager;
 
     var vim = require("ace/keyboard/keybinding/vim").Vim;
@@ -97,19 +97,19 @@ exports.launch = function(env) {
     };
         
     docs.css = new EditSession(document.getElementById("csstext").innerHTML);
-    docs.css.setMode(new CssMode());
+    docs.css.setMode(new TextmateMode('css'));
     docs.css.setUndoManager(new UndoManager());
 
     docs.html = new EditSession(document.getElementById("htmltext").innerHTML);
-    docs.html.setMode(new HtmlMode());
+    docs.html.setMode(new TextmateMode('html'));
     docs.html.setUndoManager(new UndoManager());
 
     docs.python = new EditSession(document.getElementById("pythontext").innerHTML);
-    docs.python.setMode(new Mode('py'));
+    docs.python.setMode(new TextmateMode('py'));
     docs.python.setUndoManager(new UndoManager());
 
     docs.php = new EditSession(document.getElementById("phptext").innerHTML);
-    docs.php.setMode(new PhpMode());
+    docs.php.setMode(new TextmateMode('php'));
     docs.php.setUndoManager(new UndoManager());
 
 
@@ -118,12 +118,12 @@ exports.launch = function(env) {
     
     var modes = {
         text: new TextMode(),
-        xml: new XmlMode(),
-        html: new HtmlMode(),
-        css: new CssMode(),
-        javascript: new JavaScriptMode(),
-        python: new PythonMode(),
-        php: new PhpMode()
+        xml: new TextmateMode('xml'),
+        html: new TextmateMode('html'),
+        css: new TextmateMode('css'),
+        javascript: new TextmateMode('js'),
+        python: new TextmateMode('py'),
+        php: new TextmateMode('php')
     };
 
     function getMode() {

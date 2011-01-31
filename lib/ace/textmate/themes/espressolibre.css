@@ -1,0 +1,179 @@
+.ace-espressolibre .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-espressolibre .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-espressolibre .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-espressolibre .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-espressolibre .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-espressolibre .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-espressolibre .ace_scroller {
+  background-color: #2A211C;
+}
+
+.ace-espressolibre .ace_text-layer {
+  cursor: text;
+  color: #BDAE9D;
+}
+
+.ace-espressolibre .ace_cursor {
+  border-left: 2px solid #889AFF;
+}
+
+.ace-espressolibre .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #889AFF;
+}
+ 
+.ace-espressolibre .ace_marker-layer .ace_selection {
+  background: #C3DCFF;
+}
+
+.ace-espressolibre .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-espressolibre .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.ace-espressolibre .ace_marker-layer .ace_active_line {
+  background: #3A312C;
+}
+
+       
+.ace-espressolibre .ace_invisible {
+  color: #BFBFBF;
+}
+
+.ace-espressolibre .ace_keyword {
+  color:#43A8ED;
+}
+
+.ace-espressolibre .ace_keyword.ace_operator {
+  
+}
+
+.ace-espressolibre .ace_constant {
+  color:#C5656B;
+}
+
+.ace-espressolibre .ace_constant.ace_language {
+  color:#585CF6;
+}
+
+.ace-espressolibre .ace_constant.ace_library {
+  
+}
+
+.ace-espressolibre .ace_constant.ace_numeric {
+  color:#44AA43;
+}
+
+.ace-espressolibre .ace_invalid {
+  color:#FFFFFF;
+background-color:#990000;
+}
+
+.ace-espressolibre .ace_invalid.ace_illegal {
+  
+}
+
+.ace-espressolibre .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-espressolibre .ace_support {
+  
+}
+
+.ace-espressolibre .ace_support.ace_function {
+  color:#7290D9;
+}
+
+.ace-espressolibre .ace_function.ace_buildin {
+  
+}
+
+.ace-espressolibre .ace_string {
+  color:#049B0A;
+}
+
+.ace-espressolibre .ace_string.ace_regexp {
+  
+}
+
+.ace-espressolibre .ace_comment {
+  font-style:italic;
+color:#0066FF;
+}
+
+.ace-espressolibre .ace_comment.ace_doc {
+  
+}
+
+.ace-espressolibre .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-espressolibre .ace_variable {
+  
+}
+
+.ace-espressolibre .ace_variable.ace_language {
+  color:#318495;
+}
+
+.ace-espressolibre .ace_xml_pe {
+  color:#888888;
+}
+
+.ace-espressolibre .ace_storage {color:#43A8ED;}
+.ace-espressolibre .ace_variable.ace_other {color:#318495;}
+.ace-espressolibre .ace_constant.ace_character.ace_escape {color:#2FE420;}
+.ace-espressolibre .ace_string .ace_source {color:#2FE420;}
+.ace-espressolibre .ace_meta.ace_preprocessor {color:#1A921C;}
+.ace-espressolibre .ace_keyword.ace_control.ace_import {color:#9AFF87;}
+.ace-espressolibre .ace_entity.ace_name.ace_function {color:#FF9358;}
+.ace-espressolibre .ace_keyword.ace_other.ace_name-of-parameter.ace_objc {color:#FF9358;}
+.ace-espressolibre .ace_entity.ace_name.ace_type {text-decoration:underline;}
+.ace-espressolibre .ace_entity.ace_other.ace_inherited-class {font-style:italic;}
+.ace-espressolibre .ace_variable.ace_parameter {font-style:italic;}
+.ace-espressolibre .ace_storage.ace_type.ace_method {color:#8B8E9C;}
+.ace-espressolibre .ace_meta.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-espressolibre .ace_declaration.ace_section .ace_entity.ace_name.ace_section {font-style:italic;}
+.ace-espressolibre .ace_support.ace_class {color:#6D79DE;}
+.ace-espressolibre .ace_support.ace_type {color:#6D79DE;}
+.ace-espressolibre .ace_support.ace_constant {color:#00AF0E;}
+.ace-espressolibre .ace_support.ace_variable {color:#2F5FE0;}
+.ace-espressolibre .ace_keyword.ace_operator.ace_js {color:#687687;}
+.ace-espressolibre .ace_invalid.ace_deprecated.ace_trailing-whitespace {background-color:#FFD0D0;}
+.ace-espressolibre .ace_text .ace_source {background-color:rgba(245,170,119,0.19);}
+.ace-espressolibre .ace_string.ace_unquoted {background-color:rgba(245,170,119,0.19);}
+.ace-espressolibre .ace_meta.ace_tag.ace_preprocessor.ace_xml {color:#8F7E65;}
+.ace-espressolibre .ace_string.ace_quoted.ace_docinfo.ace_doctype.ace_DTD {font-style:italic;}
+.ace-espressolibre .ace_meta.ace_tag {color:#43A8ED;}
+.ace-espressolibre .ace_declaration.ace_tag {color:#43A8ED;}
+.ace-espressolibre .ace_entity.ace_name.ace_tag {}
+.ace-espressolibre .ace_entity.ace_other.ace_attribute-name {font-style:italic;}

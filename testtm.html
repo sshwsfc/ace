@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Editor</title>
     <meta name="author" content="Fabian Jakobs">
-    <link rel="stylesheet" href="tool/tmcss/twilight.css"/>
+    <link rel="stylesheet" href="lib/ace/textmate/themes/twilight.css"/>
     <style>
     body{
     	margin: 0px;
@@ -34,7 +34,7 @@ var config = {
 };
 
 var deps = [ "pilot/fixoldbrowsers", "pilot/plugin_manager", "pilot/settings",
-             "pilot/environment", "demo/test", 'ace/syntax/manager' ];
+             "pilot/environment", "demo/test" ];
 
 require(config);
 require(deps, function() {

@@ -1,0 +1,179 @@
+.ace-cloudsmidnight .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-cloudsmidnight .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-cloudsmidnight .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-cloudsmidnight .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-cloudsmidnight .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-cloudsmidnight .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-cloudsmidnight .ace_scroller {
+  background-color: #191919;
+}
+
+.ace-cloudsmidnight .ace_text-layer {
+  cursor: text;
+  color: #929292;
+}
+
+.ace-cloudsmidnight .ace_cursor {
+  border-left: 2px solid #7DA5DC;
+}
+
+.ace-cloudsmidnight .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #7DA5DC;
+}
+ 
+.ace-cloudsmidnight .ace_marker-layer .ace_selection {
+  background: #000000;
+}
+
+.ace-cloudsmidnight .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-cloudsmidnight .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.ace-cloudsmidnight .ace_marker-layer .ace_active_line {
+  background: rgba(215, 215, 215, 0.031);
+}
+
+       
+.ace-cloudsmidnight .ace_invisible {
+  color: #BFBFBF;
+}
+
+.ace-cloudsmidnight .ace_keyword {
+  color:#927C5D;
+}
+
+.ace-cloudsmidnight .ace_keyword.ace_operator {
+  color:#4B4B4B;
+}
+
+.ace-cloudsmidnight .ace_constant {
+  
+}
+
+.ace-cloudsmidnight .ace_constant.ace_language {
+  color:#39946A;
+}
+
+.ace-cloudsmidnight .ace_constant.ace_library {
+  
+}
+
+.ace-cloudsmidnight .ace_constant.ace_numeric {
+  color:#46A609;
+}
+
+.ace-cloudsmidnight .ace_invalid {
+  color:#FFFFFF;
+background-color:#E92E2E;
+}
+
+.ace-cloudsmidnight .ace_invalid.ace_illegal {
+  
+}
+
+.ace-cloudsmidnight .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-cloudsmidnight .ace_support {
+  
+}
+
+.ace-cloudsmidnight .ace_support.ace_function {
+  color:#E92E2E;
+}
+
+.ace-cloudsmidnight .ace_function.ace_buildin {
+  
+}
+
+.ace-cloudsmidnight .ace_string {
+  color:#5D90CD;
+}
+
+.ace-cloudsmidnight .ace_string.ace_regexp {
+  
+}
+
+.ace-cloudsmidnight .ace_comment {
+  color:#3C403B;
+}
+
+.ace-cloudsmidnight .ace_comment.ace_doc {
+  
+}
+
+.ace-cloudsmidnight .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-cloudsmidnight .ace_variable {
+  
+}
+
+.ace-cloudsmidnight .ace_variable.ace_language {
+  
+}
+
+.ace-cloudsmidnight .ace_xml_pe {
+  
+}
+
+.ace-cloudsmidnight .ace_constant.ace_character {}
+.ace-cloudsmidnight .ace_constant.ace_other {}
+.ace-cloudsmidnight .ace_variable.ace_other {}
+.ace-cloudsmidnight .ace_support.ace_constant.ace_property-value {color:#927C5D;}
+.ace-cloudsmidnight .ace_constant.ace_other.ace_color {color:#927C5D;}
+.ace-cloudsmidnight .ace_keyword.ace_other.ace_unit {color:#366F1A;}
+.ace-cloudsmidnight .ace_entity.ace_other.ace_attribute-name.ace_html {color:#A46763;}
+.ace-cloudsmidnight .ace_storage {color:#E92E2E;}
+.ace-cloudsmidnight .ace_entity.ace_name.ace_class {}
+.ace-cloudsmidnight .ace_entity.ace_other.ace_inherited-class {color:#858585;}
+.ace-cloudsmidnight .ace_entity.ace_name.ace_function {}
+.ace-cloudsmidnight .ace_variable.ace_parameter {}
+.ace-cloudsmidnight .ace_entity.ace_name.ace_tag {color:#606060;}
+.ace-cloudsmidnight .ace_constant.ace_character.ace_entity {color:#A165AC;}
+.ace-cloudsmidnight .ace_support.ace_class.ace_js {color:#A165AC;}
+.ace-cloudsmidnight .ace_entity.ace_other.ace_attribute-name {color:#606060;}
+.ace-cloudsmidnight .ace_meta.ace_selector.ace_css {color:#E92E2E;}
+.ace-cloudsmidnight .ace_entity.ace_name.ace_tag.ace_css {color:#E92E2E;}
+.ace-cloudsmidnight .ace_entity.ace_other.ace_attribute-name.ace_id.ace_css {color:#E92E2E;}
+.ace-cloudsmidnight .ace_entity.ace_other.ace_attribute-name.ace_class.ace_css {color:#E92E2E;}
+.ace-cloudsmidnight .ace_meta.ace_property-name.ace_css {color:#616161;}
+.ace-cloudsmidnight .ace_support.ace_constant {}
+.ace-cloudsmidnight .ace_support.ace_type {}
+.ace-cloudsmidnight .ace_support.ace_class {}
+.ace-cloudsmidnight .ace_support.ace_other.ace_variable {}
+.ace-cloudsmidnight .ace_punctuation.ace_section.ace_embedded {color:#E92E2E;}
+.ace-cloudsmidnight .ace_punctuation.ace_definition.ace_tag {color:#606060;}
+.ace-cloudsmidnight .ace_constant.ace_other.ace_color.ace_rgb-value.ace_css {color:#A165AC;}
+.ace-cloudsmidnight .ace_support.ace_constant.ace_property-value.ace_css {color:#A165AC;}

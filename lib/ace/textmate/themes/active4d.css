@@ -1,0 +1,178 @@
+.ace-active4d .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-active4d .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-active4d .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-active4d .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-active4d .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-active4d .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-active4d .ace_scroller {
+  background-color: #FFFFFF;
+}
+
+.ace-active4d .ace_text-layer {
+  cursor: text;
+  color: #3B3B3B;
+}
+
+.ace-active4d .ace_cursor {
+  border-left: 2px solid #000000;
+}
+
+.ace-active4d .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #000000;
+}
+ 
+.ace-active4d .ace_marker-layer .ace_selection {
+  background: #BAD6FD;
+}
+
+.ace-active4d .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-active4d .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.ace-active4d .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.071);
+}
+
+       
+.ace-active4d .ace_invisible {
+  color: #BFBFBF;
+}
+
+.ace-active4d .ace_keyword {
+  color:#006699;
+}
+
+.ace-active4d .ace_keyword.ace_operator {
+  
+}
+
+.ace-active4d .ace_constant {
+  
+}
+
+.ace-active4d .ace_constant.ace_language {
+  color:#A535AE;
+}
+
+.ace-active4d .ace_constant.ace_library {
+  
+}
+
+.ace-active4d .ace_constant.ace_numeric {
+  color:#A8017E;
+}
+
+.ace-active4d .ace_invalid {
+  color:#FFFFFF;
+background-color:#990000;
+}
+
+.ace-active4d .ace_invalid.ace_illegal {
+  
+}
+
+.ace-active4d .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-active4d .ace_support {
+  
+}
+
+.ace-active4d .ace_support.ace_function {
+  color:#45AE34;
+}
+
+.ace-active4d .ace_function.ace_buildin {
+  
+}
+
+.ace-active4d .ace_string {
+  color:#666666;
+}
+
+.ace-active4d .ace_string.ace_regexp {
+  
+}
+
+.ace-active4d .ace_comment {
+  
+}
+
+.ace-active4d .ace_comment.ace_doc {
+  
+}
+
+.ace-active4d .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-active4d .ace_variable {
+  color:#0053FF;
+}
+
+.ace-active4d .ace_variable.ace_language {
+  
+}
+
+.ace-active4d .ace_xml_pe {
+  
+}
+
+.ace-active4d .ace_text.ace_html .ace_source.ace_active4d {background-color:rgba(226,233,255,0.37);}
+.ace-active4d .ace_text.ace_xml {color:#000000;}
+.ace-active4d .ace_comment.ace_line {color:#AF82D4;}
+.ace-active4d .ace_comment.ace_block {color:#AF82D4;}
+.ace-active4d .ace_string.ace_interpolated .ace_variable {color:#66CCFF;}
+.ace-active4d .ace_constant.ace_character {}
+.ace-active4d .ace_constant.ace_other {}
+.ace-active4d .ace_constant.ace_other.ace_date {color:#66CCFF;}
+.ace-active4d .ace_constant.ace_other.ace_time {color:#66CCFF;}
+.ace-active4d .ace_variable.ace_other.ace_local {color:#6392FF;}
+.ace-active4d .ace_variable.ace_other.ace_table-field {color:#6988AE;}
+.ace-active4d .ace_storage {color:#FF5600;}
+.ace-active4d .ace_entity.ace_name.ace_type {color:#21439C;}
+.ace-active4d .ace_entity.ace_other.ace_inherited-class {}
+.ace-active4d .ace_entity.ace_name.ace_function {color:#21439C;}
+.ace-active4d .ace_variable.ace_parameter {}
+.ace-active4d .ace_meta.ace_tag {color:#7A7A7A;}
+.ace-active4d .ace_entity.ace_name.ace_tag {color:#016CFF;}
+.ace-active4d .ace_entity.ace_other.ace_attribute-name {color:#963DFF;}
+.ace-active4d .ace_support.ace_constant {color:#B7734C;}
+.ace-active4d .ace_support.ace_type {color:#A535AE;}
+.ace-active4d .ace_support.ace_class {color:#A535AE;}
+.ace-active4d .ace_support.ace_variable {color:#A535AE;}
+.ace-active4d .ace_meta.ace_diff {color:#FFFFFF;background-color:#656565;}
+.ace-active4d .ace_meta.ace_diff.ace_range {color:#FFFFFF;background-color:#1B63FF;}
+.ace-active4d .ace_markup.ace_deleted.ace_diff {color:#000000;background-color:#FF7880;}
+.ace-active4d .ace_markup.ace_inserted.ace_diff {color:#000000;background-color:#98FF9A;}
+.ace-active4d .ace_source.ace_diff {color:#5E5E5E;}

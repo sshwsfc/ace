@@ -1,21 +1,29 @@
 define(function(require, exports, module) {
 
-var Mode = require("ace/tm/mode").Mode;
-var SyntaxNode = require("ace/tm/syntax").SyntaxNode;
-var Processer = require("ace/tm/processor").Processer;
-
+var manager = require("ace/textmate/bundles/syntaxes/manager").SyntaxManager;
+var Mode = require("ace/textmate/mode").Mode;
 var text = require('text!demo/test.py');
+//var text = require('text!demo/test.java');
 
 exports.launch = function(env) {
 	
 	var mode = new Mode('py');
+	//var mode = new Mode('java');
 	var token = mode.getTokenizer();
 	var text_lines = text.split(/\n/g);
 	
+	// var ps = [];
+	// var ss = [];
+	// manager.getSyntax('source.python.django').root_scope.get_patterns_exg(ps, ss, true);
+	// console.log(ps);
+	
 	var lines = [];
 	var start_time = new Date();
+	var state = 'start';
 	for (var i=0; i < text_lines.length; i++) {
-		lines.push(token.getLineTokens(text_lines[i], 'start').tokens);
+		var t = token.getLineTokens(text_lines[i], state);
+		lines.push(t.tokens);
+		state = t.state;
 	};
 	var sb = [];
 	console.log((new Date) - start_time);

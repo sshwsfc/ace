@@ -1,53 +1,197 @@
-from piston.handler import BaseHandler, AnonymousBaseHandler
-from piston.utils import rc, require_mime, require_extended
-from django.db.models import Count, Sum, Q
-from django.core.files.base import ContentFile
-from django.http import HttpResponse
+import tornado.web
+from tornado.web import HTTPError
+from django.conf import settings
 
-from django.utils.translation import ugettext as _
-from wiyun.challenge.models import *
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils import simplejson
+from django.utils.encoding import smart_unicode
 
-from mongoengine.queryset import DoesNotExist, MultipleObjectsReturned
-from wiyun.api.utils import *
-from wiyun.cloud.utils import *
+import hashlib
+from utils import *
+from meta import ApiMeta
+
+import tempfile
+import datetime
+import decimal
+import functools
+import logging
+from UserDict import UserDict
+
+from django.db.models.query import QuerySet
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from mongoengine.queryset import QuerySet as MongoQuerySet
+from mongoengine.queryset import DoesNotExist as MongoDoesNotExist, MultipleObjectsReturned as MongoMultipleObjectsReturned
+from mongoengine.base import ValidationError
+
+from wiyun.api.models import AppConsumer
+from wiyun.app.models import App
 from wiyun.cloud.docs import User
 
-import datetime, time
+from django.core.cache import cache as user_status_cache
 
-class ChallengeHandler(BaseHandler):
-	allowed_methods = ('GET', 'POST')
-	anonymous = False
+class objid(str):
+	pass
 	
-	@app_required
-	def read(self, request):
-		if not request.GET.has_key('challenge_id'):
-			return rc.BAD_REQUEST
-		try:
-			challenge = Challenge.objects.get(id=request.GET['challenge_id'])
-		except DoesNotExist:
-			resp = rc.BAD_REQUEST
-			resp.content = _(u'Challenge Not Found.')
-			return resp
-			
-		def convert_touser(touser):
-			item = get_user(touser.to_user)
-			item.update({'id': touser.id, 'result': touser.result, 'completed': touser.completed, 'bid_point': touser.bid_point, 'score': touser.score and touser.score or 0})
-			return item
-			
-		result = {'items': [convert_touser(i) for i in ChallengeToUser.objects.filter(challenge=challenge)]}
-		if len(result['items']) > 0:
-			result['bid_point'] = result['items'][0]['bid_point']
-		result.update(get_user(challenge.user))
-		result.update({'id': challenge.id, 'create_time': challenge.create_time, 'message': challenge.message, 'score': challenge.score, 'has_blob': challenge.has_blob, 'blob': challenge.has_blob and get_blob_url(challenge) or ''})
+class dbid(str):
+	pass
+	
+class ExampleParam(dict):
+	
+	def __init__(self, parent, name):
+		self['_parent'] = parent
+		self['_name'] = name
 		
-		challenge_define = challenge.challenge_define
-		result.update({'definition_id':challenge_define.id, 'definition_name': challenge_define.name, 'app_id': str(challenge_define.app.pk), \
-					'definition_icon': get_full_file_url(challenge_define.icon), 'type': challenge_define.challenge_type})
-		return result
+	def __getattr__(self, name):
+		if not self.has_key(name):
+			self[name] = ExampleParam(self, name)
+		return self[name]
 		
-	@app_required
-	def create(self, request):
-		if not request.POST.has_key('challenge_definition_id') or not request.POST.has_key('score') \
-			or not request.POST.has_key('to_user_ids') or not request.POST.has_key('message'):
-			return rc.BAD_REQUEST
+	def __str__(self):
+		if self['_parent']:
+			return '%s.%s' % (self['_parent'], self['_name'])
+		else:
+			return self['_name']
+			
+	def print_tree(self, pre=''):
+		ps = ['%s%s%s' % (pre, k, (lambda vp : vp and ':\r\n%s' % vp or '')(v.print_tree(pre + '\t'))) for k,v in self.items() if k not in ('_parent', '_name')]
+		if ps:
+			return "%s" % '\r\n'.join(ps)
+		else:
+			return ""
+		
+ex = ExampleParam({}, 'ex')
 
+class ApiDefined(UserDict):
+	
+	def __init__(self, name, method, uri, params=[], result=None, need_login=False, need_appkey=False, handler=None, module=None, filters=[], description=''):
+		UserDict.__init__(self)
+		self['name'] = name
+		self['method'] = method
+		self['module'] = module
+		self['uri'] = uri
+		self['handler'] = handler
+		self['params'] = params
+		self['result'] = result
+		self['need_login'] = need_login
+		self['need_appkey'] = need_appkey
+		self['filters'] = filters
+		self['description'] = description
+		
+	def get_handler_name(self):
+		return self['handler'].__name__
+		
+	def doc(self):
+		d = '%s\n%s %s' % (self['name'], self['method'], self['uri'])
+		d = d + '\nname\trequired\ttype\tdefault\texample\t\tdesc'
+		d = d + '\n------------------------------------------------'
+		for p in self['params']:
+			d = d + '\n%s\t%s\t%s\t%s\t%s\t%s' % (p.name, p.required, p.param_type.__name__, p.default, p.display_example(), p.description)
+		if self['result']:
+			d = d + '\nResult:\n%s' % self['result']
+		return d
+	
+	def __getattr__(self, name):
+		try:
+			return self[name]
+		except Exception:
+			return None
+	
+class Param(UserDict):
+
+	def __init__(self, name, required=False, param_type=str, default=None, example=None, description="", hidden=False):
+		UserDict.__init__(self)
+		self['name'] = name
+		self['required'] = required
+		self['param_type'] = param_type
+		self['default'] = default
+		self['example'] = example
+		self['description'] = description
+		self['hidden'] = hidden
+		
+	def display_type(self, _t=None):
+		_t = _t or self['param_type']
+		if type(_t) in (list, tuple) and _t:
+			return '[%s,..]' % self.display_type(_t[0])
+		return _t.__name__
+
+	def display_example(self):
+		if self['hidden']: return ''
+		if self['param_type'] is bool:
+			return self['example'] and 'true' or 'false'
+		else:
+			return str(self['example'])
+
+	def html_example(self):
+		if self['hidden']: return ''
+		if type(self['example']) is ExampleParam:
+			return '<input type="text" class="example_input" name="%s" value=""><a class="example_value" val="%s">E</a>' \
+				% (self['name'], str(self['example']))
+		if self['param_type'] is file:
+			return '<input name="%s" type="file"/>' % self['name']
+		if self['param_type'] is bool:
+			return '<select name="%s"><option value="true"%s>True</option><option value="false"%s>False</option></select>' % \
+			(self['name'], self['example'] and ' selected' or '', (not self['example']) and ' selected' or '')
+		elif self['param_type'] in (str, int, float):
+			if type(self['example']) in (list, tuple):
+				return '<select name="%s">%s</select>' % (self['name'], ''.join(['<option value="%s">%s</option>' % (v,v) for v in self['example']]))
+		return '<input type="text" name="%s" value="%s">' % (self['name'], str(self['example']))
+	
+	def __getattr__(self, name):
+		try:
+			return self[name]
+		except Exception:
+			return None
+
+class ApiHolder(object):
+	
+	apis = []
+
+	def __init__(self):
+		pass
+	
+	def addapi(self, api):
+		api['id'] = len(self.apis) + 1
+		self.apis.append(api)
+		
+	def get_apis(self, name=None, module=None, handler=None):
+		all_apis = self.apis
+		if name:
+			name = name.replace(' ', '_').lower()
+			all_apis = filter(lambda api: api.name.lower().replace(' ', '_') == name, all_apis)
+		if module:
+			all_apis = filter(lambda api: api['module'] == module, all_apis)
+		if handler:
+			handler = handler.lower()
+			all_apis = filter(lambda api: api['handler'].__name__.lower() == handler or api['handler'].__name__.lower() == '%shandler'%handler, all_apis)
+		return all_apis
+		
+	def get_urls(self):
+		urls = {}
+		for api in self.apis:
+			if not urls.has_key(api['uri']):
+				urls[api['uri']] = api['handler']
+		return [(r'%s$' % uri, handler) for uri, handler in urls.items()]
+	
+api_manager = ApiHolder()
+
+def api(name, uri, params=[], result=None, filters=[], description=''):
+	def wrap(method):
+		if not hasattr(method, 'apis'):
+			setattr(method, 'apis', [])
+		getattr(method, 'apis').append(ApiDefined(name, method.__name__.upper(), uri, params, result, module=method.__module__, filters=filters, description=description))
+		return method
+	return wrap
+
+def handler(cls):
+	for m in [getattr(cls, i) for i in dir(cls) if callable(getattr(cls, i)) and hasattr(getattr(cls, i), 'apis')]:
+		method_filters = getattr(m, 'api_filters', None)
+		for api in m.apis:
+			api['handler'] = cls
+			if method_filters:
+				for f in method_filters:
+					f(api)
+			if api['filters']:
+				for f in api['filters']:
+					f(api)
+			api_manager.addapi(api)
+	return cls

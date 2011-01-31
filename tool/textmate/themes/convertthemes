@@ -1,0 +1,15 @@
+#！/bin/bash
+
+ls|while read i;do
+echo $i|grep -q " "&& mv "$i" "$(echo $i|tr -d '_')";done
+
+ls|while read i;do
+echo $i|grep -q "("&& mv "$i" "$(echo $i|tr -d '_')";done
+
+ls|while read i;do
+echo $i|grep -q ")"&& mv "$i" "$(echo $i|tr -d '_')";done
+
+ls|while read i;do
+echo $i|grep -q "\'"&& mv "$i" "$(echo $i|tr -d '_')";done
+
+ls | grep '.tmTheme' | awk -F '.' '{print "plutil -convert xml1 "$0" -o "$1".plist"}' | /bin/bash

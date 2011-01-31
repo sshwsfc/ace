@@ -1,0 +1,177 @@
+.ace-idlefingers .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-idlefingers .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-idlefingers .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-idlefingers .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-idlefingers .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-idlefingers .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-idlefingers .ace_scroller {
+  background-color: #323232;
+}
+
+.ace-idlefingers .ace_text-layer {
+  cursor: text;
+  color: #FFFFFF;
+}
+
+.ace-idlefingers .ace_cursor {
+  border-left: 2px solid #91FF00;
+}
+
+.ace-idlefingers .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #91FF00;
+}
+ 
+.ace-idlefingers .ace_marker-layer .ace_selection {
+  background: rgba(90, 100, 126, 0.88);
+}
+
+.ace-idlefingers .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-idlefingers .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #404040;
+}
+
+.ace-idlefingers .ace_marker-layer .ace_active_line {
+  background: #353637;
+}
+
+       
+.ace-idlefingers .ace_invisible {
+  color: #404040;
+}
+
+.ace-idlefingers .ace_keyword {
+  color:#CC7833;
+}
+
+.ace-idlefingers .ace_keyword.ace_operator {
+  
+}
+
+.ace-idlefingers .ace_constant {
+  color:#6C99BB;
+}
+
+.ace-idlefingers .ace_constant.ace_language {
+  
+}
+
+.ace-idlefingers .ace_constant.ace_library {
+  
+}
+
+.ace-idlefingers .ace_constant.ace_numeric {
+  
+}
+
+.ace-idlefingers .ace_invalid {
+  color:#FFFFFF;
+background-color:#FF0000;
+}
+
+.ace-idlefingers .ace_invalid.ace_illegal {
+  
+}
+
+.ace-idlefingers .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-idlefingers .ace_support {
+  
+}
+
+.ace-idlefingers .ace_support.ace_function {
+  color:#B83426;
+}
+
+.ace-idlefingers .ace_function.ace_buildin {
+  
+}
+
+.ace-idlefingers .ace_string {
+  color:#A5C261;
+}
+
+.ace-idlefingers .ace_string.ace_regexp {
+  color:#CCCC33;
+}
+
+.ace-idlefingers .ace_comment {
+  font-style:italic;
+color:#BC9458;
+}
+
+.ace-idlefingers .ace_comment.ace_doc {
+  
+}
+
+.ace-idlefingers .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-idlefingers .ace_variable {
+  
+}
+
+.ace-idlefingers .ace_variable.ace_language {
+  
+}
+
+.ace-idlefingers .ace_xml_pe {
+  
+}
+
+.ace-idlefingers .ace_text {color:#FFFFFF;}
+.ace-idlefingers .ace_source {color:#CDCDCD;background-color:#282828;}
+.ace-idlefingers .ace_meta.ace_tag {color:#FFE5BB;}
+.ace-idlefingers .ace_declaration.ace_tag {color:#FFE5BB;}
+.ace-idlefingers .ace_meta.ace_doctype {color:#FFE5BB;}
+.ace-idlefingers .ace_entity.ace_name {color:#FFC66D;}
+.ace-idlefingers .ace_source.ace_ruby .ace_entity.ace_name {color:#FFF980;}
+.ace-idlefingers .ace_variable.ace_other {color:#B7DFF8;}
+.ace-idlefingers .ace_support.ace_class.ace_ruby {color:#CCCC33;}
+.ace-idlefingers .ace_support.ace_constant {color:#6C99BB;}
+.ace-idlefingers .ace_other.ace_preprocessor.ace_c {color:#D0D0FF;}
+.ace-idlefingers .ace_entity.ace_name.ace_preprocessor {}
+.ace-idlefingers .ace_entity.ace_name.ace_function {}
+.ace-idlefingers .ace_variable.ace_parameter {font-style:italic;}
+.ace-idlefingers .ace_source .ace_comment.ace_block {color:#FFFFFF;background-color:#575757;}
+.ace-idlefingers .ace_string .ace_constant.ace_character.ace_escape {color:#AAAAAA;}
+.ace-idlefingers .ace_string.ace_interpolated {color:#000000;background-color:#CCCC33;}
+.ace-idlefingers .ace_string.ace_literal {color:#CCCC33;}
+.ace-idlefingers .ace_string.ace_interpolated .ace_constant.ace_character.ace_escape {color:#787878;}
+.ace-idlefingers .ace_entity.ace_name.ace_class {text-decoration:underline;}
+.ace-idlefingers .ace_entity.ace_other.ace_inherited-class {text-decoration:underline;font-style:italic;}
+.ace-idlefingers .ace_entity.ace_name.ace_tag {}
+.ace-idlefingers .ace_entity.ace_other.ace_attribute-name {}
+.ace-idlefingers .ace_markup.ace_list.ace_unnumbered.ace_textile {color:#6EA533;}
+.ace-idlefingers .ace_markup.ace_list.ace_numbered.ace_textile {color:#6EA533;}
+.ace-idlefingers .ace_markup.ace_bold.ace_textile {color:#C2C2C2;}

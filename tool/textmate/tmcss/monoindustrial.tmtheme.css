@@ -1,0 +1,191 @@
+.ace-monoindustrial.tmtheme .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-monoindustrial.tmtheme .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-monoindustrial.tmtheme .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-monoindustrial.tmtheme .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-monoindustrial.tmtheme .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-monoindustrial.tmtheme .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-monoindustrial.tmtheme .ace_scroller {
+  background-color: #222C28;
+}
+
+.ace-monoindustrial.tmtheme .ace_text-layer {
+  cursor: text;
+  color: #FFFFFF;
+}
+
+.ace-monoindustrial.tmtheme .ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+
+.ace-monoindustrial.tmtheme .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+ 
+.ace-monoindustrial.tmtheme .ace_marker-layer .ace_selection {
+  background: rgba(145, 153, 148, 0.40);
+}
+
+.ace-monoindustrial.tmtheme .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-monoindustrial.tmtheme .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid rgba(102, 108, 104, 0.50);
+}
+
+.ace-monoindustrial.tmtheme .ace_marker-layer .ace_active_line {
+  background: rgba(12, 13, 12, 0.25);
+}
+
+       
+.ace-monoindustrial.tmtheme .ace_invisible {
+  color: rgba(102, 108, 104, 0.50);
+}
+
+.ace-monoindustrial.tmtheme .ace_keyword {
+  color:#A39E64;
+}
+
+.ace-monoindustrial.tmtheme .ace_keyword.ace_operator {
+  color:#A8B3AB;
+}
+
+.ace-monoindustrial.tmtheme .ace_constant {
+  color:#E98800;
+}
+
+.ace-monoindustrial.tmtheme .ace_constant.ace_language {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_constant.ace_library {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_constant.ace_numeric {
+  color:#E98800;
+}
+
+.ace-monoindustrial.tmtheme .ace_invalid {
+  color:#FFFFFF;
+background-color:rgba(153, 0, 0, 0.68);
+}
+
+.ace-monoindustrial.tmtheme .ace_invalid.ace_illegal {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_support {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_support.ace_function {
+  color:#588E60;
+}
+
+.ace-monoindustrial.tmtheme .ace_function.ace_buildin {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_string {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_string.ace_regexp {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_comment {
+  color:#666C68;
+background-color:#151C19;
+}
+
+.ace-monoindustrial.tmtheme .ace_comment.ace_doc {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_variable {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_variable.ace_language {
+  color:#648BD2;
+}
+
+.ace-monoindustrial.tmtheme .ace_xml_pe {
+  
+}
+
+.ace-monoindustrial.tmtheme .ace_storage {color:#C23B00;}
+.ace-monoindustrial.tmtheme .ace_support.ace_type {color:#5778B6;}
+.ace-monoindustrial.tmtheme .ace_string.ace_unquoted.ace_embedded {color:#FFFFFF;background-color:#151C19;}
+.ace-monoindustrial.tmtheme .ace_text .ace_source {color:#FFFFFF;background-color:#151C19;}
+.ace-monoindustrial.tmtheme .ace_string.ace_unquoted {color:#FFFFFF;background-color:#151C19;}
+.ace-monoindustrial.tmtheme .ace_constant.ace_character.ace_escaped {color:rgba(233,71,0,0.0);background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_string .ace_source .ace_- .ace_string.ace_unquoted.ace_embedded {color:rgba(233,71,0,0.0);background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_string .ace_string .ace_source {color:rgba(233,71,0,0.0);background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_string .ace_- .ace_string .ace_source {color:#C23800;background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_string .ace_source .ace_string {color:#C23800;background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_meta.ace_scope.ace_heredoc {color:#C23800;background-color:#1A0700;}
+.ace-monoindustrial.tmtheme .ace_variable.ace_other {color:#648BD2;}
+.ace-monoindustrial.tmtheme .ace_other.ace_preprocessor {color:#A8B3AB;background-color:#161D1A;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_name.ace_preprocessor {color:#A8B3AB;background-color:#161D1A;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_name.ace_function {color:#A8B3AB;}
+.ace-monoindustrial.tmtheme .ace_keyword.ace_other.ace_name-of-parameter {color:#A8B3AB;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_name.ace_class {color:#9A2F00;}
+.ace-monoindustrial.tmtheme .ace_variable.ace_parameter {color:#648BD2;}
+.ace-monoindustrial.tmtheme .ace_storage.ace_type.ace_method {color:#666C68;}
+.ace-monoindustrial.tmtheme .ace_storage.ace_type.ace_function.ace_php {color:#A39E64;}
+.ace-monoindustrial.tmtheme .ace_invalid.ace_trailing-whitespace {color:#000000;background-color:#FFD0D0;}
+.ace-monoindustrial.tmtheme .ace_support.ace_class {color:#5778B6;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_name {color:#5778B6;}
+.ace-monoindustrial.tmtheme .ace_support.ace_constant {color:#C87500;}
+.ace-monoindustrial.tmtheme .ace_support.ace_other.ace_variable {color:#5879B7;}
+.ace-monoindustrial.tmtheme .ace_declaration.ace_xml-processing {color:#68685B;}
+.ace-monoindustrial.tmtheme .ace_declaration.ace_doctype {color:#888888;}
+.ace-monoindustrial.tmtheme .ace_declaration.ace_doctype.ace_DTD {color:#888888;}
+.ace-monoindustrial.tmtheme .ace_declaration.ace_tag {color:#A65EFF;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_name.ace_tag {color:#A65EFF;}
+.ace-monoindustrial.tmtheme .ace_entity.ace_other.ace_attribute-name {color:#909993;}
+.ace-monoindustrial.tmtheme .ace_punctuation {color:rgba(144,153,147,0.50);}
+.ace-monoindustrial.tmtheme .ace_entity.ace_other.ace_inherited-class {color:#7642B7;}
+.ace-monoindustrial.tmtheme .ace_meta.ace_scope.ace_changed-files.ace_svn {color:#FFFFFF;background-color:rgba(0,0,0,0.35);}
+.ace-monoindustrial.tmtheme .ace_markup.ace_inserted.ace_svn {color:#FFFFFF;background-color:rgba(0,0,0,0.35);}
+.ace-monoindustrial.tmtheme .ace_markup.ace_changed.ace_svn {color:#FFFFFF;background-color:rgba(0,0,0,0.35);}
+.ace-monoindustrial.tmtheme .ace_markup.ace_deleted.ace_svn {color:#FFFFFF;background-color:rgba(0,0,0,0.35);}
+.ace-monoindustrial.tmtheme .ace_meta.ace_section {background-color:rgba(120,128,123,0.039);}
+.ace-monoindustrial.tmtheme .ace_meta.ace_section .ace_meta.ace_section {background-color:rgba(120,128,123,0.039);}
+.ace-monoindustrial.tmtheme .ace_meta.ace_section .ace_meta.ace_section .ace_meta.ace_section {background-color:rgba(120,128,123,0.039);}

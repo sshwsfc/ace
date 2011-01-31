@@ -1,0 +1,173 @@
+.ace-slushpoppies .ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace-slushpoppies .ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace-slushpoppies .ace_gutter {
+  width: 50px;
+  background: #e8e8e8;
+  color: #333;
+  overflow : hidden;
+}
+
+.ace-slushpoppies .ace_gutter-layer {
+  width: 100%;
+  text-align: right;
+}
+
+.ace-slushpoppies .ace_gutter-layer .ace_gutter-cell {
+  padding-right: 6px;
+}
+
+.ace-slushpoppies .ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace-slushpoppies .ace_scroller {
+  background-color: #F1F1F1;
+}
+
+.ace-slushpoppies .ace_text-layer {
+  cursor: text;
+  color: #000000;
+}
+
+.ace-slushpoppies .ace_cursor {
+  border-left: 2px solid #000000;
+}
+
+.ace-slushpoppies .ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #000000;
+}
+ 
+.ace-slushpoppies .ace_marker-layer .ace_selection {
+  background: #B0B0FF;
+}
+
+.ace-slushpoppies .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+
+.ace-slushpoppies .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF;
+}
+
+.ace-slushpoppies .ace_marker-layer .ace_active_line {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+       
+.ace-slushpoppies .ace_invisible {
+  color: #BFBFBF;
+}
+
+.ace-slushpoppies .ace_keyword {
+  color:#2060A0;
+}
+
+.ace-slushpoppies .ace_keyword.ace_operator {
+  color:#2060A0;
+}
+
+.ace-slushpoppies .ace_constant {
+  
+}
+
+.ace-slushpoppies .ace_constant.ace_language {
+  
+}
+
+.ace-slushpoppies .ace_constant.ace_library {
+  
+}
+
+.ace-slushpoppies .ace_constant.ace_numeric {
+  color:#0080A0;
+}
+
+.ace-slushpoppies .ace_invalid {
+  
+}
+
+.ace-slushpoppies .ace_invalid.ace_illegal {
+  
+}
+
+.ace-slushpoppies .ace_invalid.ace_deprecated {
+  
+}
+
+.ace-slushpoppies .ace_support {
+  
+}
+
+.ace-slushpoppies .ace_support.ace_function {
+  
+}
+
+.ace-slushpoppies .ace_function.ace_buildin {
+  
+}
+
+.ace-slushpoppies .ace_string {
+  color:#C03030;
+}
+
+.ace-slushpoppies .ace_string.ace_regexp {
+  
+}
+
+.ace-slushpoppies .ace_comment {
+  color:#406040;
+}
+
+.ace-slushpoppies .ace_comment.ace_doc {
+  
+}
+
+.ace-slushpoppies .ace_comment.ace_doc.ace_tag {
+  
+}
+
+.ace-slushpoppies .ace_variable {
+  
+}
+
+.ace-slushpoppies .ace_variable.ace_language {
+  
+}
+
+.ace-slushpoppies .ace_xml_pe {
+  
+}
+
+.ace-slushpoppies .ace_source.ace_ocaml .ace_constant.ace_numeric.ace_floating-point {text-decoration:underline;}
+.ace-slushpoppies .ace_constant.ace_character {}
+.ace-slushpoppies .ace_constant.ace_other {}
+.ace-slushpoppies .ace_variable.ace_parameter {}
+.ace-slushpoppies .ace_variable.ace_other {}
+.ace-slushpoppies .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_prefix.ace_floating-point {text-decoration:underline;}
+.ace-slushpoppies .ace_source.ace_ocaml .ace_keyword.ace_operator.ace_symbol.ace_infix.ace_floating-point {text-decoration:underline;}
+.ace-slushpoppies .ace_entity.ace_name.ace_module {color:#0080FF;}
+.ace-slushpoppies .ace_support.ace_other.ace_module {color:#0080FF;}
+.ace-slushpoppies .ace_storage.ace_type {color:#A08000;}
+.ace-slushpoppies .ace_storage {color:#008080;}
+.ace-slushpoppies .ace_entity.ace_name.ace_class.ace_variant {color:#C08060;}
+.ace-slushpoppies .ace_keyword.ace_other.ace_directive {}
+.ace-slushpoppies .ace_source.ace_ocaml .ace_keyword.ace_other.ace_directive.ace_line-number {}
+.ace-slushpoppies .ace_entity.ace_other.ace_inherited-class {}
+.ace-slushpoppies .ace_entity.ace_name.ace_function {color:#800000;}
+.ace-slushpoppies .ace_storage.ace_type.ace_user-defined {color:#800080;}
+.ace-slushpoppies .ace_entity.ace_name.ace_type.ace_class.ace_type {color:#8000C0;}
+.ace-slushpoppies .ace_entity.ace_name.ace_tag {}
+.ace-slushpoppies .ace_entity.ace_other.ace_attribute-name {}
+.ace-slushpoppies .ace_support.ace_constant {}
+.ace-slushpoppies .ace_support.ace_type {}
+.ace-slushpoppies .ace_support.ace_class {}
+.ace-slushpoppies .ace_support.ace_variable {}
