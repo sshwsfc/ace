@@ -47,7 +47,7 @@ public class Action extends BaseWYObject implements ICopyable {
 	}
 	
 	public static Action from(int pointer) {
-		return new Action(pointer);
+		return new Action;
 	}
 	
     public Node getTarget() {

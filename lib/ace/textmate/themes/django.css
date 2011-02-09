@@ -177,6 +177,7 @@ color:#FB9A4B;
 .ace-django .ace_meta.ace_property-value .ace_support.ace_constant.ace_property-value.ace_css {font-style:italic;color:#FFE862;}
 .ace-django .ace_meta.ace_property-value .ace_support.ace_constant.ace_named-color.ace_css {color:#FFE862;}
 .ace-django .ace_meta.ace_property-value .ace_constant {color:#FFE862;}
+.ace-django .ace_meta.ace_property-value .ace_support.ace_constant {color:#EB939A;}
 .ace-django .ace_meta.ace_preprocessor.ace_at-rule .ace_keyword.ace_control.ace_at-rule {color:#FD6209;}
 .ace-django .ace_meta.ace_constructor.ace_argument.ace_css {color:#EC9799;}
 .ace-django .ace_meta.ace_diff {font-style:italic;color:#F8F8F8;background-color:#0B2F20;}

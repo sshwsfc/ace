@@ -4,6 +4,7 @@ var tools = require('./tools');
 
 var syntaxTemplate = fs.readFileSync(__dirname + "/templates/syntax.tmpl.js", "utf8");
 var syntaxManagerTemplate = fs.readFileSync(__dirname + "/templates/syntax.manager.tmpl.js", "utf8");
+var snippetsManagerTemplate = fs.readFileSync(__dirname + "/templates/snippets.manager.tmpl.js", "utf8");
 
 function parseSyntax(path, context) {
 try {
@@ -27,11 +28,36 @@ try {
 } catch(e) {}
 };
 
+function parseSnippets(path, context){
+try {
+	var files = fs.readdirSync(path);
+	for(var i=0;i<files.length;i++){
+		//console.log('Star parse Snippets : ' + files[i]);
+	    try {
+			var plist = fs.readFileSync(path + files[i], "utf8");
+	        var j =  tools.plistToJson(plist);
+			if(!context['snippets'][j.scope]){
+				context['snippets'][j.scope] = {'tab': [], 'key': []};
+			}
+			if(j.tabTrigger){
+				context['snippets'][j.scope]['tab'].push(j);
+			}else if(j.keyEquivalent){
+				context['snippets'][j.scope]['key'].push(j);
+			}
+			//console.log('Finish parse Snippets :' + files[i]);
+	    } catch(e) {
+	        console.log(e.stack);
+	    }
+	}
+} catch(e) {}
+};
+
 function parseBundle(bundlePath, context){
 	parseSyntax(bundlePath + '/Syntaxes/', context);
+	//parseSnippets(bundlePath + '/Snippets/', context);
 }
 
-function parseBundleManager(context){
+function parseSyntaxManager(context){
 	var syntaxes = context['syntaxes'];
 	var syntaxs_hash = '';
 	var file_typs = '';
@@ -50,8 +76,18 @@ function parseBundleManager(context){
 	fs.writeFileSync(__dirname + "/../../lib/ace/textmate/bundles/syntaxes/manager.js", output);
 }
 
+function parseSnippetsManager(context){
+	var output = tools.fillTemplate(snippetsManagerTemplate, {'snippets_hash': util.inspect(context['snippets'], false, 10)});
+	fs.writeFileSync(__dirname + "/../../lib/ace/textmate/bundles/snippets/manager.js", output);
+}
+
+function parseBundleManager(context){
+	//parseSyntaxManager(context);
+	//parseSnippetsManager(context);
+}
+
 var path = __dirname + "/bundles/";
-var context = {'syntaxes': []};
+var context = {'syntaxes': [], 'snippets': {}};
 var files = fs.readdirSync(path);
 
 for(var i=0;i<files.length;i++){

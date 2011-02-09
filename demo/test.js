@@ -2,20 +2,13 @@ define(function(require, exports, module) {
 
 var manager = require("ace/textmate/bundles/syntaxes/manager").SyntaxManager;
 var Mode = require("ace/textmate/mode").Mode;
-var text = require('text!demo/test.py');
-//var text = require('text!demo/test.java');
+var text = require('text!demo/test.rb');
 
 exports.launch = function(env) {
 	
-	var mode = new Mode('py');
-	//var mode = new Mode('java');
+	var mode = new Mode('rb');
 	var token = mode.getTokenizer();
 	var text_lines = text.split(/\n/g);
-	
-	// var ps = [];
-	// var ss = [];
-	// manager.getSyntax('source.python.django').root_scope.get_patterns_exg(ps, ss, true);
-	// console.log(ps);
 	
 	var lines = [];
 	var start_time = new Date();
@@ -37,7 +30,6 @@ exports.launch = function(env) {
 			{'tabString':'&nbsp;&nbsp;&nbsp;&nbsp;', 'spaceRe': spaceRe, 'spaceReplace': spaceReplace, 'characterWidth': 12});	
 		sb.push('</div>');
 	};
-	console.log((new Date) - start_time);
 	
 	document.getElementById('ace_text-layer').innerHTML = sb.join('');
 	

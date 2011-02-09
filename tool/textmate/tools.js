@@ -33,8 +33,8 @@ function $plistParse(el) {
                 if (!key)
                     throw new Error("missing key");
                 dict[key] = $plistParse(child);
-                if(key == 'match'){
-                	dict[key] = dict[key].replace(/\s/g, '');
+                if(key == 'match' || key == 'begin' || key == 'end'){
+                	dict[key] = dict[key].replace(/\#.*\n/g, '').replace(/\s/g, '');
                 }
                 key = null;
             }

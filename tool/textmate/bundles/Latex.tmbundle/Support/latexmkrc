@@ -1,1 +1,8 @@
-$latex = 'pdflatex -interaction=nonstopmode -file-line-error-style ';
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>$latex</key>
+	<string>pdflatex -interaction=nonstopmode -file-line-error-style </string>
+</dict>
+</plist>
