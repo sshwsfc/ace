@@ -86,7 +86,7 @@ function parseBundleManager(context){
 	//parseSnippetsManager(context);
 }
 
-var path = __dirname + "/bundles/";
+var path = __dirname + "/convert_bundles/";
 var context = {'syntaxes': [], 'snippets': {}};
 var files = fs.readdirSync(path);
 
